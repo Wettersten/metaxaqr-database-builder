@@ -8,4 +8,4 @@ from .handling import create_dir_structure
 
 from .cluster_tax import create_cluster_tax
 
-from clustering import cluster_vs
+from .clustering import cluster_vs
