@@ -104,4 +104,4 @@ def float_to_str_id(identity):
     """Converts a float identity (0.95) to a str (95).
     """
     str_id = (str(int(float(identity)*100)))
-    return str_id
+    return str(str_id)

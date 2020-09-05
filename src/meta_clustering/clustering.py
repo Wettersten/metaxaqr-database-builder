@@ -8,7 +8,7 @@ def cluster_vs(database, float_id):
     using VSEARCH, producing cluster files which are later analysed.
     """
     str_id = float_to_str_id(float_id)
-    proj_path = return_proj_path
+    proj_path = return_proj_path()
     dir_path = proj_path + str_id
     uc_file = dir_path + '/uc'
     log_file = dir_path + '/log.txt'

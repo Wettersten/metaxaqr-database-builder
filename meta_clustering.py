@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser = create_parser()
     args = return_args(parser)
 
-    print("run")
+    print("Running Meta_clustering")
     print(args.input)
 
     id_range = id_range_to_list(args.identity)
