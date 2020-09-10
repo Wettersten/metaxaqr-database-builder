@@ -19,11 +19,19 @@ if __name__ == "__main__":
 
     for id in id_range:
         ident = float_to_str_id(id)
+
         # 1) create output directories - done
         create_dir_structure(ident)
+
         # 2) cluster vsearch id - todo
+        print('Running VSEARCH at id: {} using database: {}'.format(
+                id,
+                args.input
+            ))
         cluster_vs(args.input, id)
+
         # 3) create tax_clusters files - test on vs_10k files
         create_cluster_tax(ident)
+
         # 4) create flag and repr cluster files
         repr_and_flag(ident)

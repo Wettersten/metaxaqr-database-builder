@@ -34,8 +34,4 @@ def cluster_vs(database, float_id):
         vs_quiet
                                                         )
 
-    print('Running VSEARCH at id: {} using database: {}'.format(
-        float_id,
-        database
-    ))
     os.system(vs_cmd)
