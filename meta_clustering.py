@@ -5,6 +5,7 @@ from src.meta_clustering.handling import float_to_str_id
 from src.meta_clustering.handling import create_dir_structure
 from src.meta_clustering.clustering import cluster_vs
 from src.meta_clustering.cluster_tax import create_cluster_tax
+from src.meta_clustering.cluster_tax import repr_and_flag
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import os
 from .handling import return_proj_path
-from .parsing import float_to_str_id
+from .handling import float_to_str_id
 
 
 def cluster_vs(database, float_id):

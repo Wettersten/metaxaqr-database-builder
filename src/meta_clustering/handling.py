@@ -54,6 +54,22 @@ def float_to_str_id(identity):
     return str(str_id)
 
 
+def check_id_range(identity):
+    """Checks if valid input in identity arg.
+    """
+    id_range = str(identity).split("-")
+    error_msg = "Error in identity range input."
+
+    try:
+        (isinstance(float(id_range[0]), float))
+    except ValueError:
+        quit(error_msg)
+
+    if len(id_range) > 1:
+        if float(id_range[0]) >= float(id_range[1]):
+            quit(error_msg)
+
+
 def logging():
     """Todo - Used to log time used etc
     """

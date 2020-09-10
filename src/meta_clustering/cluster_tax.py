@@ -1,4 +1,5 @@
 from .handling import return_proj_path
+from .handling import tax_list_to_str
 import os
 
 
