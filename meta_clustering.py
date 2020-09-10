@@ -24,3 +24,5 @@ if __name__ == "__main__":
         cluster_vs(args.input, id)
         # 3) create tax_clusters files - test on vs_10k files
         create_cluster_tax(ident)
+        # 4) create flag and repr cluster files
+        repr_and_flag(ident)

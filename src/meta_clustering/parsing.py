@@ -80,28 +80,3 @@ def check_id_range(identity):
     if len(id_range) > 1:
         if float(id_range[0]) >= float(id_range[1]):
             quit(error_msg)
-
-
-def id_range_to_list(identity):
-    """Converts identity arg to a list of either a identity or a range of
-    identities, depending on input. Also returns True if range and False if
-    not. Returning a list in the format of floats.
-    """
-    check_id_range(identity)
-    id_list = []
-    id_range = str(identity).split("-")
-    if len(id_range) > 1:
-        is_range = True
-        c_range = int((float(id_range[1])*100) - (float(id_range[0])*100))+1
-        for i in range(c_range):
-            id_list.append("{:.2f}".format(float(id_range[0]) + float(i/100)))
-    else:
-        id_list.append("{:.2f}".format(float(id_range[0])))
-    return id_list
-
-
-def float_to_str_id(identity):
-    """Converts a float identity (0.95) to a str (95).
-    """
-    str_id = (str(int(float(identity)*100)))
-    return str(str_id)
