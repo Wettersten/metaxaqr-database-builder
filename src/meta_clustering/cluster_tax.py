@@ -148,7 +148,7 @@ def chlor_mito_flag(cluster):
     flag_out = ''
 
     for tax in cluster:
-        if "Chloroplast" in tax:
+        if "Chloroplast" in tax or "Chloroplastida" in tax:
             chlor_check = True
         elif "Mitochondria" in tax:
             mito_check = True
@@ -411,6 +411,7 @@ def repr_and_flag(str_id):
         flag_file.write(header_flag[:-1] + "\n")
         for line in orig_file:
             flag_file.write(line)
+        flag_file.write('end')
     os.remove(flag_clusters_file)
 
 
@@ -914,7 +915,10 @@ def flag_correction(str_id):
 
         for line in flag_file:
             curr_line = line.rstrip()
-            if (curr_line.split("\t")[0][:3] == "MQR"):
+            if (
+                curr_line.split("\t")[0][:3] == "MQR"
+                or curr_line == 'end'
+            ):
 
                 old_label = cluster_label
                 old_repr = cluster_repr
@@ -941,31 +945,15 @@ def flag_correction(str_id):
                         my_cluster.get_reprtax()
                         ))
 
-                cluster_label = curr_line.split("\t")[0]
-                cluster_repr = curr_line.split("\t")[1]
-                cluster_flags = curr_line.split("\t")[2]
+                if curr_line != 'end':
+                    cluster_label = curr_line.split("\t")[0]
+                    cluster_repr = curr_line.split("\t")[1]
+                    cluster_flags = curr_line.split("\t")[2]
+
                 first_line = False
                 curr_cluster = []
 
             else:
                 curr_cluster.append(curr_line)
-
-        my_cluster = Cluster(
-            cluster_label,
-            curr_cluster,
-            repr_tax=cluster_repr,
-            flags=old_flags
-            )
-
-        skip_review, exit_review = run_correction(
-            my_cluster,
-            skip_review,
-            exit_review
-            )
-
-        corr_file.write("{}\t{}\n".format(
-            my_cluster.get_label(),
-            my_cluster.get_reprtax()
-            ))
 
     repr_correction(str_id)
