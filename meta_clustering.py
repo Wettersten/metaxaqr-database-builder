@@ -6,6 +6,7 @@ from src.meta_clustering.handling import create_dir_structure
 from src.meta_clustering.clustering import cluster_vs
 from src.meta_clustering.cluster_tax import create_cluster_tax
 from src.meta_clustering.cluster_tax import repr_and_flag
+from src.meta_clustering.cluster_tax import flag_correction
 
 
 if __name__ == "__main__":
@@ -20,18 +21,21 @@ if __name__ == "__main__":
     for id in id_range:
         ident = float_to_str_id(id)
 
-        # 1) create output directories - done
+        #: 1) create output directories - done
         create_dir_structure(ident)
 
-        # 2) cluster vsearch id - todo
+        #: 2) cluster vsearch id - todo
         print('Running VSEARCH at id: {} using database: {}'.format(
                 id,
                 args.input
             ))
         cluster_vs(args.input, id)
 
-        # 3) create tax_clusters files - test on vs_10k files
+        #: 3) create tax_clusters files - test on vs_10k files
         create_cluster_tax(ident)
 
-        # 4) create flag and repr cluster files
+        #: 4) create flag and repr cluster files
         repr_and_flag(ident)
+
+        #: 5) manual review of flag file and creation of corrected repr file
+        flag_correction(ident)

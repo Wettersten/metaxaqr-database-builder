@@ -9,5 +9,6 @@ from .handling import tax_list_to_str
 
 from .cluster_tax import create_cluster_tax
 from .cluster_tax import repr_and_flag
+from .cluster_tax import flag_correction
 
 from .clustering import cluster_vs
