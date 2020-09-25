@@ -21,7 +21,6 @@ if __name__ == "__main__":
     for id in id_range:
         ident = float_to_str_id(id)
 
-        """
         #: 1) create output directories - done
         create_dir_structure(ident)
 
@@ -34,7 +33,6 @@ if __name__ == "__main__":
 
         #: 3) create tax_clusters files - test on vs_10k files
         create_cluster_tax(ident)
-        """
 
         #: 4) create flag and repr cluster files
         repr_and_flag(ident)
