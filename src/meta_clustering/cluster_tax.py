@@ -68,63 +68,59 @@ class Cluster:
         return self.str_id
 
 
-def create_cluster_tax(ident):
+def create_cluster_tax(str_id, loop=False):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
-    uc_file = "/uc"
-    tax_clusters = "/tax_clusters"
-    cluster_dir = "/clusters"
-    run_path = return_proj_path() + ident
+    run_path = return_proj_path() + str_id
+    uc_file = run_path + "/uc"
+    tax_clusters_file = run_path + "/tax_clusters"
+    cluster_dir = run_path + "/clusters"
 
-    with open(run_path + tax_clusters, 'w') as clust_out, \
-         open(run_path + uc_file, 'r') as read_uc:
+    with open(tax_clusters_file, 'w') as clust_out, \
+         open(uc_file, 'r') as read_uc:
 
         for line in read_uc:
             curr_line = line.rstrip().split("\t")
 
             if curr_line[0] == "C" and int(curr_line[2]) > 1:
                 curr_cluster = curr_line[1]
-                cluster_file = "/cluster_" + curr_cluster
+                cluster_file = cluster_dir + "/cluster_" + curr_cluster
 
-                with open("{}{}{}".format(
-                                            run_path,
-                                            cluster_dir,
-                                            cluster_file
-                                            ), 'r') as read_cluster:
+                with open(cluster_file, 'r') as read_cluster:
+                    new_cluster = curr_cluster
+                    if loop:
+                        new_cluster = curr_line[9].split("_")[2]
                     clust_out.write("MQR_{}_{}\n".format(
-                                                         ident,
-                                                         curr_cluster
+                                                         str_id,
+                                                         new_cluster
                                                          ))
+
                     for lines in read_cluster:
                         if lines[0] == ">":
-                            curr_id = remove_cf_line(lines.rstrip())
+                            if loop:
+                                loop_line = lines.rstrip().split("\t")
+                                loop_tlabel = loop_line[0]
+                                loop_clabel = "MQR_{}_{}".format(
+                                    str_id,
+                                    loop_line[1].split("_")[2]
+                                )
+                                loop_repr = loop_line[2]
+                                curr_id = "{} {}".format(
+                                    loop_tlabel,
+                                    loop_repr
+                                )
+                            else:
+                                curr_id = remove_cf_line(lines.rstrip())
                             clust_out.write("{}\n".format(curr_id))
 
-        clust_out.write("end")  # used by cluster_stats to denote eof
+        clust_out.write("end")
 
 
 def remove_cf_line(tax_line):
     """Removes all occurences of "cf. " within a line of taxonomy.
     """
     return tax_line.replace('cf. ', '')
-
-
-def remove_cf_file(tax_file):
-    """Removes all occurences of "cf. " within a tax_clusters file. (remove?)
-    """
-    cluster_file = tax_file
-    old_file = "{}_old".format(cluster_file)
-    if os.path.isfile(old_file):
-        os.remove(old_file)
-    os.rename(cluster_file, old_file)
-    with open(old_file, 'r') as read_file, \
-         open(cluster_file, 'w') as write_file:
-
-        for line in read_file:
-            new_line = "{}\n".format(line.rstrip().replace('cf. ', ''))
-            write_file.write(new_line)
-    os.remove(old_file)
 
 
 def flag_check(cluster):
@@ -687,7 +683,7 @@ def prompt_print(my_cluster):
     )
 
     prompt_clust_full = prompt_before + prompt_clust + prompt_after
-    prompt_text = """
+    old_prompt_text = """
 
 Accept suggestion, alt. accept all/all from one flag: accept [all] [flag]
 Manual entry: manual Taxonomy;To;Use
@@ -696,6 +692,19 @@ Need suggestion by removing ids: remove id1-id3 id5
 Ignore current cluster and save it for later review: exclude
 Show flags and their respective occurences: flags
 Exit, discarding all remaining suggestions: exit
+
+
+Input: """
+
+    prompt_text = """
+
+accept [all]/[flag]\tAccept current suggestion, accept all or all from one flag
+manual Taxonomy;To;Use\tManual entry of taxonomy
+keep id [c-2]/[s-3]\tKeep entry to represent, category/species - cut columns
+remove id1-id3 id5\tNew suggestion calculated by removing entries
+exclude\t\t\tIgnore current cluster and save it for later review
+flags\t\t\tShow flags and their respective occurences
+exit\t\t\tExit, discarding all remaining suggestions
 
 
 Input: """
