@@ -2,6 +2,9 @@ from .cluster_tax import repr_and_flag, create_cluster_tax
 from .clustering import cluster_vs
 from .handling import return_proj_path
 
+import os
+from shutil import rmtree
+
 
 def clean_singleton(repr_tax):
     """Removes taxonomy starting with lowercase such as 'unidentified' and
