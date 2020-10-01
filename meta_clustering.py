@@ -45,8 +45,15 @@ if __name__ == "__main__":
     #: 5) loop down from 100 to 95, clustering using the centroid files
     v_loop = [str(i) for i in range(100, 95-1, -1)]
     for id in v_loop:
-        print('Running VSEARCH at id: {} using database: {}'.format(
-                id,
+        cmd = ''
+        if int(id) > 95:
+            out_id = str(int(id)-1)
+            cmd = "Running VSEARCH at id: {} using database: {}".format(
+                out_id,
                 args.input
-            ))
+            )
+        else:
+            cmd = "Finalizing output"
+
+        print(cmd)
         cluster_loop(id)
