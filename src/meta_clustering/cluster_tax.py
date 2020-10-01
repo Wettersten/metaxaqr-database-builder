@@ -1,5 +1,4 @@
-from .handling import return_proj_path
-from .handling import tax_list_to_str
+from .handling import return_proj_path, tax_list_to_str
 import os
 from collections import Counter
 

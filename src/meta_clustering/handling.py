@@ -3,16 +3,12 @@ import os
 import pathlib
 
 
-def create_dir_structure(str_ident):
+def create_dir_structure(str_id):
     """Creates the directory structure used by clustering and subsequent
     handling of clusters. Cluster files in mc_db/identity/clusters/
     """
-    dir_path = os.getcwd()
-    # Maybe use parser.out_path
-    parent_dir = '/mqr_db/'
-    cluster_dir = '/clusters/'
-    new_dir_path = dir_path + parent_dir + str_ident + cluster_dir
-    pathlib.Path(new_dir_path).mkdir(parents=True, exist_ok=True)
+    cluster_dir = return_proj_path() + str_id + '/clusters/'
+    pathlib.Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
 def return_proj_path():

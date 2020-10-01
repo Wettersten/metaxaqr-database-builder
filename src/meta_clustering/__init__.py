@@ -12,3 +12,5 @@ from .cluster_tax import repr_and_flag
 from .cluster_tax import flag_correction
 
 from .clustering import cluster_vs
+
+from .cluster_loop import cluster_loop

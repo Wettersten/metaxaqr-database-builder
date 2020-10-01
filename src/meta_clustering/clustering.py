@@ -1,6 +1,5 @@
 import os
-from .handling import return_proj_path
-from .handling import float_to_str_id
+from .handling import return_proj_path, float_to_str_id, create_dir_structure
 
 
 def cluster_vs(database, float_id):
@@ -8,6 +7,7 @@ def cluster_vs(database, float_id):
     using VSEARCH, producing cluster files which are later analysed.
     """
     str_id = float_to_str_id(float_id)
+    create_dir_structure(str_id)
     proj_path = return_proj_path()
     dir_path = proj_path + str_id
     uc_file = dir_path + '/uc'
