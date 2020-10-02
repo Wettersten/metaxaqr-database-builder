@@ -1,9 +1,11 @@
 import argparse
+import time
 
 from src.meta_clustering.parsing import create_parser, return_args
 
 from src.meta_clustering.handling import id_range_to_list
 from src.meta_clustering.handling import float_to_str_id
+from src.meta_clustering.handling import logging
 
 from src.meta_clustering.clustering import cluster_vs
 
@@ -18,54 +20,67 @@ if __name__ == "__main__":
     parser = create_parser()
     args = return_args(parser)
 
-    print("Running Meta_clustering")
-    print(args.input)
+    #: check args for any problems, such as missing input etc TODO
+    #: quit with error msg if any errors
 
-    id_range = id_range_to_list(args.identity)
+    #: running the start clustering command
+    #: make into separate method TODO
+    if args.opt_clustering:
+        #: cluster vsearch id -
+        id = 1.0
+        ident = float_to_str_id(id)
 
-    id = id_range[0]
-    ident = float_to_str_id(id)
-
-    #: 1) cluster vsearch id -
-    print('Running VSEARCH at id: {} using database: {}'.format(
-            ident,
-            args.input
-        ))
-    cluster_vs(args.input, id)
-
-    #: 2) create tax_clusters files - test on vs_10k files
-    create_cluster_tax(ident)
-
-    #: 3) create flag and repr cluster files
-    repr_and_flag(ident)
-
-    #: 4) manual review of flag file and creation of corrected repr file
-    flag_correction(ident)
-
-    #: 5) loop down from 100 to 95, clustering using the centroid files
-    v_loop = [str(i) for i in range(100, 95-1, -1)]
-    for id in v_loop:
-        cmd = ''
-        if int(id) > 95:
-            out_id = str(int(id)-1)
-            cmd = "Running VSEARCH at id: {} using database: {}".format(
-                out_id,
+        log_msg = "Running VSEARCH at id: {} using database: {}".format(
+                ident,
                 args.input
             )
-        else:
-            cmd = "Finalizing output"
+        time_log_msg = "Done in Hours:Minutes:Seconds"
+        logging(log_msg, start=True)
+        start_time = time.time()
 
-        print(cmd)
-        cluster_loop(id)
+        cluster_vs(args.input, id)
 
-"""logging
-log_file = 'mc_log.txt'
-if os.path.isfile(log_file):
-    os.remove(log_file)
+        elapsed_time = time.time() - start_time
+        time_msg = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+        log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
+        logging(log_msg)
 
-v_loop = [str(i) for i in range(100, 95-1, -1)]
+        #: create tax_clusters files - test on vs_10k files
+        create_cluster_tax(ident)
 
-for id in v_loop:
-    with open(log_file, 'a+') as log:
-        log.write('Running VSAERCH at id: {}\n'.format(id))
-"""
+        #: create flag and repr cluster files
+        repr_and_flag(ident)
+
+    #: running the manual review and further clusterging command
+    #: make into separate method TODO
+    if args.opt_review:
+
+        #: manual review of flag file and creation of corrected repr file
+        flag_correction(ident)
+
+        #: loop down from 100 to 95, clustering using the centroid files
+        v_loop = [str(i) for i in range(100, 95-1, -1)]
+        for id in v_loop:
+            cmd = ''
+            if int(id) > 95:
+                out_id = str(int(id)-1)
+                log_msg = "Running VSEARCH at id: {}".format(out_id)
+                logging(log_msg)
+
+            else:
+                log_msg = "Finalizing output"
+                logging(log_msg)
+
+            start_time = time.time()
+
+            cluster_loop(id)
+
+            elapsed_time = time.time() - start_time
+            time_msg = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+            log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
+            logging(log_msg)
+
+    #: running the make database command
+    #: make into separate method TODO
+    if args.opt_makedb:
+        pass

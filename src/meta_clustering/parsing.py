@@ -2,8 +2,7 @@
 for valid installation(s) etc
 """
 
-import os.path
-from os import path
+import os
 import argparse
 
 seq_version = 0.1
@@ -11,6 +10,44 @@ seq_name = 'meta_clustering'
 
 
 def create_parser():
+    """Creates a command line parser, --h shows help, --version shows version.
+    Required arguments:
+    Optional arguments:
+    """
+    parser = argparse.ArgumentParser(
+        prog=seq_name,
+        description="""Analyse taxonomy within clusters based on sequence
+        identity.""",
+        epilog='Examples: ')
+
+    parser.add_argument('-c', '--cluster', dest='opt_clustering',
+                        action='store_true', default=False,
+                        help="""Clustering of input database at 100%% identity
+                        and preparation of files for manual review""")
+
+    parser.add_argument('-i', '--input', dest='input', type=str, metavar='',
+                        help="""{FILENAME} FASTA database to be clustered""")
+
+    parser.add_argument('-o', '--output', dest='path', type=str, metavar='',
+                        help="""{PATH} Specify output path""")
+
+    parser.add_argument('-r', '--review', dest='opt_review',
+                        action='store_true', default=False,
+                        help="""Manual review of flagged clusters followed by
+                        further clusterging of their output centroid files
+                        down to 95%% identity""")
+
+    parser.add_argument('-m', '--makedb', dest='opt_makedb',
+                        action='store_true', default=False,
+                        help="""Creates a Metaxa2 databse from the created
+                        files""")
+
+    parser.add_argument('--version', action='version',
+                        version='{}: version {}'.format(seq_name, seq_version))
+    return parser
+
+
+def old_create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
     Required arguments:
     Optional arguments:

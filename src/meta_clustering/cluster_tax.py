@@ -335,13 +335,31 @@ def flag_header(str_id):
     return header
 
 
-def cut_incertae(entry):
-    tax_entry = " ".join(entry.split(" ")[1:]).split(";")
+def process_entry(entry):
+    """Processes a taxonomic entry (label, taxonomy) to stop at the category
+    before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
+    categories to the first position, replacing Eukaryota/Bacteria.
+    """
+    label = entry.split(" ")[0]
     inc_sed = 'Incertae Sedis'
-    if inc_sed in tax_entry:
-        label = entry.split(" ")[0]
+    mito_chlor = ['Mitochondria', 'Chloroplast', 'Chloroplastida']
+
+    #: if 'Incertae Sedis' in the taxonomy
+    if inc_sed in entry.split(";"):
+        tax_entry = " ".join(entry.split(" ")[1:]).split(";")
         cut_tax = tax_entry[:tax_entry.index(inc_sed)]
         entry = "{} {}".format(label, ";".join(cut_tax))
+
+    #: if mitochondria or chlorplast in the taxonomy
+    mc_found = [i for i in mito_chlor if i in entry.split(";")]
+    if mc_found:
+        tax_entry = " ".join(entry.split(" ")[1:]).split(";")
+        new_tax_entry = [mc_found[0]]
+        for tax in tax_entry[1:tax_entry.index(mc_found[0])]:
+            new_tax_entry.append(tax)
+        for tax in tax_entry[tax_entry.index(mc_found[0])+1:]:
+            new_tax_entry.append(tax)
+        entry = "{} {}".format(label, ";".join(new_tax_entry))
 
     return entry
 
@@ -403,8 +421,8 @@ def repr_and_flag(str_id):
                 curr_cluster = []
 
             else:
-                #: cuts the taxonomic entry before 'Incertae Sedis'
-                curr_cluster.append(cut_incertae(curr_line))
+                #: cuts incertae sedis and moved chlorplast/mitochondria
+                curr_cluster.append(process_entry(curr_line))
 
     #: creates a new file with the header at start, followed by all flags
     header_flag = '#\t'

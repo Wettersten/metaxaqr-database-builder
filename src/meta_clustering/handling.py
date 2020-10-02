@@ -66,14 +66,15 @@ def check_id_range(identity):
             quit(error_msg)
 
 
-def logging():
+def logging(msg, start=False):
     """Todo - Used to log time used etc
     """
-    start_time = time.time()
-    elapsed_time = time.time() - start_time
-
-    with open('cluster_tax_log.txt', 'w') as out_file:
-        out_file.write("Project: {}\n".format(fasta_file))
-        out_file.write("Identities performed: {}\n".format(str(idents)))
-        out_file.write("Done in Hours:Minutes:Seconds\n")
-        out_file.write(time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+    logging_file = os.getcwd() + 'mc_log.txt'  # change dir? TODO
+    if start:
+        if os.path.isfile(logging_file):
+            os.remove(logging_file)
+        with open(logging_file, 'w') as log_file:
+            log_file.write(msg)
+    else:
+        with open(logging_file, 'a') as log_file:
+            log_file.write(msg)
