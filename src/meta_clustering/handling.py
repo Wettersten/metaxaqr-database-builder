@@ -69,7 +69,7 @@ def check_id_range(identity):
 def logging(msg, start=False):
     """Todo - Used to log time used etc
     """
-    logging_file = os.getcwd() + 'mc_log.txt'  # change dir? TODO
+    logging_file = os.getcwd() + '/mc_log.txt'  # change dir? TODO
     if start:
         if os.path.isfile(logging_file):
             os.remove(logging_file)

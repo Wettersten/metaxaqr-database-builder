@@ -21,24 +21,22 @@ if __name__ == "__main__":
     args = return_args(parser)
 
     #: check args for any problems, such as missing input etc TODO
-    #: quit with error msg if any errors
+    #: quit with error msg if any errors TODO
 
     #: running the start clustering command
     #: make into separate method TODO
     if args.opt_clustering:
         #: cluster vsearch id -
-        id = 1.0
-        ident = float_to_str_id(id)
 
         log_msg = "Running VSEARCH at id: {} using database: {}".format(
-                ident,
+                '100',
                 args.input
             )
         time_log_msg = "Done in Hours:Minutes:Seconds"
         logging(log_msg, start=True)
         start_time = time.time()
 
-        cluster_vs(args.input, id)
+        cluster_vs(args.input, 1.0)
 
         elapsed_time = time.time() - start_time
         time_msg = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
@@ -46,17 +44,17 @@ if __name__ == "__main__":
         logging(log_msg)
 
         #: create tax_clusters files - test on vs_10k files
-        create_cluster_tax(ident)
+        create_cluster_tax('100')
 
         #: create flag and repr cluster files
-        repr_and_flag(ident)
+        repr_and_flag('100')
 
     #: running the manual review and further clusterging command
     #: make into separate method TODO
     if args.opt_review:
 
         #: manual review of flag file and creation of corrected repr file
-        flag_correction(ident)
+        flag_correction('100')
 
         #: loop down from 100 to 95, clustering using the centroid files
         v_loop = [str(i) for i in range(100, 95-1, -1)]
@@ -64,17 +62,18 @@ if __name__ == "__main__":
             cmd = ''
             if int(id) > 95:
                 out_id = str(int(id)-1)
-                log_msg = "Running VSEARCH at id: {}".format(out_id)
+                log_msg = "Running VSEARCH at id: {}\n".format(out_id)
                 logging(log_msg)
 
             else:
-                log_msg = "Finalizing output"
+                log_msg = "Finalizing output\n"
                 logging(log_msg)
 
             start_time = time.time()
 
             cluster_loop(id)
 
+            time_log_msg = "Done in Hours:Minutes:Seconds"
             elapsed_time = time.time() - start_time
             time_msg = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
             log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
