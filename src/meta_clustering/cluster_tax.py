@@ -202,7 +202,7 @@ def repr_taxonomy(tax_cluster):
         if len(tax_cluster[0]) > 4:
             start = len(tax_cluster[0])-5
 
-        for i in range(start, len(tax_cluster[0])-1):
+        for i in range(start, len(tax_cluster[0])):
             curr_cluster = []
             for tax in tax_cluster:
                 if tax[:i+1][-1][0].isupper():
@@ -335,6 +335,17 @@ def flag_header(str_id):
     return header
 
 
+def cut_incertae(entry):
+    tax_entry = " ".join(entry.split(" ")[1:]).split(";")
+    inc_sed = 'Incertae Sedis'
+    if inc_sed in tax_entry:
+        label = entry.split(" ")[0]
+        cut_tax = tax_entry[:tax_entry.index(inc_sed)]
+        entry = "{} {}".format(label, ";".join(cut_tax))
+
+    return entry
+
+
 def repr_and_flag(str_id):
     """Takes an identity (in str) and opens the corresponding tax_clusters
     file, where all clusters are iterated over. Each cluster is assigned a
@@ -392,7 +403,8 @@ def repr_and_flag(str_id):
                 curr_cluster = []
 
             else:
-                curr_cluster.append(curr_line)
+                #: cuts the taxonomic entry before 'Incertae Sedis'
+                curr_cluster.append(cut_incertae(curr_line))
 
     #: creates a new file with the header at start, followed by all flags
     header_flag = '#\t'

@@ -50,3 +50,15 @@ if __name__ == "__main__":
                 args.input
             ))
         cluster_loop(id)
+
+"""logging
+log_file = 'mc_log.txt'
+if os.path.isfile(log_file):
+    os.remove(log_file)
+
+v_loop = [str(i) for i in range(100, 95-1, -1)]
+
+for id in v_loop:
+    with open(log_file, 'a+') as log:
+        log.write('Running VSAERCH at id: {}\n'.format(id))
+"""
