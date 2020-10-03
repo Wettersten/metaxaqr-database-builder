@@ -92,11 +92,11 @@ def logging(
 
     else:
         if start:
-            log_msg = "{txt1}: {id} {}txt2: {db}\n".format(
+            log_msg = "{txt1}: {id} {txt2}: {idb}\n".format(
                     txt1="Running VSEARCH at id",
                     id=str_id,
                     txt2="using database",
-                    db=db
+                    idb=db
                 )
         elif int(str_id) > 95:
             log_msg = "{tx1}: {id1} {txt2}: {id2}\n".format(

@@ -10,16 +10,17 @@ from .handling import logging
 
 
 def main_mc(args):
-    quiet = args.log_quiet
+    quiet_opt = args.log_quiet
 
     #: running start command, clustering at 100 identity
     if args.opt_clustering:
         str_id = '100'
         float_id = 1.0
-        logging(str_id=str_id, db=args.input, quiet=quiet, start=True)
+        db = args.input
+        logging(str_id=str_id, db=db, quiet=quiet, start=True)
         start_time = time.time()
 
-        cluster_vs(args.input, float_id)
+        cluster_vs(db, float_id)
 
         elapsed_time = time.time() - start_time
         logging(etime=elapsed_time, time_log=True, quiet=quiet)
