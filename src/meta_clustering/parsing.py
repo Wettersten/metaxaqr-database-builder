@@ -33,49 +33,23 @@ def create_parser():
 
     parser.add_argument('-r', '--review', dest='opt_review',
                         action='store_true', default=False,
-                        help="""Manual review of flagged clusters followed by
-                        further clusterging of their output centroid files
-                        down to 95%% identity""")
+                        help="""Manual review of flagged clusters""")
+
+    parser.add_argument('-f', '--finalize', dest='opt_finalize',
+                        action='store_true', default=False,
+                        help="""Further clustering of their output centroid
+                        files from manual review down to 95%% identity""")
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Creates a Metaxa2 databse from the created
                         files""")
 
-    parser.add_argument('--version', action='version',
-                        version='{}: version {}'.format(seq_name, seq_version))
-    return parser
-
-
-def old_create_parser():
-    """Creates a command line parser, --h shows help, --version shows version.
-    Required arguments:
-    Optional arguments:
-    """
-    parser = argparse.ArgumentParser(
-        prog=seq_name,
-        description="""Analyse taxonomy within clusters based on sequence
-        identity.""",
-        epilog='Examples: ')
-    parser.add_argument('-i', dest='input', type=str, required=True,
-                        help="""{FILENAME} FASTA database to be analysed""")
-    parser.add_argument('-id', dest='identity', type=str, required=True,
-                        help="""{REAL/REAL-REAL} Identity cutoff used in
-                        clustering, either a single identity (1.0) or a range
-                        (0.95-1.0). Using a range results in clustering at each
-                        identity in the range.
+    parser.add_argument('-q', '--quiet', dest='log_quiet',
+                        action='store_true', default=False,
+                        help="""No status print out, only writing to log file
                         """)
-    parser.add_argument('-p', dest='path', type=str,
-                        help="""{PATH} Specify output path.""")
-    parser.add_argument('--format', dest='file_format',
-                        default='silva_tax_trunc',
-                        choices=['silva_tax_trunc', 'genbank'],
-                        help="""{genbank, meta, silva_tax_trunc} Format of the
-                        input file (default: silva_tax_trunc)""")
-    parser.add_argument('--gc', dest='gc_parse', action='store_true',
-                        default=False,
-                        help=""" Display GC content (%%) of sequences (default:
-                         off)""")
+
     parser.add_argument('--version', action='version',
                         version='{}: version {}'.format(seq_name, seq_version))
     return parser

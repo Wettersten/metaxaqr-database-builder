@@ -15,6 +15,7 @@ def return_proj_path():
     """Returns the path to current path, appending identity will return path to
     clustering files.
     """
+    #: fix to use input path? TODO
     proj_path = os.getcwd() + '/mqr_db/'
     return proj_path
 
@@ -66,15 +67,57 @@ def check_id_range(identity):
             quit(error_msg)
 
 
-def logging(msg, start=False):
-    """Todo - Used to log time used etc
+def logging(
+            str_id='',
+            etime='',
+            db='',
+            time_log=False,
+            quiet=False,
+            start=False,
+            custom=False,
+            custom_msg=''
+            ):
+    """Used for logging messages/time spent on processes etc
     """
-    logging_file = os.getcwd() + '/mc_log.txt'  # change dir? TODO
+    log_msg = ''
+    logging_file = return_proj_path() + 'mc_log.txt'
+
+    if time_log:
+        time_log_msg = "Done in Hours:Minutes:Seconds"
+        time_msg = time.strftime("%H:%M:%S", time.gmtime(etime))
+        log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
+
+    elif custom:
+        log_msg = custom_msg
+
+    else:
+        if start:
+            log_msg = "{txt1}: {id} {}txt2: {db}\n".format(
+                    txt1="Running VSEARCH at id",
+                    id=str_id,
+                    txt2="using database",
+                    db=db
+                )
+        elif int(str_id) > 95:
+            log_msg = "{tx1}: {id1} {txt2}: {id2}\n".format(
+                    txt1="Finalizing id",
+                    id1=str_id,
+                    txt2="and running VSEARCH at id",
+                    id2=str(int(str_id)-1)
+                )
+        else:
+            log_msg = "Finalizing output\n"
+
     if start:
         if os.path.isfile(logging_file):
             os.remove(logging_file)
         with open(logging_file, 'w') as log_file:
-            log_file.write(msg)
+            log_file.write(log_msg)
+            if not quiet:
+                print(log_msg)
+
     else:
         with open(logging_file, 'a') as log_file:
             log_file.write(msg)
+            if not quiet:
+                print(log_msg)
