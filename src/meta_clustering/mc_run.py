@@ -10,7 +10,7 @@ from .handling import logging
 
 
 def main_mc(args):
-    quiet_opt = args.log_quiet
+    quiet = args.log_quiet
 
     #: running start command, clustering at 100 identity
     if args.opt_clustering:

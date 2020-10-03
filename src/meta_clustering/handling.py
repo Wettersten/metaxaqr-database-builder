@@ -80,7 +80,7 @@ def logging(
     """Used for logging messages/time spent on processes etc
     """
     log_msg = ''
-    logging_file = return_proj_path() + 'mc_log.txt'
+    logging_file = os.getcwd() + 'mc_log.txt'
 
     if time_log:
         time_log_msg = "Done in Hours:Minutes:Seconds"
@@ -99,7 +99,7 @@ def logging(
                     idb=db
                 )
         elif int(str_id) > 95:
-            log_msg = "{tx1}: {id1} {txt2}: {id2}\n".format(
+            log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
                     txt1="Finalizing id",
                     id1=str_id,
                     txt2="and running VSEARCH at id",
@@ -118,6 +118,6 @@ def logging(
 
     else:
         with open(logging_file, 'a') as log_file:
-            log_file.write(msg)
+            log_file.write(log_msg)
             if not quiet:
                 print(log_msg)
