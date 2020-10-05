@@ -1,6 +1,8 @@
 import time
 import os
 import pathlib
+import argparse
+from shutil import which
 
 
 def create_dir_structure(str_id):
@@ -15,6 +17,7 @@ def return_proj_path():
     """Returns the path to current path, appending identity will return path to
     clustering files.
     """
+    #: fix to use input path? TODO
     proj_path = os.getcwd() + '/mqr_db/'
     return proj_path
 
@@ -25,24 +28,6 @@ def tax_list_to_str(tlist):
     return ";".join(tlist)
 
 
-def id_range_to_list(identity):
-    """Converts identity arg to a list of either a identity or a range of
-    identities, depending on input. Also returns True if range and False if
-    not. Returning a list in the format of floats.
-    """
-    check_id_range(identity)
-    id_list = []
-    id_range = str(identity).split("-")
-    if len(id_range) > 1:
-        is_range = True
-        c_range = int((float(id_range[1])*100) - (float(id_range[0])*100))+1
-        for i in range(c_range):
-            id_list.append("{:.2f}".format(float(id_range[0]) + float(i/100)))
-    else:
-        id_list.append("{:.2f}".format(float(id_range[0])))
-    return id_list
-
-
 def float_to_str_id(identity):
     """Converts a float identity (0.95) to a str (95).
     """
@@ -50,30 +35,167 @@ def float_to_str_id(identity):
     return str(str_id)
 
 
-def check_id_range(identity):
-    """Checks if valid input in identity arg.
+def error_check(args):
     """
-    id_range = str(identity).split("-")
-    error_msg = "Error in identity range input."
+    """
+    check_installation()
+    check_args(args)
+    check_prereqs(args)
 
-    try:
-        (isinstance(float(id_range[0]), float))
-    except ValueError:
+
+def check_args(args):
+    """
+    """
+    if (
+        not args.opt_clustering
+        and not args.opt_review
+        and not args.opt_finalize
+        and not args.opt_makedb
+    ):
+        error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
         quit(error_msg)
 
-    if len(id_range) > 1:
-        if float(id_range[0]) >= float(id_range[1]):
+    if args.input:
+        file = args.input
+        error_msg = "ERROR: Could not find the file: {}".format(file)
+        if not check_file(file):
+            quit(error_msg)
+
+    if args.output:
+        out_dir = args.output
+
+        if out_dir[-1] = '/':
+            dir = out_dir + "mqr_db/"
+        else:
+            dir = args.output + "/mqr_db/"
+
+        error_msg = "ERROR: {} already exists".format(dir)
+
+        if check_dir(dir):
             quit(error_msg)
 
 
-def logging():
-    """Todo - Used to log time used etc
+def check_dir(path):
+    """Checks if the directory/path exists, returning True/False
     """
-    start_time = time.time()
-    elapsed_time = time.time() - start_time
+    return os.path.isdir(path)
 
-    with open('cluster_tax_log.txt', 'w') as out_file:
-        out_file.write("Project: {}\n".format(fasta_file))
-        out_file.write("Identities performed: {}\n".format(str(idents)))
-        out_file.write("Done in Hours:Minutes:Seconds\n")
-        out_file.write(time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+
+def check_file(file):
+    """Checks if the file exists, retuning True/False
+    """
+    return os.path.isfile(file)
+
+
+def check_installation():
+    """Checks if valid installation; Vsearch + ?
+    """
+    reqs = ['vsearch']
+    for tool in reqs:
+        is_tool(tool)
+
+
+def check_prereqs(args):
+    """
+    """
+    if args.opt_clustering:
+        dir = return_proj_path()
+        error_msg = "ERROR: {} already exists".format(dir)
+        if check_dir(dir):
+            quit(error_msg)
+
+    if args.opt_review:
+        flag_file = return_proj_path() + '100/flag_correction'
+        error_msg = "ERROR: {file} {txt}".format(
+            file=flag_file,
+            txt="missing, please perform clustering [-c] first"
+            )
+        if not check_file(flag_file):
+            quit(error_msg)
+
+    if args.opt_finalize:
+        repr_file = return_proj_path() + '100/repr_correction'
+        error_msg = "ERROR: {file} {txt}".format(
+            file=repr_file,
+            txt="missing, please perform review [-r] first"
+            )
+        if not check_file(repr_file):
+            quit(error_msg)
+
+    if args.opt_makedb:
+        tree_file = return_proj_path() + '95/label_tree'
+        error_msg = "ERROR: {file} {txt}".format(
+            file=tree_file,
+            txt="missing, please perform finalize [-f] first"
+            )
+        if not check_file(tree_file):
+            quit(error_msg)
+
+
+def is_tool(name):
+    """Check whether `name` is on PATH and marked as executable, exits
+    otherwise.
+    """
+    error_msg = "{} was not found".format(name)
+
+    if which(name):
+        # print("{} was found".format(name))
+        pass
+    else:
+        quit(error_msg)
+
+
+def logging(
+            str_id='',
+            etime='',
+            db='',
+            time_log=False,
+            quiet=False,
+            start=False,
+            custom=False,
+            custom_msg=''
+            ):
+    """Used for logging messages/time spent on processes etc
+    """
+    log_msg = ''
+    logging_file = os.getcwd() + '/mc_log.txt'
+
+    if time_log:
+        time_log_msg = "Done in Hours:Minutes:Seconds"
+        time_msg = time.strftime("%H:%M:%S", time.gmtime(etime))
+        log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
+
+    elif custom:
+        log_msg = custom_msg
+
+    else:
+        if start:
+            log_msg = "{txt1}: {id} {txt2}: {idb}\n".format(
+                    txt1="Running VSEARCH at id",
+                    id=str_id,
+                    txt2="using database",
+                    idb=db
+                )
+        elif int(str_id) > 95:
+            log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
+                    txt1="Finalizing id",
+                    id1=str_id,
+                    txt2="and running VSEARCH at id",
+                    id2=str(int(str_id)-1)
+                )
+        else:
+            log_msg = "Finalizing output\n"
+
+    if start:
+        if os.path.isfile(logging_file):
+            os.remove(logging_file)
+        with open(logging_file, 'w') as log_file:
+            log_file.write(log_msg)
+            if not quiet:
+                print(log_msg)
+
+    else:
+        with open(logging_file, 'a') as log_file:
+            log_file.write(log_msg)
+            if not quiet:
+                print(log_msg)
