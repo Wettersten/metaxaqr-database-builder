@@ -14,12 +14,32 @@ def create_dir_structure(str_id):
 
 
 def return_proj_path():
-    """Returns the path to current path, appending identity will return path to
-    clustering files.
+    """Returns the path to project dir, if output path specified mqr_db will be
+    created in that folder
     """
-    #: fix to use input path? TODO
-    proj_path = os.getcwd() + '/mqr_db/'
+    path_file = os.getcwd() + "/mc_init.txt"
+    if check_file(path_file):
+        with open(path_file, 'r') as file:
+            proj_path = file.readline().rstrip() + '/mqr_db'
+    else:
+        proj_path = os.getcwd() + '/mqr_db/'
+
     return proj_path
+
+
+def set_proj_path(path):
+    """
+    """
+    path_file = os.getcwd() + "/mc_init.txt"
+
+    with open(path_file, 'w+') as file:
+        file.write(path)
+
+
+def set_proj_path(path):
+    """
+    """
+    pass
 
 
 def tax_list_to_str(tlist):
@@ -64,7 +84,7 @@ def check_args(args):
     if args.output:
         out_dir = args.output
 
-        if out_dir[-1] = '/':
+        if out_dir[-1] == '/':
             dir = out_dir + "mqr_db/"
         else:
             dir = args.output + "/mqr_db/"
@@ -91,8 +111,11 @@ def check_installation():
     """Checks if valid installation; Vsearch + ?
     """
     reqs = ['vsearch']
+
     for tool in reqs:
-        is_tool(tool)
+        error_msg = "{} was not found".format(tool)
+        if not is_tool(tool):
+            quit(error_msg)
 
 
 def check_prereqs(args):
@@ -133,16 +156,9 @@ def check_prereqs(args):
 
 
 def is_tool(name):
-    """Check whether `name` is on PATH and marked as executable, exits
-    otherwise.
+    """Check whether `name` is on PATH and marked as executable
     """
-    error_msg = "{} was not found".format(name)
-
-    if which(name):
-        # print("{} was found".format(name))
-        pass
-    else:
-        quit(error_msg)
+    return which(name)
 
 
 def logging(

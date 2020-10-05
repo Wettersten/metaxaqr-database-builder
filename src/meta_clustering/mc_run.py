@@ -17,6 +17,10 @@ def main_mc(args):
         str_id = '100'
         float_id = 1.0
         db = args.input
+        if args.output:
+            path = args.output
+            set_proj_path(path)
+
         logging(str_id=str_id, db=db, quiet=quiet, start=True)
         start_time = time.time()
 
