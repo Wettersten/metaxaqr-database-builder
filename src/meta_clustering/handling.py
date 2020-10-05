@@ -15,7 +15,7 @@ def create_dir_structure(str_id):
 
 def return_proj_path():
     """Returns the path to project dir, if output path specified mqr_db will be
-    created in that folder
+    created in that path.
     """
     path_file = os.getcwd() + "/mc_init.txt"
     if check_file(path_file):
@@ -28,18 +28,13 @@ def return_proj_path():
 
 
 def set_proj_path(path):
-    """
+    """Sets custom project path (if -p given when -c is used), this is saves as
+    the first line in a local file for later retrieval.
     """
     path_file = os.getcwd() + "/mc_init.txt"
 
     with open(path_file, 'w+') as file:
         file.write(path)
-
-
-def set_proj_path(path):
-    """
-    """
-    pass
 
 
 def tax_list_to_str(tlist):
@@ -56,7 +51,10 @@ def float_to_str_id(identity):
 
 
 def error_check(args):
-    """
+    """Main error checking method, ran when executing main script first after
+    the parser, checks that all arguments are valid, all required programs are
+    installed and that any files needed exist or paths not already created.
+    Quits with error messages if anything is invalid.
     """
     check_installation()
     check_args(args)
@@ -64,7 +62,8 @@ def error_check(args):
 
 
 def check_args(args):
-    """
+    """Checks that the use of args are correct, at least one main argument is
+    used, the input file and output paths are valid.
     """
     if (
         not args.opt_clustering
@@ -108,7 +107,7 @@ def check_file(file):
 
 
 def check_installation():
-    """Checks if valid installation; Vsearch + ?
+    """Checks if valid installation, if vsearch + ? is found.
     """
     reqs = ['vsearch']
 
@@ -119,7 +118,8 @@ def check_installation():
 
 
 def check_prereqs(args):
-    """
+    """Checks if the args are used correctly - in correct order (not starting
+    with the review before using initial clustering).
     """
     if args.opt_clustering:
         dir = return_proj_path()

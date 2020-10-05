@@ -11,7 +11,8 @@ seq_name = 'meta_clustering'
 
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
-    Required arguments:
+    Required arguments: One of the main 4 arguments, -c/-r/-f/-m
+    -c requires the use -i to specify input database (in FASTA)
     Optional arguments:
     """
     parser = argparse.ArgumentParser(
