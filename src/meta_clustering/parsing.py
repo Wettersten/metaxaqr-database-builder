@@ -28,8 +28,8 @@ def create_parser():
     parser.add_argument('-i', '--input', dest='input', type=str, metavar='',
                         help="""{FILENAME} FASTA database to be clustered""")
 
-    parser.add_argument('-o', '--output', dest='path', type=str, metavar='',
-                        help="""{PATH} Specify output path""")
+    parser.add_argument('-o', '--output', dest='output', type=str, metavar='',
+                        help="""{PATH} Specify output path, path/mqr_db/...""")
 
     parser.add_argument('-r', '--review', dest='opt_review',
                         action='store_true', default=False,
@@ -60,18 +60,3 @@ def return_args(parser):
     """
     args = parser.parse_args()
     return args
-
-
-def check_file(file):
-    """Checks if the file input from the command line arguments is valid, quits
-    otherwise.
-    """
-    error_msg = "Could not find the file: {}".format(file)
-    if not os.path.isfile(file):
-        quit(error_msg)
-
-
-def check_installation():
-    """Checks if valid installation; Vsearch + ?
-    """
-    pass
