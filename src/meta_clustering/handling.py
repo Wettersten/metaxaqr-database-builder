@@ -123,8 +123,13 @@ def check_prereqs(args):
     """
     if args.opt_clustering:
         dir = return_proj_path()
-        error_msg = "ERROR: {} already exists".format(dir)
+
         if check_dir(dir):
+            error_msg = "ERROR: {} already exists".format(dir)
+            quit(error_msg)
+
+        if not args.input:
+            error_msg = "ERROR: no input database specified"
             quit(error_msg)
 
     if args.opt_review:
