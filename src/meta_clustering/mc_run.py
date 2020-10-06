@@ -6,7 +6,7 @@ from .cluster_tax import create_cluster_tax, repr_and_flag
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging
+from .handling import logging, set_proj_path
 
 
 def main_mc(args):
