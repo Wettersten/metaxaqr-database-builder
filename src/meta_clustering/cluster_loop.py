@@ -248,7 +248,7 @@ def cluster_loop(str_id, cleanup=False):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, next_ident)
+        cluster_vs(final_cent_file, next_ident, loop=False)
 
     #: cleanup unnecessary files
     if cleanup:

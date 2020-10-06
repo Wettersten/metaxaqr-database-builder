@@ -14,12 +14,32 @@ def create_dir_structure(str_id):
 
 
 def return_proj_path():
-    """Returns the path to current path, appending identity will return path to
-    clustering files.
+    """Returns the path to project dir, if output path specified mqr_db will be
+    created in that path.
     """
-    #: fix to use input path? TODO
-    proj_path = os.getcwd() + '/mqr_db/'
+    path_file = os.getcwd() + "/mc_init.txt"
+    if check_file(path_file):
+        with open(path_file, 'r') as file:
+            proj_path = file.readline().rstrip() + '/mqr_db/'
+    else:
+        proj_path = os.getcwd() + '/mqr_db/'
+
     return proj_path
+
+
+def set_proj_path(path):
+    """Sets custom project path (if -p given when -c is used), this is saves as
+    the first line in a local file for later retrieval.
+    """
+    path_file = os.getcwd() + "/mc_init.txt"
+    if check_file(path_file):
+        os.remove(path_file)
+
+    with open(path_file, 'w') as file:
+        if path[-1] == '/':
+            file.write(path[:-1])
+        else:
+            file.write(path)
 
 
 def tax_list_to_str(tlist):
@@ -36,7 +56,10 @@ def float_to_str_id(identity):
 
 
 def error_check(args):
-    """
+    """Main error checking method, ran when executing main script first after
+    the parser, checks that all arguments are valid, all required programs are
+    installed and that any files needed exist or paths not already created.
+    Quits with error messages if anything is invalid.
     """
     check_installation()
     check_args(args)
@@ -44,7 +67,8 @@ def error_check(args):
 
 
 def check_args(args):
-    """
+    """Checks that the use of args are correct, at least one main argument is
+    used, the input file and output paths are valid.
     """
     if (
         not args.opt_clustering
@@ -53,6 +77,13 @@ def check_args(args):
         and not args.opt_makedb
     ):
         error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
+        quit(error_msg)
+
+    if (
+        (args.input and not args.opt_clustering)
+        or (args.output and not args.opt_clustering)
+    ):
+        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]"
         quit(error_msg)
 
     if args.input:
@@ -64,7 +95,7 @@ def check_args(args):
     if args.output:
         out_dir = args.output
 
-        if out_dir[-1] = '/':
+        if out_dir[-1] == '/':
             dir = out_dir + "mqr_db/"
         else:
             dir = args.output + "/mqr_db/"
@@ -88,24 +119,33 @@ def check_file(file):
 
 
 def check_installation():
-    """Checks if valid installation; Vsearch + ?
+    """Checks if valid installation, if vsearch + ? is found.
     """
     reqs = ['vsearch']
+
     for tool in reqs:
-        is_tool(tool)
+        error_msg = "{} was not found".format(tool)
+        if not is_tool(tool):
+            quit(error_msg)
 
 
 def check_prereqs(args):
-    """
+    """Checks if the args are used correctly - in correct order (not starting
+    with the review before using initial clustering).
     """
     if args.opt_clustering:
         dir = return_proj_path()
-        error_msg = "ERROR: {} already exists".format(dir)
+
         if check_dir(dir):
+            error_msg = "ERROR: {} already exists".format(dir)
+            quit(error_msg)
+
+        if not args.input:
+            error_msg = "ERROR: no input database specified"
             quit(error_msg)
 
     if args.opt_review:
-        flag_file = return_proj_path() + '100/flag_correction'
+        flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(
             file=flag_file,
             txt="missing, please perform clustering [-c] first"
@@ -133,16 +173,9 @@ def check_prereqs(args):
 
 
 def is_tool(name):
-    """Check whether `name` is on PATH and marked as executable, exits
-    otherwise.
+    """Check whether `name` is on PATH and marked as executable
     """
-    error_msg = "{} was not found".format(name)
-
-    if which(name):
-        # print("{} was found".format(name))
-        pass
-    else:
-        quit(error_msg)
+    return which(name)
 
 
 def logging(

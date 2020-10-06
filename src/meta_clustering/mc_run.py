@@ -6,7 +6,7 @@ from .cluster_tax import create_cluster_tax, repr_and_flag
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging
+from .handling import logging, set_proj_path
 
 
 def main_mc(args):
@@ -17,6 +17,10 @@ def main_mc(args):
         str_id = '100'
         float_id = 1.0
         db = args.input
+        if args.output:
+            path = args.output
+            set_proj_path(path)
+
         logging(str_id=str_id, db=db, quiet=quiet, start=True)
         start_time = time.time()
 
