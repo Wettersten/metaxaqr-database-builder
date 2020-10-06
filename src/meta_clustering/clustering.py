@@ -2,7 +2,7 @@ import subprocess
 from .handling import return_proj_path, float_to_str_id, create_dir_structure
 
 
-def cluster_vs(database, float_id):
+def cluster_vs(database, float_id, loop=False):
     """Used to perform clustering of a FASTA file at certain taxonomy identity
     using VSEARCH, producing cluster files which are later analysed.
     """
@@ -15,7 +15,13 @@ def cluster_vs(database, float_id):
     log_file = dir_path + '/log.txt'
     cluster_file = dir_path + '/clusters/cluster_'
 
-    vs_cluster_fast = "{} {}".format('--cluster_fast', database)
+    #: if using already sorted database
+    if loop:
+        vs_cluster_option = "{} {}".format('--cluster_smallmem', database)
+    #: if not using already sorted database (start of clustering)
+    else:
+        vs_cluster_option = "{} {}".format('--cluster_fast', database)
+
     vs_clusters = "{} {}".format('--clusters', cluster_file)
     vs_uc = "{} {}".format('--uc', uc_file)
     vs_centroids = "{} {}".format('--centroids', centroids_file)
@@ -25,8 +31,8 @@ def cluster_vs(database, float_id):
     vs_notrunclabels = "{}".format('--notrunclabels')
     vs_quiet = "{}".format('--quiet')
 
-    vs_cmd = 'vsearch {cf} {cl} {uc} {ce} {id} {lo} {np} {nt} {qu}'.format(
-        cf=vs_cluster_fast,
+    vs_cmd = 'vsearch {co} {cl} {uc} {ce} {id} {lo} {np} {nt} {qu}'.format(
+        co=vs_cluster_fast,
         cl=vs_clusters,
         uc=vs_uc,
         ce=vs_centroids,

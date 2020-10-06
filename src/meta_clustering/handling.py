@@ -74,6 +74,13 @@ def check_args(args):
         error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
         quit(error_msg)
 
+    if (
+        (args.input and not args.opt_clustering)
+        or (args.output and not args.opt_clustering)
+    ):
+        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]".
+        quit(error_msg)
+
     if args.input:
         file = args.input
         error_msg = "ERROR: Could not find the file: {}".format(file)
