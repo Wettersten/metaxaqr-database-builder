@@ -83,7 +83,7 @@ def check_args(args):
         (args.input and not args.opt_clustering)
         or (args.output and not args.opt_clustering)
     ):
-        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]".
+        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]"
         quit(error_msg)
 
     if args.input:
@@ -145,7 +145,7 @@ def check_prereqs(args):
             quit(error_msg)
 
     if args.opt_review:
-        flag_file = return_proj_path() + '100/flag_correction'
+        flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(
             file=flag_file,
             txt="missing, please perform clustering [-c] first"

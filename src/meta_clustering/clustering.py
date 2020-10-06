@@ -32,7 +32,7 @@ def cluster_vs(database, float_id, loop=False):
     vs_quiet = "{}".format('--quiet')
 
     vs_cmd = 'vsearch {co} {cl} {uc} {ce} {id} {lo} {np} {nt} {qu}'.format(
-        co=vs_cluster_fast,
+        co=vs_cluster_option,
         cl=vs_clusters,
         uc=vs_uc,
         ce=vs_centroids,
