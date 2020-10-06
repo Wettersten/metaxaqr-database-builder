@@ -20,7 +20,7 @@ def return_proj_path():
     path_file = os.getcwd() + "/mc_init.txt"
     if check_file(path_file):
         with open(path_file, 'r') as file:
-            proj_path = file.readline().rstrip() + '/mqr_db'
+            proj_path = file.readline().rstrip() + '/mqr_db/'
     else:
         proj_path = os.getcwd() + '/mqr_db/'
 
@@ -32,9 +32,14 @@ def set_proj_path(path):
     the first line in a local file for later retrieval.
     """
     path_file = os.getcwd() + "/mc_init.txt"
+    if check_file(path_file):
+        os.remove(path_file)
 
-    with open(path_file, 'w+') as file:
-        file.write(path)
+    with open(path_file, 'w') as file:
+        if path[-1] == '/':
+            file.write(path[:-1])
+        else:
+            file.write(path)
 
 
 def tax_list_to_str(tlist):
