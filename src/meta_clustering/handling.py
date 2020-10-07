@@ -209,7 +209,7 @@ def logging(
                     txt2="using database",
                     idb=db
                 )
-        elif int(str_id) > 95:
+        elif int(str_id) > 50:
             log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
                     txt1="Finalizing id",
                     id1=str_id,

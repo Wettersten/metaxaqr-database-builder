@@ -149,7 +149,12 @@ def create_label_tree(str_id, tree_loop=False):
 
     #: reads the last label_tree file into memory
     if tree_loop:
-        old_tree_file = return_proj_path() + str(int(str_id)+1) + "/label_tree"
+        if int(str_id) < 90:
+            old_id = str(int(str_id)+5)
+        else:
+            old_id = str(int(str_id)+1)
+
+        old_tree_file = return_proj_path() + old_id + "/label_tree"
         with open(old_tree_file, 'r') as old_tree:
             for line in old_tree:
                 curr_line = line.rstrip().split("\t")
@@ -227,9 +232,9 @@ def cluster_loop(str_id, cleanup=False):
     50-90 e.g 50, 55, 60 ...
     """
     if int(str_id) <= 90:
-        next_ident = str(int(str_id)-5)
+        next_ident = int(str_id)-5
     else:
-        next_ident = str(int(str_id)-1)
+        next_ident = int(str_id)-1
 
     stop_ident = 50
     tree_loop = False
@@ -254,7 +259,7 @@ def cluster_loop(str_id, cleanup=False):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, float(int(next_ident)/100), loop=False)
+        cluster_vs(final_cent_file, float(next_ident/100), loop=False)
 
     #: cleanup unnecessary files
     if cleanup:
