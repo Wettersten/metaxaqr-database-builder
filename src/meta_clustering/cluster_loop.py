@@ -226,12 +226,12 @@ def cluster_loop(str_id, cleanup=False):
     steps. First does one cluster for every percent 100-90, then one per five
     50-90 e.g 50, 55, 60 ...
     """
-    if float(str_id) <= 0.90:
-        next_ident = float(int(str_id)/100)-0.05
+    if int(str_id) <= 90:
+        next_ident = str(int(str_id)-5)
     else:
-        next_ident = float(int(str_id)/100)-0.01
+        next_ident = str(int(str_id)-1)
 
-    stop_ident = 0.50
+    stop_ident = 50
     tree_loop = False
 
     if str_id == '100':
@@ -239,7 +239,7 @@ def cluster_loop(str_id, cleanup=False):
     else:
         cent_loop = True
         loop_repr_corr(str_id)
-        if float(int(str_id)/100) < 0.99:
+        if int(str_id) < 99:
             tree_loop = True
 
     #: creating final_repr and final_cent files for clustering
@@ -254,7 +254,7 @@ def cluster_loop(str_id, cleanup=False):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, next_ident, loop=False)
+        cluster_vs(final_cent_file, float(int(next_ident)/100), loop=False)
 
     #: cleanup unnecessary files
     if cleanup:
