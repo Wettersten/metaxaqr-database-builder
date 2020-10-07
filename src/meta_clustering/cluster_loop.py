@@ -90,6 +90,7 @@ def create_final_cent(str_id, cent_loop=False):
     final_cent_file = run_path + '/final_centroids'
     final_repr_file = run_path + '/final_repr'
     repr_dict = {}
+    excluded = False
 
     with open(final_repr_file, 'r') as repr_file:
         for line in repr_file:
@@ -106,11 +107,11 @@ def create_final_cent(str_id, cent_loop=False):
             cluster_label = ''
             cent_label = ''
             repr_tax = ''
-            excluded = False
 
             curr_line = line.rstrip()
 
             if curr_line[0] == '>':
+                excluded = False
                 if cent_loop:
                     curr_label = curr_line.split("\t")[0]
                 else:
@@ -222,7 +223,8 @@ def cluster_loop(str_id, cleanup=False):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
-    steps.
+    steps. First does one cluster for every percent 100-90, then one per five
+    50-90 e.g 50, 55, 60 ...
     """
     next_ident = float(int(str_id)/100)-0.01
     stop_ident = 0.95
