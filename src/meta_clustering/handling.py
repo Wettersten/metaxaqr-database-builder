@@ -210,11 +210,16 @@ def logging(
                     idb=db
                 )
         elif int(str_id) > 50:
+            if intr(str_id) > 90:
+                nxt_id = str(int(str_id)-1)
+            else:
+                nxt_id = str(int(str_id)-5)
+
             log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
                     txt1="Finalizing id",
                     id1=str_id,
                     txt2="and running VSEARCH at id",
-                    id2=str(int(str_id)-1)
+                    id2=nxt_id
                 )
         else:
             log_msg = "Finalizing output\n"
