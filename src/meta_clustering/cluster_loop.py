@@ -226,8 +226,12 @@ def cluster_loop(str_id, cleanup=False):
     steps. First does one cluster for every percent 100-90, then one per five
     50-90 e.g 50, 55, 60 ...
     """
-    next_ident = float(int(str_id)/100)-0.01
-    stop_ident = 0.95
+    if float(str_id) <= 0.90:
+        next_ident = float(int(str_id)/100)-0.05
+    else:
+        next_ident = float(int(str_id)/100)-0.01
+
+    stop_ident = 0.50
     tree_loop = False
 
     if str_id == '100':

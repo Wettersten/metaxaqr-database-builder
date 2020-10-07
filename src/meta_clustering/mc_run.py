@@ -51,8 +51,12 @@ def main_mc(args):
 
     #: finalizing files and further clustering
     if args.opt_finalize:
-        #: loop down from 100 to 95, clustering using the centroid files
-        v_loop = [str(i) for i in range(100, 95-1, -1)]
+        #: loop down from 100 to 50, clustering using the centroid files
+        #: 100, 99, ... 90, 85, 80. ... 50
+        a_loop = [str(i) for i in range(100, 90-1, -1)]
+        b_loop = [str(a) for a in range(85, 50-5, -5)]
+        v_loop = a_loop + b_loop
+
         for id in v_loop:
 
             logging(str_id=id, quiet=quiet)

@@ -143,7 +143,7 @@ def chlor_mito_flag(cluster):
     flag_out = ''
 
     for tax in cluster:
-        if "Chloroplast" in tax or "Chloroplastida" in tax:
+        if "Chloroplast" in tax:
             chlor_check = True
         elif "Mitochondria" in tax:
             mito_check = True
@@ -186,6 +186,7 @@ def repr_taxonomy(tax_cluster):
                 new_repr_tax[-3:] == 'sp.'
                 or new_repr_tax[-1:] == '#'
                 or 'environmental' in new_repr_tax.split(";")[-1].split(" ")
+                or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
             ):
                 found = False
             if found:
@@ -211,6 +212,10 @@ def repr_taxonomy(tax_cluster):
                 found, new_repr_tax, new_flag = calc_repr_taxonomy_rest(
                     curr_cluster
                 )
+
+            if 'Incertae' in new_repr_tax.split(";")[-1].split(" "):
+                found = False
+
             if found:
                 repr_tax = new_repr_tax
                 if new_flag and new_flag not in flag.split(", "):
@@ -335,20 +340,21 @@ def flag_header(str_id):
     return header
 
 
-def process_entry(entry):
+def process_entry(entry, inc_check=False):
     """Processes a taxonomic entry (label, taxonomy) to stop at the category
     before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
     categories to the first position, replacing Eukaryota/Bacteria.
     """
     label = entry.split(" ")[0]
     inc_sed = 'Incertae Sedis'
-    mito_chlor = ['Mitochondria', 'Chloroplast', 'Chloroplastida']
+    mito_chlor = ['Mitochondria', 'Chloroplast']
 
     #: if 'Incertae Sedis' in the taxonomy
-    if inc_sed in entry.split(";"):
-        tax_entry = " ".join(entry.split(" ")[1:]).split(";")
-        cut_tax = tax_entry[:tax_entry.index(inc_sed)]
-        entry = "{} {}".format(label, ";".join(cut_tax))
+    if inc_check:
+        if inc_sed in entry.split(";"):
+            tax_entry = " ".join(entry.split(" ")[1:]).split(";")
+            cut_tax = tax_entry[:tax_entry.index(inc_sed)]
+            entry = "{} {}".format(label, ";".join(cut_tax))
 
     #: if mitochondria or chlorplast in the taxonomy
     mc_found = [i for i in mito_chlor if i in entry.split(";")]
