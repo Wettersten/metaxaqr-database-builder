@@ -203,14 +203,14 @@ def logging(
 
     else:
         if start:
-            log_msg = "{txt1}: {id} {txt2}: {idb}\n".format(
+            log_msg = "{txt1}: {id}, {txt2}: {idb}\n".format(
                     txt1="Running VSEARCH at id",
                     id=str_id,
                     txt2="using database",
                     idb=db
                 )
         elif int(str_id) > 50:
-            if intr(str_id) > 90:
+            if int(str_id) > 90:
                 nxt_id = str(int(str_id)-1)
             else:
                 nxt_id = str(int(str_id)-5)
