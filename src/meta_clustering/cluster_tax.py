@@ -180,7 +180,9 @@ def find_taxonomy(in_tax, tax_dict):
     #: find in tax_db
     if species in tax_dict:
         temp_tax = tax_dict[species]
-        tax = ";".join(temp_tax.split(";")[1:])
+        split = temp_tax.split(";")[1:-1]
+        split.append(species)
+        tax = ";".join(split)
 
     #: if not in tax_db - find in NCBI taxonomy using ETE3
     if not tax:
