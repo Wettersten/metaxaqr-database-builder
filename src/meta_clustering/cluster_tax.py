@@ -177,22 +177,17 @@ def find_taxonomy(in_tax, tax_dict):
     else:
         str_info = ''
 
-    print(species)
-
     #: find in tax_db
     if species in tax_dict:
-        print("tax_db")
         temp_tax = tax_dict[species]
         tax = ";".join(temp_tax.split(";")[1:])
 
     #: if not in tax_db - find in NCBI taxonomy using ETE3
     if not tax:
-        print("ncbi")
         tax = get_lineage(species)
 
     #: if not in either - use input tax but move chlor/mito
     if not tax:
-        print("neither")
         tax_split.remove(chlr_mito)
         tax_split.remove(tax_split[-1])
         tax_join = ";".join(tax_split)

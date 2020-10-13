@@ -121,7 +121,7 @@ def check_file(file):
 def check_installation():
     """Checks if valid installation, if vsearch + ? is found.
     """
-    reqs = ['vsearch']
+    reqs = ['vsearch', 'ete3']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
