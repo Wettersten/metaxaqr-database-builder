@@ -2,7 +2,7 @@ import time
 import argparse
 import os
 
-from .cluster_tax import create_cluster_tax, repr_and_flag
+from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
@@ -29,6 +29,9 @@ def main_mc(args):
         elapsed_time = time.time() - start_time
         logging(etime=elapsed_time, time_log=True, quiet=quiet)
 
+        #: create tax_db
+        create_taxdb()
+
         #: create tax_clusters files
         create_cluster_tax(str_id)
 
@@ -51,8 +54,12 @@ def main_mc(args):
 
     #: finalizing files and further clustering
     if args.opt_finalize:
-        #: loop down from 100 to 95, clustering using the centroid files
-        v_loop = [str(i) for i in range(100, 95-1, -1)]
+        #: loop down from 100 to 50, clustering using the centroid files
+        #: 100, 99, ... 90, 85, 80. ... 50
+        a_loop = [str(i) for i in range(100, 90-1, -1)]
+        b_loop = [str(a) for a in range(85, 50-5, -5)]
+        v_loop = a_loop + b_loop
+
         for id in v_loop:
 
             logging(str_id=id, quiet=quiet)

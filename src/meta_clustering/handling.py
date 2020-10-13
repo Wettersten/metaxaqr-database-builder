@@ -121,7 +121,7 @@ def check_file(file):
 def check_installation():
     """Checks if valid installation, if vsearch + ? is found.
     """
-    reqs = ['vsearch']
+    reqs = ['vsearch', 'ete3']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
@@ -203,18 +203,23 @@ def logging(
 
     else:
         if start:
-            log_msg = "{txt1}: {id} {txt2}: {idb}\n".format(
+            log_msg = "{txt1}: {id}, {txt2}: {idb}\n".format(
                     txt1="Running VSEARCH at id",
                     id=str_id,
                     txt2="using database",
                     idb=db
                 )
-        elif int(str_id) > 95:
+        elif int(str_id) > 50:
+            if int(str_id) > 90:
+                nxt_id = str(int(str_id)-1)
+            else:
+                nxt_id = str(int(str_id)-5)
+
             log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
                     txt1="Finalizing id",
                     id1=str_id,
                     txt2="and running VSEARCH at id",
-                    id2=str(int(str_id)-1)
+                    id2=nxt_id
                 )
         else:
             log_msg = "Finalizing output\n"

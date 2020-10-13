@@ -1,4 +1,5 @@
-from .cluster_tax import repr_and_flag, create_cluster_tax
+from .cluster_tax import repr_and_flag, create_cluster_tax, get_lineage
+from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
 from .handling import return_proj_path
 
@@ -29,6 +30,7 @@ def create_final_repr(str_id, cent_loop=False):
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
     repr_dict = {}
+    tax_db = read_taxdb()
 
     #: reads repr_correction file into memory
     with open(repr_corr_file, 'r') as corr_file:
@@ -63,6 +65,13 @@ def create_final_repr(str_id, cent_loop=False):
                 if entries == 1:
                     repr_tax = clean_singleton(singleton_repr)
 
+                    #: fixes chloro/mito taxonomies
+                    if (
+                        "Chloroplast" in repr_tax.split(";")
+                        or "Mitochondria" in repr_tax.split(";")
+                    ):
+                        repr_tax = find_taxonomy(repr_tax, tax_db)
+
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
                     repr_tax = repr_dict[cluster_label]
@@ -90,6 +99,7 @@ def create_final_cent(str_id, cent_loop=False):
     final_cent_file = run_path + '/final_centroids'
     final_repr_file = run_path + '/final_repr'
     repr_dict = {}
+    excluded = False
 
     with open(final_repr_file, 'r') as repr_file:
         for line in repr_file:
@@ -106,11 +116,11 @@ def create_final_cent(str_id, cent_loop=False):
             cluster_label = ''
             cent_label = ''
             repr_tax = ''
-            excluded = False
 
             curr_line = line.rstrip()
 
             if curr_line[0] == '>':
+                excluded = False
                 if cent_loop:
                     curr_label = curr_line.split("\t")[0]
                 else:
@@ -148,7 +158,12 @@ def create_label_tree(str_id, tree_loop=False):
 
     #: reads the last label_tree file into memory
     if tree_loop:
-        old_tree_file = return_proj_path() + str(int(str_id)+1) + "/label_tree"
+        if int(str_id) < 90:
+            old_id = str(int(str_id)+5)
+        else:
+            old_id = str(int(str_id)+1)
+
+        old_tree_file = return_proj_path() + old_id + "/label_tree"
         with open(old_tree_file, 'r') as old_tree:
             for line in old_tree:
                 curr_line = line.rstrip().split("\t")
@@ -222,10 +237,15 @@ def cluster_loop(str_id, cleanup=False):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
-    steps.
+    steps. First does one cluster for every percent 100-90, then one per five
+    50-90 e.g 50, 55, 60 ...
     """
-    next_ident = float(int(str_id)/100)-0.01
-    stop_ident = 0.95
+    if int(str_id) <= 90:
+        next_ident = int(str_id)-5
+    else:
+        next_ident = int(str_id)-1
+
+    stop_ident = 50
     tree_loop = False
 
     if str_id == '100':
@@ -233,7 +253,7 @@ def cluster_loop(str_id, cleanup=False):
     else:
         cent_loop = True
         loop_repr_corr(str_id)
-        if float(int(str_id)/100) < 0.99:
+        if int(str_id) < 99:
             tree_loop = True
 
     #: creating final_repr and final_cent files for clustering
@@ -248,7 +268,7 @@ def cluster_loop(str_id, cleanup=False):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, next_ident, loop=False)
+        cluster_vs(final_cent_file, float(next_ident/100), loop=False)
 
     #: cleanup unnecessary files
     if cleanup:
