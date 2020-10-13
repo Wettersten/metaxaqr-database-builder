@@ -1,6 +1,8 @@
 from .handling import return_proj_path, tax_list_to_str
 import os
+import subprocess
 from collections import Counter
+from ete3 import NCBITaxa
 
 #: global list of accepted flags for prompt_accept flags
 accepted_flags = []
@@ -67,6 +69,152 @@ class Cluster:
         return self.str_id
 
 
+def create_taxdb():
+    """Creates a taxonomy database from clusters, only Euk, no chloro/mito.
+    """
+    run_path = return_proj_path() + '100'
+    cluster_dir = run_path + '/clusters/'
+    tax_db_file = run_path + '/tax_db'
+    tax_cmd = []
+
+    #: finds all sequences from all cluster files (starts with '>')
+    cmd_grep_reg = "grep -r \">\" {}".format(cluster_dir)
+    #: gets only taxonomy (everything after first space)
+    cmd_cut = "cut -d ' ' -f 2-"
+    #: filters out Archaea, Bacteria, chlor/mito, etc
+    cmd_grep_seq = "grep -v {arc} {bac} {mit} {chl} {sam} {low} {sp}".format(
+        arc="-e \"Archaea\"",
+        bac="-e \"Bacteria\"",
+        mit="-e \";Mitochondria;\"",
+        chl="-e \";Chloroplast;\"",
+        sam="-e \"sample\"",
+        low="-e \";[a-z]\"",
+        sp="-e \"sp.$\"",
+    )
+    #: removes all non-uniques from the list
+    cmd_sort = "sort -u"
+
+    tax_cmd = "{gr} | {ct} | {gs} | {st} > {tf}".format(
+        gr=cmd_grep_reg,
+        ct=cmd_cut,
+        gs=cmd_grep_seq,
+        st=cmd_sort,
+        tf=tax_db_file
+    )
+
+    subprocess.run(tax_cmd, shell=True)
+
+
+def read_taxdb():
+    """Reads the taxonomy db into a dictionary.
+    """
+    run_path = return_proj_path() + '100'
+    tax_db_file = run_path + '/tax_db'
+    tax_db = {}
+
+    with open(tax_db_file, 'r') as tax_file:
+        for line in tax_file:
+            tax = line.rstrip()
+            species = " ".join(tax.split(";")[-1].split(" ")[:2])
+            tax_db[species] = tax
+
+    return tax_db
+
+
+def translate_lineage(lin):
+    """
+    """
+    lin_list = lin[3:]
+
+    tax = ''
+    for cat in lin_list:
+        tax += cat + ";"
+
+    return tax[:-1]
+
+
+def get_lineage(species):
+    """
+    """
+    ncbi = NCBITaxa()
+    # ncbi.update_taxonomy_database()
+    tax = ''
+
+    try:
+        tax_id = ncbi.get_name_translator([species])[species][0]
+    except KeyError:
+        tax_id = ''
+
+    if tax_id:
+        lineage = ncbi.get_lineage(tax_id)
+        names = ncbi.get_taxid_translator(lineage)
+        lin = [names[taxid] for taxid in lineage]
+        tax = translate_lineage(lin)
+
+    return tax
+
+
+def find_taxonomy(in_tax, tax_dict):
+    """Takes a taxonomy (used when Chlor/Mito present) and tries to find it
+    first in the tax_db file and then using ETE3, if found in none replace
+    first col with Chlor/Mito and keep taxonomy as is.
+    """
+    tax_split = in_tax.split(";")
+    sp_split = tax_split[-1].split(" ")
+    species = " ".join(sp_split[:2])
+    chlr_mito = ''
+    str_info = ''
+    tax = ''
+    new_tax = ''
+
+    if "Chloroplast" in tax_split:
+        chlr_mito = 'Chloroplast'
+    elif "Mitochondria" in tax_split:
+        chlr_mito = 'Mitochondria'
+
+    if len(sp_split) > 2:
+        str_info = " ".join(sp_split[2:])
+    else:
+        str_info = ''
+
+    print(species)
+
+    #: find in tax_db
+    if species in tax_dict:
+        print("tax_db")
+        temp_tax = tax_dict[species]
+        tax = ";".join(temp_tax.split(";")[1:])
+
+    #: if not in tax_db - find in NCBI taxonomy using ETE3
+    if not tax:
+        print("ncbi")
+        tax = get_lineage(species)
+
+    #: if not in either - use input tax but move chlor/mito
+    if not tax:
+        print("neither")
+        tax_split.remove(chlr_mito)
+        tax_split.remove(tax_split[-1])
+        tax_join = ";".join(tax_split)
+        tax = "{};{}".format(tax_join, species)
+
+    #: creating new tax_line
+    #: if there are any strain/variation information for species
+    if str_info:
+        new_tax = "{cm};{tx} {st}".format(
+            cm=chlr_mito,
+            tx=tax,
+            st=str_info
+        )
+    else:
+        new_tax = "{cm};{tx}".format(
+            cm=chlr_mito,
+            tx=tax
+        )
+
+    return new_tax
+
+
 def create_cluster_tax(str_id, loop=False):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
@@ -75,6 +223,7 @@ def create_cluster_tax(str_id, loop=False):
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
+    tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -105,12 +254,24 @@ def create_cluster_tax(str_id, loop=False):
                                     loop_line[1].split("_")[2]
                                 )
                                 loop_repr = loop_line[2]
+
                                 curr_id = "{} {}".format(
                                     loop_tlabel,
                                     loop_repr
                                 )
                             else:
                                 curr_id = remove_cf_line(lines.rstrip())
+
+                                #: fixes chloro/mito taxonomies
+                                if (
+                                    "Chloroplast" in curr_id.split(";")
+                                    or "Mitochondria" in curr_id.split(";")
+                                ):
+                                    id_label = curr_id.split(" ")[0]
+                                    curr_tax = " ".join(curr_id.split(" ")[1:])
+                                    f_tax = find_taxonomy(curr_tax, tax_db)
+                                    curr_id = id_label + " " + f_tax
+
                             clust_out.write("{}\n".format(curr_id))
 
         clust_out.write("end")
@@ -341,7 +502,8 @@ def flag_header(str_id):
 
 
 def process_entry(entry, inc_check=False):
-    """Processes a taxonomic entry (label, taxonomy) to stop at the category
+    """Deprecated - ignore incertae, ETE3 handles Mito/Chlor.
+    Processes a taxonomic entry (label, taxonomy) to stop at the category
     before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
     categories to the first position, replacing Eukaryota/Bacteria.
     """
@@ -427,8 +589,7 @@ def repr_and_flag(str_id):
                 curr_cluster = []
 
             else:
-                #: cuts incertae sedis and moved chlorplast/mitochondria
-                curr_cluster.append(process_entry(curr_line))
+                curr_cluster.append(curr_line)
 
     #: creates a new file with the header at start, followed by all flags
     header_flag = '#\t'

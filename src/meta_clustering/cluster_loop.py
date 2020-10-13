@@ -1,4 +1,5 @@
-from .cluster_tax import repr_and_flag, create_cluster_tax
+from .cluster_tax import repr_and_flag, create_cluster_tax, get_lineage
+from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
 from .handling import return_proj_path
 
@@ -29,6 +30,7 @@ def create_final_repr(str_id, cent_loop=False):
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
     repr_dict = {}
+    tax_db = read_taxdb()
 
     #: reads repr_correction file into memory
     with open(repr_corr_file, 'r') as corr_file:
@@ -62,6 +64,13 @@ def create_final_repr(str_id, cent_loop=False):
 
                 if entries == 1:
                     repr_tax = clean_singleton(singleton_repr)
+
+                    #: fixes chloro/mito taxonomies
+                    if (
+                        "Chloroplast" in repr_tax.split(";")
+                        or "Mitochondria" in repr_tax.split(";")
+                    ):
+                        repr_tax = find_taxonomy(repr_tax, tax_db)
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
