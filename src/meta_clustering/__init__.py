@@ -5,6 +5,7 @@ from .cluster_tax import repr_and_flag
 from .cluster_tax import flag_correction
 from .cluster_tax import find_taxonomy
 from .cluster_tax import read_taxdb
+from .cluster_tax import create_taxdb
 
 from .clustering import cluster_vs
 

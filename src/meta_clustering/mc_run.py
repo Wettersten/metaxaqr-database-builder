@@ -2,7 +2,7 @@ import time
 import argparse
 import os
 
-from .cluster_tax import create_cluster_tax, repr_and_flag
+from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
@@ -28,6 +28,9 @@ def main_mc(args):
 
         elapsed_time = time.time() - start_time
         logging(etime=elapsed_time, time_log=True, quiet=quiet)
+
+        #: create tax_db
+        create_taxdb()
 
         #: create tax_clusters files
         create_cluster_tax(str_id)
