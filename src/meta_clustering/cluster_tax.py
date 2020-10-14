@@ -74,7 +74,7 @@ def create_taxdb():
     """
     run_path = return_proj_path() + '100'
     cluster_dir = run_path + '/clusters/'
-    tax_db_file = run_path + '/tax_db'
+    tax_db_raw_file = run_path + '/tax_db_raw'
     tax_cmd = []
 
     #: finds all sequences from all cluster files (starts with '>')
@@ -91,7 +91,7 @@ def create_taxdb():
         low="-e \";[a-z]\"",
         sp="-e \"sp.$\"",
     )
-    #: removes all non-uniques from the list
+    #: removes all non-uniques from the list (and sorting)
     cmd_sort = "sort -u"
 
     tax_cmd = "{gr} | {ct} | {gs} | {st} > {tf}".format(
@@ -102,7 +102,48 @@ def create_taxdb():
         tf=tax_db_file
     )
 
+    #: runs the command
     subprocess.run(tax_cmd, shell=True)
+    #: processing the raw file, creating the tax_db file
+    process_taxdb()
+    #: removing the raw file
+    os.remove(tax_db_raw_file)
+
+
+def process_taxdb():
+    """Processing the tax_db_raw file, removing strain info, adding all
+    (unique) taxonomies of species and genuses (for easier indexing later).
+    """
+    run_path = return_proj_path() + '100'
+    tax_db_raw_file = run_path + '/tax_db_raw'
+    tax_db_file = run_path + '/tax_db'
+    taxes = []
+    old_genus = ''
+
+    with open(tax_db_raw_file, 'r') as raw_file, \
+         open(tax_db_file, 'w') as tax_db:
+
+        for line in raw_file:
+            curr_line = line.rstrip()
+            tax_cats = ";".join(curr_line.split(";")[:-1])
+            species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
+            genus = curr_line.split(";")[-1].split(" ")[0]
+
+            #: tax_db_raw is sorted by name, no need to search old taxes
+            if genus != old_genus:
+                taxes = []
+
+            tax_species = "{};{}".format(tax_cats, species)
+            tax_genus = "{};{}".format(tax_cats, genus)
+            curr = [tax_species, tax_genus]
+
+            #: makes sure only uniques in db, after removing strain info
+            for tax in curr:
+                if tax not in taxes:
+                    taxes.append(tax)
+                    tax_db.write("{}\n".format(tax))
+
+            old_genus = genus
 
 
 def read_taxdb():
@@ -162,6 +203,7 @@ def find_taxonomy(in_tax, tax_dict):
     tax_split = in_tax.split(";")
     sp_split = tax_split[-1].split(" ")
     species = " ".join(sp_split[:2])
+    genus = sp_split[0]
     chlr_mito = ''
     str_info = ''
     tax = ''
@@ -180,6 +222,11 @@ def find_taxonomy(in_tax, tax_dict):
     #: find in tax_db
     if species in tax_dict:
         temp_tax = tax_dict[species]
+        split = temp_tax.split(";")[1:-1]
+        split.append(species)
+        tax = ";".join(split)
+    elif genus in tax_dict:
+        temp_tax = tax_dict[genus]
         split = temp_tax.split(";")[1:-1]
         split.append(species)
         tax = ";".join(split)
