@@ -7,12 +7,12 @@ from src.meta_clustering.mc_run import main_mc
 
 
 if __name__ == "__main__":
+    #: creates the parser and gets the arguments input by user
     parser = create_parser()
     args = return_args(parser)
 
+    #: looks for any errors in the args provided
     error_check(args)
 
-    #: check args for any problems, such as missing input etc TODO
-    #: quit with error msg if any errors TODO
-
+    #: runs the main loop of meta_clustering
     main_mc(args)

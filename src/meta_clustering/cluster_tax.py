@@ -99,7 +99,7 @@ def create_taxdb():
         ct=cmd_cut,
         gs=cmd_grep_seq,
         st=cmd_sort,
-        tf=tax_db_file
+        tf=tax_db_raw_file
     )
 
     #: runs the command
@@ -375,7 +375,7 @@ def repr_taxonomy(tax_cluster):
             new_cluster.append(tax)
 
     #: loop for species
-    if len(new_cluster) > 0:
+    if new_cluster:
         for i in range(sp_splits):
             curr_cluster = []
             for tax in new_cluster:
@@ -413,13 +413,10 @@ def repr_taxonomy(tax_cluster):
             for tax in tax_cluster:
                 if tax[:i+1][-1][0].isupper():
                     curr_cluster.append(tax[:i+1])
-            if len(curr_cluster) > 0:
+            if curr_cluster:
                 found, new_repr_tax, new_flag = calc_repr_taxonomy_rest(
                     curr_cluster
                 )
-
-            if 'Incertae' in new_repr_tax.split(";")[-1].split(" "):
-                found = False
 
             if found:
                 repr_tax = new_repr_tax
@@ -428,6 +425,11 @@ def repr_taxonomy(tax_cluster):
             else:
                 break
 
+    #: check for Incertae Sedis in last position
+    if 'Incertae' in repr_tax.split(";")[-1]:
+        repr_tax = ";".join(repr_tax.split(";")[:-1])
+
+    #: fix flag
     tmp_flag = flag_check(tax_cluster)
     if tmp_flag and tmp_flag not in flag.split(", "):
         flag += tmp_flag + ", "
