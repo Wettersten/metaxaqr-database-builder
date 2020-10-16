@@ -23,15 +23,16 @@ usage: meta_clustering [-h] [-c] [-i] [-o] [-r] [-f] [-m] [-q] [--version]
 Analyse taxonomy within clusters based on sequence identity.
 
 optional arguments:
-  -h, --help      show this help message and exit
-  -c, --cluster   Clustering of input database at 100% identity and preparation of files for manual review
-  -i , --input    {FILENAME} FASTA database to be clustered
-  -o , --output   {PATH} Specify output path, path/mqr_db/...
-  -r, --review    Manual review of flagged clusters
-  -f, --finalize  Further clustering of their output centroid files from manual review down to 95% identity
-  -m, --makedb    Creates a Metaxa2 databse from the created files
-  -q, --quiet     No status print out, only writing to log file
-  --version       show program's version number and exit
+
+- -h, --help      show this help message and exit
+- -c, --cluster   Clustering of input database at 100% identity and preparation of files for manual review
+- -i , --input    {FILENAME} FASTA database to be clustered
+- -o , --output   {PATH} Specify output path, path/mqr_db/...
+- -r, --review    Manual review of flagged clusters
+- -f, --finalize  Further clustering of their output centroid files from manual review down to 95% identity
+- -m, --makedb    Creates a Metaxa2 databse from the created files
+- -q, --quiet     No status print out, only writing to log file
+- --version       show program's version number and exit
 
 
 Examples:
