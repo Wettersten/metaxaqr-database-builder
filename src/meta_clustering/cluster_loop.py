@@ -70,7 +70,9 @@ def create_final_repr(str_id, cent_loop=False):
                         "Chloroplast" in repr_tax.split(";")
                         or "Mitochondria" in repr_tax.split(";")
                     ):
-                        repr_tax = find_taxonomy(repr_tax, tax_db)
+                        #: check to prevent index errors
+                        if len(repr_tax.split(";")) > 2:
+                            repr_tax = find_taxonomy(repr_tax, tax_db)
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
