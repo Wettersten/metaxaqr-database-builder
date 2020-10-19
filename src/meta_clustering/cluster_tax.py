@@ -507,7 +507,8 @@ def algo_repr(tax_cluster):
         high_fract = highest/total_count
         if high_fract >= 0.9:
             found = True
-            flag = 'Outlier'
+            # removing outlier flag for now, doesn't add to review process
+            # flag = 'Outlier'
 
     return found, repr_tax, flag
 
