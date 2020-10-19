@@ -537,13 +537,21 @@ def flag_header(str_id):
     """Gets the flag header from the flag_clusters file, (first line, starts
     with #\t)
     """
-    run_path = return_proj_path() + str_id
-    flag_clusters_file = run_path + '/flag_clusters'
-    header = ''
+    # run_path = return_proj_path() + str_id
+    # flag_clusters_file = run_path + '/flag_clusters'
+    flag_clusters_file = 'flag_clusters'
+    f_header = ''
+    header = {}
 
-    flag_file = open(flag_clusters_file, 'r')
-    header = flag_file.readline()
-    flag_file.close()
+    with open(flag_clusters_file, 'r') as fc:
+        f_header = fc.readline().rstrip()
+
+    f_split = f_header.split("\t")
+    if len(f_split) > 1:
+        f_split.remove('#')
+        for entry in f_split:
+            flag, occurence = entry.split(": ")
+            header[flag] = int(occurence)
 
     return header
 
@@ -724,7 +732,7 @@ def check_input_rem(input):
     return valid
 
 
-def prompt_accept(input, header):
+def prompt_accept(input, header, flags):
     """Method for the accept alternative in manual_correction. Either accepts
     current suggestion, accepts all suggestions or accepts all suggestions from
     a given flag.
@@ -736,6 +744,8 @@ def prompt_accept(input, header):
     if len(input.split(" ")) == 1:
 
         input_loop = confirm_accept('accept')
+        if not input_loop:
+            rem_flag_update(header, flags)
 
     else:
         #: accepts all remaining suggestions
@@ -744,15 +754,17 @@ def prompt_accept(input, header):
             skip_review = True
 
         #: accepts all remining suggestions from a specific flag
-        elif input.split(" ")[1] in header.lower():
-            input_loop = confirm_accept('accept flag', input.split(" ")[1])
+        elif input.split(" ")[1] in [i.lower() for i in header]:
+            flag = input.split(" ")[1]
+            input_loop = confirm_accept('accept flag', flag)
             if not input_loop:
-                accepted_flags.append(input.split(" ")[1])
+                accepted_flags.append(flag)
+                header[flag] = 0
 
         else:
             print("Invalid flag\n")
 
-    return input_loop, skip_review
+    return input_loop, skip_review, header
 
 
 def prompt_exclude(my_cluster, exclusion_file):
@@ -812,15 +824,23 @@ def prompt_exit():
     return exit_review, input_loop
 
 
-def prompt_flag(header):
+def prompt_flag(o_header, r_header):
     """Method for the flags alternative in manual_correction. Displays all
     flags and their respective occurences in the flag file.
     """
-    print("\nFlag:\t\tCount")
-    for flag in header.split("\t"):
-        flag_line = flag.split(" ")
-        print("{}\t{}".format(flag_line[0], flag_line[1]))
+    print("\nFlag:\t\tCount\tRemaining")
+    for flag in o_header:
+        occurence = o_header[flag]
+        remaining = r_header[flag]
+        print("{}\t{}\t{}".format(flag, occurence, remaining))
     print("\n")
+
+
+def rem_flag_update(header, flags):
+    for flag in flags:
+        header[flag] -= 1
+
+    return header
 
 
 def prompt_keep(input, my_cluster):
@@ -1013,14 +1033,17 @@ def prompt_remove(input, my_cluster):
     return input_loop
 
 
-def run_correction(my_cluster, skip_review, exit_review):
+def run_correction(my_cluster, skip_review, exit_review, rem_header):
     """Wrapping function to perform full correction on cluster.
     """
     if skip_review or exit_review:
         pass
     else:
-        skip_review, exit_review = manual_correction(my_cluster)
-    return skip_review, exit_review
+        skip_review, exit_review, rem_header = manual_correction(
+            my_cluster,
+            rem_header
+        )
+    return skip_review, exit_review, rem_header
 
 
 def repr_correction(str_id):
@@ -1056,7 +1079,7 @@ def repr_correction(str_id):
                 corr_file.write("{}\t{}\n".format(curr_label, curr_repr))
 
 
-def manual_correction(my_cluster):
+def manual_correction(my_cluster, rem_header):
     """Displays each cluster with its suggested taxonomy and label. Prompts
     """
     input_loop = True
@@ -1065,7 +1088,7 @@ def manual_correction(my_cluster):
     str_id = my_cluster.get_strid()
     run_path = return_proj_path() + str_id
     flag_exclusions_file = run_path + '/flag_exclusions'
-    header = "\t".join(flag_header(str_id).split("\t")[1:]).rstrip()
+    orig_header = flag_header(str_id)
 
     def_prompt = prompt_print(my_cluster)
     while input_loop:
@@ -1088,16 +1111,23 @@ def manual_correction(my_cluster):
 
         inp_cmd = input(def_prompt)
         curr_inp = inp_cmd.lower()
+        flags = my_cluster.get_flags().lower().split(", ")
 
         #: accept option
         #: accepting cluster/all/all from flag
         if curr_inp.split(" ")[0] == 'accept':
-            input_loop, skip_review = prompt_accept(curr_inp, header)
+            input_loop, skip_review, rem_header = prompt_accept(
+                curr_inp,
+                rem_header,
+                flags
+            )
 
         #: exclude option
         #: excluding current cluster, saving to flag_exclusions
         elif curr_inp == 'exclude':
             input_loop = prompt_exclude(my_cluster, flag_exclusions_file)
+            if not input_loop:
+                rem_flag_update(rem_header, flags)
 
         #: exit option
         #: rejects all remaining suggestions and exits
@@ -1107,12 +1137,14 @@ def manual_correction(my_cluster):
         #: flag option
         #: prints all flags and their occurences
         elif curr_inp == 'flags' or curr_inp == 'flag':
-            prompt_flag(header)
+            prompt_flag(orig_header, rem_header)
 
         #: keep option
         #: keeping an id and optionally removing from species or categories
         elif (curr_inp.split(" ")[0] == 'keep'):
             input_loop = prompt_keep(curr_inp, my_cluster)
+            if not input_loop:
+                rem_flag_update(rem_header, flags)
 
         #: manual option
         #: takes manual input as suggestion
@@ -1121,6 +1153,8 @@ def manual_correction(my_cluster):
             and len(curr_inp.split(" ")) > 1
         ):
             input_loop = prompt_manual(inp_cmd, my_cluster)
+            if not input_loop:
+                rem_flag_update(rem_header, flags)
 
         #: remove option
         #: removes all entries by id then suggest new taxonomy with remaining
@@ -1129,11 +1163,13 @@ def manual_correction(my_cluster):
             and len(curr_inp.split(" ")) > 1
         ):
             input_loop = prompt_remove(curr_inp, my_cluster)
+            if not input_loop:
+                rem_flag_update(rem_header, flags)
 
         else:
             print("Invalid choice")
 
-    return skip_review, exit_review
+    return skip_review, exit_review, rem_header
 
 
 def flag_correction(str_id):
@@ -1148,6 +1184,7 @@ def flag_correction(str_id):
     flag_exclusions_file = run_path + '/flag_exclusions'
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)
+    rem_header = flag_header(str_id)
 
     with open(flag_clusters_file, 'r') as flag_file, \
          open(flag_correction_file, 'w') as corr_file:
@@ -1163,7 +1200,7 @@ def flag_correction(str_id):
         skip_review = False
         exit_review = False
 
-        header = flag_file.readline()
+        _ = flag_file.readline()
 
         for line in flag_file:
             curr_line = line.rstrip()
@@ -1186,7 +1223,8 @@ def flag_correction(str_id):
                     skip_review, exit_review = run_correction(
                         my_cluster,
                         skip_review,
-                        exit_review
+                        exit_review,
+                        rem_header
                         )
 
                     if exit_review:
