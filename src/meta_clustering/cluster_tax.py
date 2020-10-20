@@ -1118,11 +1118,12 @@ def manual_correction(my_cluster, rem_header):
             curr_inp.split(" ")[0] == 'accept'
             or curr_inp.split(" ")[0] == 'a'
         ):
-            input_loop, skip_review, rem_header = prompt_accept(
-                curr_inp,
-                rem_header,
-                flags
-            )
+            if valid_input(curr_inp):
+                input_loop, skip_review, rem_header = prompt_accept(
+                    curr_inp,
+                    rem_header,
+                    flags
+                )
 
         #: exclude option (exclude/e)
         #: excluding current cluster, saving to flag_exclusions
@@ -1130,9 +1131,10 @@ def manual_correction(my_cluster, rem_header):
           curr_inp.split(" ")[0] == 'exclude'
           or curr_inp.split(" ")[0] == 'e'
           ):
-            input_loop = prompt_exclude(my_cluster, flag_exclusions_file)
-            if not input_loop:
-                rem_flag_update(rem_header, flags)
+            if valid_input(curr_inp):
+                input_loop = prompt_exclude(my_cluster, flag_exclusions_file)
+                if not input_loop:
+                    rem_flag_update(rem_header, flags)
 
         #: exit option (exit)
         #: rejects all remaining suggestions and exits
@@ -1150,9 +1152,10 @@ def manual_correction(my_cluster, rem_header):
               curr_inp.split(" ")[0] == 'keep'
               or curr_inp.split(" ")[0] == 'k'
         ):
-            input_loop = prompt_keep(curr_inp, my_cluster)
-            if not input_loop:
-                rem_flag_update(rem_header, flags)
+            if valid_input(curr_inp):
+                input_loop = prompt_keep(curr_inp, my_cluster)
+                if not input_loop:
+                    rem_flag_update(rem_header, flags)
 
         #: manual option (manual/m)
         #: takes manual input as suggestion
@@ -1160,8 +1163,7 @@ def manual_correction(my_cluster, rem_header):
             curr_inp.split(" ")[0] == 'manual'
             or curr_inp.split(" ")[0] == 'm'
         ):
-            # check valid input
-            if len(curr_inp.split(" ")) > 1:
+            if valid_input(curr_inp):
                 input_loop = prompt_manual(inp_cmd, my_cluster)
                 if not input_loop:
                     rem_flag_update(rem_header, flags)
@@ -1172,16 +1174,80 @@ def manual_correction(my_cluster, rem_header):
             curr_inp.split(" ")[0] == 'remove'
             or curr_inp.split(" ")[0] == 'r'
         ):
-            # check valid input
-            if len(curr_inp.split(" ")) > 1
-            input_loop = prompt_remove(curr_inp, my_cluster)
-            if not input_loop:
-                rem_flag_update(rem_header, flags)
+            if valid_input(curr_inp):
+                input_loop = prompt_remove(curr_inp, my_cluster)
+                if not input_loop:
+                    rem_flag_update(rem_header, flags)
 
         else:
             print("Invalid choice")
 
     return skip_review, exit_review, rem_header
+
+
+def valid_input(input):
+    """Method to check validity of inpt command used in manual_correction, used
+    to prevent errors when working with invalid input.
+    """
+    option = input.split(" ")[0]
+    inp_cmd = ''
+    valid = False
+    if len(input.split(" ")) > 1:
+        inp_cmd = input.split(" ")[1:]
+
+    if option == 'accept' or option == 'a':
+        #: accept
+        #: accept flag
+        #: accept all
+        if not inp_cmd:
+            valid = True
+        else:
+            if len(inp_cmd) == 1:
+                valid = True
+
+    elif option == 'exclude' or option == 'e':
+        #: exclude
+        #: exclude flag
+        #: exclude all
+        if not inp_cmd:
+            valid = True
+        else:
+            if len(inp_cmd) == 1:
+                valid = True
+
+    elif option == 'keep' or option == 'k':
+        #: keep 1
+        #: keep 1 c-1
+        #: keep 1 s-1
+        if inp_cmd:
+            if len(inp_cmd) == 1 and inp_cmd[0].isdigit():
+                valid = True
+            elif len(inp_cmd) == 2 and '-' in inp_cmd[1]:
+                inp_split = inp_cmd[1].split('-')
+                if (
+                    (inp_split[0] == 's' or inp_split[0] == 'c')
+                    and inp_split[1].isdigit()
+                ):
+                    valid = True
+
+    elif option == 'manual' or option == 'm':
+        #: manual taxonomy;here
+        if inp_cmd:
+            valid = True
+
+    elif option == 'remove' or option == 'r':
+        #: remove 1
+        #: remove 1-3
+        if len(inp_cmd) == 1:
+            inp_cmd = inp_cmd[0]
+            if inp_cmd[0].isdigit():
+                valid = True
+            elif '-' in inp_cmd:
+                inp_split = inp_cmd.split('-')
+                if inp_split[0].isdigit() and inp_split[1].isdigit():
+                    valid = True
+
+    return valid
 
 
 def flag_correction(str_id):
