@@ -666,7 +666,11 @@ def confirm_accept_exclude(option, flag=''):
     """Used for the confirmation propt in the accept prompt option.
     """
     input_loop = True
-    acc_exc = option.split(" ")[0]
+    acc_exc = ''
+    if option.split(" ") == 'accept':
+        acc_exc = 'accept'
+    elif option.split(" ") == 'exclude':
+        acc_exc == 'exclud'
 
     if option == 'accept' or option == 'exclude':
         opt_out = 'current cluster'
