@@ -774,7 +774,6 @@ def prompt_accept(input, header, flags):
 def cluster_exclude(my_cluster):
     run_path = return_proj_path() + '100'
     exclusions_file = run_path + '/flag_exclusions'
-    print('Excluding\n')
 
     with open(exclusions_file, 'a+') as exclusions:
 
@@ -1123,6 +1122,7 @@ def manual_correction(my_cluster, rem_header):
         flags = my_cluster.get_flags().lower().split(", ")
 
         skip = True
+        print("accept? flags: {}, accepted_flags: {}".format(flags, accepted_flags))
         for flag in flags:
             if flag not in accepted_flags:
                 skip = False
@@ -1132,6 +1132,7 @@ def manual_correction(my_cluster, rem_header):
 
         skip = True
         exclude = True
+        print("exclude? flags: {}, excluded_flags: {}".format(flags, excluded_flags))
         for flag in flags:
             if flag not in excluded_flags:
                 exclude = False
