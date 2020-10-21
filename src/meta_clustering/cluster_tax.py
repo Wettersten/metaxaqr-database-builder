@@ -4,8 +4,9 @@ import subprocess
 from collections import Counter
 from ete3 import NCBITaxa
 
-#: global list of accepted flags for prompt_accept flags
+#: global list of accepted/excluded flags for prompt_accept/exclude flags
 accepted_flags = []
+excluded_flags = []
 
 
 class Cluster:
@@ -661,30 +662,34 @@ def repr_and_flag(str_id):
     os.remove(flag_clusters_file)
 
 
-def confirm_accept(option, flag=''):
+def confirm_accept_exclude(option, flag=''):
     """Used for the confirmation propt in the accept prompt option.
     """
     input_loop = True
+    acc_exc = option.split(" ")[0]
 
-    if option == 'accept':
-        opt_out = 'current suggestion'
-    elif option == 'accept all':
-        opt_out = 'all remaining suggestions'
-    elif option == 'accept flag':
+    if option == 'accept' or option == 'exclude':
+        opt_out = 'current cluster'
+    elif option == 'accept all' or option == 'exclude all':
+        opt_out = 'all remaining clusters'
+    elif option == 'accept flag' or option == 'exclude flag':
         opt_out = 'all from the flag: ' + flag
 
-    opt_cmd = input("{}{}{}".format(
-        'Accept ',
+    opt_cmd = input("{} {}{}".format(
+        acc_exc.title(),
         opt_out,
         '? y/n\nInput: '
     ))
     curr_opt = opt_cmd.lower()
 
     if curr_opt == 'y' or curr_opt == 'yes':
-        print('Accepting\n')
+        #: 'Accepting' or 'Excluding'
+        print("{}ing\n".format(acc_exc.title()))
         input_loop = False
+
     elif curr_opt == 'n' or curr_opt == 'no':
-        print('Not accepting\n')
+        #: 'Not accepting' or 'Not excluding'
+        print("Not {}ing".format(acc_exc))
     else:
         print("Invalid input")
 
@@ -737,25 +742,25 @@ def prompt_accept(input, header, flags):
     a given flag.
     """
     input_loop = True
-    skip_review = False
+    review = ''
 
-    #: accepts current suggestion
+    #: accepts current cluster
     if len(input.split(" ")) == 1:
 
-        input_loop = confirm_accept('accept')
+        input_loop = confirm_accept_exclude('accept')
         if not input_loop:
             rem_flag_update(header, flags)
 
     else:
-        #: accepts all remaining suggestions
+        #: accepts all remaining clusters
         if input.split(" ")[1] == 'all':
-            input_loop = confirm_accept('accept all')
-            skip_review = True
+            input_loop = confirm_accept_exclude('accept all')
+            review = 'skip'
 
-        #: accepts all remining suggestions from a specific flag
+        #: accepts all remining clusters from a specific flag
         elif input.split(" ")[1] in [i.lower() for i in header]:
             flag = input.split(" ")[1]
-            input_loop = confirm_accept('accept flag', flag)
+            input_loop = confirm_accept_exclude('accept flag', flag)
             if not input_loop:
                 accepted_flags.append(flag)
                 header[flag.title()] = 0
@@ -763,49 +768,69 @@ def prompt_accept(input, header, flags):
         else:
             print("Invalid flag\n")
 
-    return input_loop, skip_review, header
+    return input_loop, review, header
 
 
-def prompt_exclude(my_cluster, exclusion_file):
+def cluster_exclude(my_cluster):
+    run_path = return_proj_path() + '100'
+    exclusions_file = run_path + '/flag_exclusions'
+    print('Excluding\n')
+
+    with open(exclusion_file, 'a+') as exclusions:
+
+        exclusions.write("{}\t{}\t{}\n".format(
+            my_cluster.get_label(),
+            my_cluster.get_reprtax(),
+            my_cluster.get_flags() + ", Excluded"
+            ))
+        for tax in my_cluster.get_entries():
+            exclusions.write(tax + "\n")
+
+    my_cluster.change_reprtax('Excluded')
+
+
+def prompt_exclude(my_cluster, input, header, flags):
     """Method for the exclude alternative in manual_correction. Removes a bad
     cluster and stores it in a flag_exclusions file for later review, this
-    cluster does not appear in the final corrected repr_tax file.
+    cluster does not appear in the final corrected repr_tax file. Works for
+    single clusters, all in flag, or all clusters.
     """
     input_loop = True
-    opt_cmd = input("{}{}".format(
-        'Are you sure you want to exclude current cluster?',
-        ' y/n\nInput: '
-    ))
-    curr_opt = opt_cmd.lower()
+    review = ''
 
-    if curr_opt == 'y' or curr_opt == 'yes':
-        print('Excluding\n')
+    #: exclude current cluster
+    if len(input.split(" ")) == 1:
 
-        with open(exclusion_file, 'a+') as exclusions:
+        input_loop = confirm_accept_exclude('exclude')
+        if not input_loop:
+            rem_flag_update(header, flags)
+            cluster_exclude(my_cluster)
 
-            exclusions.write("{}\t{}\t{}\n".format(
-                my_cluster.get_label(),
-                my_cluster.get_reprtax(),
-                my_cluster.get_flags() + ", Excluded"
-                ))
-            for tax in my_cluster.get_entries():
-                exclusions.write(tax + "\n")
-
-        my_cluster.change_reprtax('Excluded')
-        input_loop = False
-    elif curr_opt == 'n' or curr_opt == 'no':
-        print('Not excluding\n')
     else:
-        print("Invalid input")
+        #: exclude all remaining clusters
+        if input.split(" ")[1] == 'all':
+            input_loop = confirm_accept_exclude('exclude all')
+            review = 'exclude'
 
-    return input_loop
+        #: excludes all remining clusters from a specific flag
+        elif input.split(" ")[1] in [i.lower() for i in header]:
+            flag = input.split(" ")[1]
+            input_loop = confirm_accept_exclude('exclude flag', flag)
+            if not input_loop:
+                excluded_flags.append(flag)
+                header[flag.title()] = 0
+
+        else:
+            print("Invalid flag\n")
+
+    return input_loop, review, header
 
 
 def prompt_exit():
     """Method for the exit alternative in manual_correction. Exiting the
     correction prompt loop and rejecting all further suggestions.
     """
-    exit_review = False
+    review = ''
     input_loop = True
 
     opt_cmd = input('Are you sure you want to exit? y/n\nInput: ')
@@ -813,14 +838,14 @@ def prompt_exit():
 
     if curr_opt == 'y' or curr_opt == 'yes':
         print("Discarding remaining flags")
-        exit_review = True
+        review = 'exit'
         input_loop = False
     elif curr_opt == 'n' or curr_opt == 'no':
         print('Not exiting\n')
     else:
         print("Invalid input")
 
-    return exit_review, input_loop
+    return review, input_loop
 
 
 def prompt_flag(o_header, r_header):
@@ -1032,17 +1057,19 @@ def prompt_remove(input, my_cluster):
     return input_loop
 
 
-def run_correction(my_cluster, skip_review, exit_review, rem_header):
+def run_correction(my_cluster, review, rem_header):
     """Wrapping function to perform full correction on cluster.
     """
-    if skip_review or exit_review:
+    if review == 'skip' or review == 'exit':
         pass
+    elif review == 'exclude':
+        cluster_exclude(my_cluster)
     else:
-        skip_review, exit_review, rem_header = manual_correction(
+        review, rem_header = manual_correction(
             my_cluster,
             rem_header
         )
-    return skip_review, exit_review, rem_header
+    return review, rem_header
 
 
 def repr_correction(str_id):
@@ -1082,8 +1109,7 @@ def manual_correction(my_cluster, rem_header):
     """Displays each cluster with its suggested taxonomy and label. Prompts
     """
     input_loop = True
-    skip_review = False
-    exit_review = False
+    review = ''
     str_id = my_cluster.get_strid()
     run_path = return_proj_path() + str_id
     flag_exclusions_file = run_path + '/flag_exclusions'
@@ -1092,25 +1118,29 @@ def manual_correction(my_cluster, rem_header):
     def_prompt = prompt_print(my_cluster)
     while input_loop:
 
-        #: checks flags if accepted already
+        #: if all flags in my_cluster accepted already, skip
+        #: if all flags in my_cluster excluded already, exclude and skip
         flags = my_cluster.get_flags().lower().split(", ")
-        flag = flags[0]
-        if len(flags) == 1:
-            if flag in accepted_flags:
-                input_loop = False
+        skip = True
+        exclude = True
 
-        else:
+        for flag in flags:
+            if flag not in accepted_flags:
+                skip = False
+
+        for flag in flags:
+            if flag not in excluded_flags:
+                exclude = False
+
+        if exclude:
+            cluster_exclude(my_cluster)
+
+        if skip:
             input_loop = False
-            for flag in flags:
-                if flag not in accepted_flags:
-                    input_loop = True
-
-        if not input_loop:
             break
 
         inp_cmd = input(def_prompt)
         curr_inp = inp_cmd.lower()
-        flags = my_cluster.get_flags().lower().split(", ")
 
         #: accept option (accept/a)
         #: accepting cluster/all/all from flag
@@ -1119,7 +1149,7 @@ def manual_correction(my_cluster, rem_header):
             or curr_inp.split(" ")[0] == 'a'
         ):
             if valid_input(curr_inp):
-                input_loop, skip_review, rem_header = prompt_accept(
+                input_loop, review, rem_header = prompt_accept(
                     curr_inp,
                     rem_header,
                     flags
@@ -1132,14 +1162,19 @@ def manual_correction(my_cluster, rem_header):
           or curr_inp.split(" ")[0] == 'e'
           ):
             if valid_input(curr_inp):
-                input_loop = prompt_exclude(my_cluster, flag_exclusions_file)
+                input_loop, review, rem_header = prompt_exclude(
+                    my_cluster,
+                    curr_inp,
+                    rem_header,
+                    flags
+                )
                 if not input_loop:
                     rem_flag_update(rem_header, flags)
 
         #: exit option (exit)
         #: rejects all remaining suggestions and exits
         elif curr_inp == 'exit':
-            exit_review, input_loop = prompt_exit()
+            review, input_loop = prompt_exit()
 
         #: flag option (flag/flags)
         #: prints all flags and their occurences
@@ -1182,7 +1217,7 @@ def manual_correction(my_cluster, rem_header):
         else:
             print("Invalid choice")
 
-    return skip_review, exit_review, rem_header
+    return review, rem_header
 
 
 def valid_input(input):
@@ -1275,8 +1310,7 @@ def flag_correction(str_id):
         cluster_flags = ''
         old_flags = ''
         first_line = True
-        skip_review = False
-        exit_review = False
+        review = ''
 
         _ = flag_file.readline()
 
@@ -1298,14 +1332,13 @@ def flag_correction(str_id):
                         repr_tax=old_repr,
                         flags=old_flags
                     )
-                    skip_review, exit_review, rem_header = run_correction(
+                    review, rem_header = run_correction(
                         my_cluster,
-                        skip_review,
-                        exit_review,
+                        review,
                         rem_header
                     )
 
-                    if exit_review:
+                    if review == 'exit':
                         break
 
                     corr_file.write("{}\t{}\n".format(
