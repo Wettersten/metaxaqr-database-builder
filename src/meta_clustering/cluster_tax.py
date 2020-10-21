@@ -1121,20 +1121,23 @@ def manual_correction(my_cluster, rem_header):
         #: if all flags in my_cluster accepted already, skip
         #: if all flags in my_cluster excluded already, exclude and skip
         flags = my_cluster.get_flags().lower().split(", ")
-        skip = True
-        exclude = True
 
+        skip = True
         for flag in flags:
             if flag not in accepted_flags:
                 skip = False
+        if skip:
+            input_loop = False
+            break
 
+        skip = True
+        exclude = True
         for flag in flags:
             if flag not in excluded_flags:
                 exclude = False
-
+                skip = False
         if exclude:
             cluster_exclude(my_cluster)
-
         if skip:
             input_loop = False
             break
@@ -1168,8 +1171,6 @@ def manual_correction(my_cluster, rem_header):
                     rem_header,
                     flags
                 )
-                if not input_loop:
-                    rem_flag_update(rem_header, flags)
 
         #: exit option (exit)
         #: rejects all remaining suggestions and exits
