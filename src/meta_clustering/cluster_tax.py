@@ -776,7 +776,7 @@ def cluster_exclude(my_cluster):
     exclusions_file = run_path + '/flag_exclusions'
     print('Excluding\n')
 
-    with open(exclusion_file, 'a+') as exclusions:
+    with open(exclusions_file, 'a+') as exclusions:
 
         exclusions.write("{}\t{}\t{}\n".format(
             my_cluster.get_label(),
@@ -1291,12 +1291,16 @@ def flag_correction(str_id):
     non-flagged suggestions.
     """
     accepted_flags = []
+    excluded_flags = []
+
     run_path = return_proj_path() + str_id
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
     flag_exclusions_file = run_path + '/flag_exclusions'
+
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)
+
     rem_header = flag_header(str_id)
 
     with open(flag_clusters_file, 'r') as flag_file, \
