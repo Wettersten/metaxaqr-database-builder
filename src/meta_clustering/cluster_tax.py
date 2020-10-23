@@ -153,12 +153,16 @@ def read_taxdb():
     run_path = return_proj_path() + '100'
     tax_db_file = run_path + '/tax_db'
     tax_db = {}
+    added_keys = []
 
     with open(tax_db_file, 'r') as tax_file:
         for line in tax_file:
             tax = line.rstrip()
             species = " ".join(tax.split(";")[-1].split(" ")[:2])
-            tax_db[species] = tax
+            #: ignore duplicates
+            if species not in added_keys:
+                tax_db[species] = tax
+                added_keys.append(species)
 
     return tax_db
 
@@ -268,7 +272,6 @@ def create_cluster_tax(str_id, loop=False):
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
-    tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -305,6 +308,7 @@ def create_cluster_tax(str_id, loop=False):
                                     loop_repr
                                 )
                             else:
+                                tax_db = read_taxdb()
                                 curr_id = remove_cf_line(lines.rstrip())
 
                                 #: fixes chloro/mito taxonomies
