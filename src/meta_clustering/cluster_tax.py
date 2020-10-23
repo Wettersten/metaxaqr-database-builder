@@ -329,8 +329,8 @@ def remove_cf_line(tax_line):
 
 
 def flag_check(cluster):
-    """Checks various flag scenarios and returns appropriate flags. Expand to
-    further checks TODO
+    """Checks various flag scenarios and returns appropriate flags.
+    TODO - Expand to further flags
     """
     flag = ''
 
@@ -360,6 +360,23 @@ def chlor_mito_flag(cluster):
     return flag_out
 
 
+def find_spsplits(tax_cluster):
+    """Gets how many words (split by spaces) in the entry with most words in
+    the tax_cluster.
+    """
+    sps = []
+    sp_splits = 0
+
+    for tax in tax_cluster:
+        sps.append(tax[-1].split(" "))
+
+    for sp in sps:
+        if len(sp) > sp_splits:
+            sp_splits = len(sp)
+
+    return sp_splits
+
+
 def repr_taxonomy(tax_cluster):
     """Calculates the representative taxonomy for a cluster, checking species
     first and the continuing down to lower categories. Returning representative
@@ -368,7 +385,8 @@ def repr_taxonomy(tax_cluster):
     repr_tax = 'No Match'  # if no repr_tax is found
     flag = ''
     found = False
-    sp_splits = 6
+    sp_splits = find_spsplits(tax_cluster)
+    opt = ''
 
     new_cluster = []
     for tax in tax_cluster:
@@ -377,6 +395,7 @@ def repr_taxonomy(tax_cluster):
 
     #: loop for species
     if new_cluster:
+        opt = 'species'
         for i in range(sp_splits):
             curr_cluster = []
             for tax in new_cluster:
@@ -385,9 +404,10 @@ def repr_taxonomy(tax_cluster):
                 stripped_tax.append(sp_tax)
                 curr_cluster.append(stripped_tax)
 
-            found, new_repr_tax, new_flag = calc_repr_taxonomy_species(
-                curr_cluster
-                )
+            found, new_repr_tax, new_flag = calc_repr_taxonomy(
+                curr_cluster,
+                opt
+            )
             if (
                 new_repr_tax[-3:] == 'sp.'
                 or new_repr_tax[-1:] == '#'
@@ -395,6 +415,7 @@ def repr_taxonomy(tax_cluster):
                 or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
             ):
                 found = False
+
             if found:
                 repr_tax = new_repr_tax
                 if new_flag and new_flag not in flag.split(", "):
@@ -405,6 +426,7 @@ def repr_taxonomy(tax_cluster):
     #: starting at lowest category and moving upwards, if more than 4
     #: categories it starts at category nr 4 to speed up the process
     if not found:
+        opt = 'rest'
         start = 0
         if len(tax_cluster[0]) > 4:
             start = len(tax_cluster[0])-5
@@ -415,8 +437,9 @@ def repr_taxonomy(tax_cluster):
                 if tax[:i+1][-1][0].isupper():
                     curr_cluster.append(tax[:i+1])
             if curr_cluster:
-                found, new_repr_tax, new_flag = calc_repr_taxonomy_rest(
-                    curr_cluster
+                found, new_repr_tax, new_flag = calc_repr_taxonomy(
+                    curr_cluster,
+                    opt
                 )
 
             if found:
@@ -440,7 +463,7 @@ def repr_taxonomy(tax_cluster):
     return flag[:-2], repr_tax
 
 
-def calc_repr_taxonomy_species(tax_cluster):
+def calc_repr_taxonomy(tax_cluster, opt):
     """Gets the representative taxonomy for species, first checking if all
     entries in the cluster are equal then checking if they match using the
     algorithm.
@@ -448,40 +471,36 @@ def calc_repr_taxonomy_species(tax_cluster):
     eq_tax = True
     repr_tax = tax_cluster[0]
     flag = ''
+    mc = []
+
     for tax in tax_cluster:
-        if len(tax) > 0:
+        if opt == 'species':
             if tax[-1] != repr_tax[-1]:
                 eq_tax = False
                 break
-        if len(tax) > len(repr_tax):
-            repr_tax = tax
+            if len(tax) > len(repr_tax):
+                repr_tax = tax
+            mc.append(tax[-2])
+
+        elif opt == 'rest':
+            if tax != repr_tax:
+                eq_tax = False
+                break
+
+    if opt == 'species':
+        mc_term = Counter(mc).most_common(1)[0][0]
+        for tax in tax_cluster:
+            if mc_term in tax:
+                repr_tax = tax
+                break
 
     if not eq_tax:
-        eq_tax, repr_tax, flag = algo_repr(tax_cluster)
+        eq_tax, repr_tax, flag = algo_repr(tax_cluster, opt)
 
     return eq_tax, tax_list_to_str(repr_tax), flag
 
 
-def calc_repr_taxonomy_rest(tax_cluster):
-    """Gets the representative taxonomy for lower categories, first checking if
-    all entries in the cluster are equal then checking if they match using the
-    algorithm.
-    """
-    eq_tax = True
-    repr_tax = tax_cluster[0]
-    flag = ''
-    for tax in tax_cluster:
-        if tax != repr_tax:
-            eq_tax = False
-            break
-
-    if not eq_tax:
-        eq_tax, repr_tax, flag = algo_repr(tax_cluster)
-
-    return eq_tax, tax_list_to_str(repr_tax), flag
-
-
-def algo_repr(tax_cluster):
+def algo_repr(tax_cluster, opt):
     """Algorithm used to calculate representative taxonomy in cluster, looking
     for highest fraction and calculating if smaller fraction(s) are just
     wrongly annotated.
@@ -493,7 +512,10 @@ def algo_repr(tax_cluster):
 
     if len(tax_cluster) > 10:
         for tax in tax_cluster:
-            new_cluster.append(tax_list_to_str(tax))
+            if opt == 'species':
+                new_cluster.append(tax_list_to_str(tax[-1]))
+            elif opt == 'rest':
+                new_cluster.append(tax_list_to_str(tax))
 
         c_cluster = []
         high_fract = 0.0
@@ -510,6 +532,11 @@ def algo_repr(tax_cluster):
             found = True
             # removing outlier flag for now, doesn't add to review process
             # flag = 'Outlier'
+            if opt == 'species':
+                for tax in tax_cluster:
+                    if repr_tax[0] in tax:
+                        repr_tax = tax
+                        break
 
     return found, repr_tax, flag
 
@@ -561,6 +588,7 @@ def process_entry(entry, inc_check=False):
     Processes a taxonomic entry (label, taxonomy) to stop at the category
     before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
     categories to the first position, replacing Eukaryota/Bacteria.
+    TODO - Remove
     """
     label = entry.split(" ")[0]
     inc_sed = 'Incertae Sedis'
@@ -667,9 +695,9 @@ def confirm_accept_exclude(option, flag=''):
     """
     input_loop = True
     acc_exc = ''
-    if option.split(" ") == 'accept':
+    if option.split(" ")[0] == 'accept':
         acc_exc = 'accept'
-    elif option.split(" ") == 'exclude':
+    elif option.split(" ")[0] == 'exclude':
         acc_exc == 'exclud'
 
     if option == 'accept' or option == 'exclude':
@@ -1126,7 +1154,6 @@ def manual_correction(my_cluster, rem_header):
         flags = my_cluster.get_flags().lower().split(", ")
 
         skip = True
-        print("accept? flags: {}, accepted_flags: {}".format(flags, accepted_flags))
         for flag in flags:
             if flag not in accepted_flags:
                 skip = False
@@ -1136,7 +1163,6 @@ def manual_correction(my_cluster, rem_header):
 
         skip = True
         exclude = True
-        print("exclude? flags: {}, excluded_flags: {}".format(flags, excluded_flags))
         for flag in flags:
             if flag not in excluded_flags:
                 exclude = False
