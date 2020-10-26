@@ -159,7 +159,7 @@ def read_taxdb():
         for line in tax_file:
             tax = line.rstrip()
             species = " ".join(tax.split(";")[-1].split(" ")[:2])
-            #: ignore duplicates
+            #: ignore duplicates (move to process db?)
             if species not in added_keys:
                 tax_db[species] = tax
                 added_keys.append(species)
