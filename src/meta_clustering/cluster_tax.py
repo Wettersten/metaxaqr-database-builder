@@ -250,16 +250,9 @@ def find_taxonomy(in_tax, tax_dict):
     #: creating new tax_line
     #: if there are any strain/variation information for species
     if str_info:
-        new_tax = "{cm};{tx} {st}".format(
-            cm=chlr_mito,
-            tx=tax,
-            st=str_info
-        )
+        new_tax = "{cm};{tx} {st}".format(cm=chlr_mito, tx=tax, st=str_info)
     else:
-        new_tax = "{cm};{tx}".format(
-            cm=chlr_mito,
-            tx=tax
-        )
+        new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
 
     return new_tax
 
