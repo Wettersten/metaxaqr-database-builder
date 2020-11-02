@@ -179,15 +179,15 @@ def is_tool(name):
 
 
 def logging(
-            str_id='',
-            etime='',
-            db='',
-            time_log=False,
-            quiet=False,
-            start=False,
-            custom=False,
-            custom_msg=''
-            ):
+        str_id='',
+        etime='',
+        db='',
+        time_log=False,
+        quiet=False,
+        start=False,
+        custom=False,
+        custom_msg=''
+):
     """Used for logging messages/time spent on processes etc
     """
     log_msg = ''
