@@ -118,33 +118,88 @@ def process_taxdb():
     run_path = return_proj_path() + '100'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_db_file = run_path + '/tax_db'
-    taxes = []
-    old_genus = ''
+    taxes = {}
+    final_taxes = {}
 
-    with open(tax_db_raw_file, 'r') as raw_file, \
-         open(tax_db_file, 'w') as tax_db:
+    with open(tax_db_raw_file, 'r') as raw_file:
 
         for line in raw_file:
+            species = ''
+            genus = ''
+
             curr_line = line.rstrip()
             tax_cats = ";".join(curr_line.split(";")[:-1])
-            species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
+            if 'sp.' not in curr_line.split(";")[-1]:
+                species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
+                tax_species = "{};{}".format(tax_cats, species)
             genus = curr_line.split(";")[-1].split(" ")[0]
-
-            #: tax_db_raw is sorted by name, no need to search old taxes
-            if genus != old_genus:
-                taxes = []
-
-            tax_species = "{};{}".format(tax_cats, species)
             tax_genus = "{};{}".format(tax_cats, genus)
-            curr = [tax_species, tax_genus]
 
-            #: makes sure only uniques in db, after removing strain info
-            for tax in curr:
-                if tax not in taxes:
-                    taxes.append(tax)
-                    tax_db.write("{}\n".format(tax))
+            if species:
+                if species not in taxes:
+                    taxes[species] = tax_species
+                else:
+                    dict_genus = taxes[species].split(";")[-2]
+                    sp_genus = tax_species.split(";")[-2]
+                    dict_len = len(taxes[species].split(";"))
+                    sp_len = len(tax_species.split(";"))
 
-            old_genus = genus
+                    #: if correct taxonomy found, uses genus as category
+                    if (
+                        dict_genus != genus
+                        and sp_genus == genus
+                    ):
+                        taxes[species] = tax_species
+
+                    #: if both either correct or wrong
+                    #: but new is longer (more detailed)
+                    elif (
+                        sp_len > dict_len
+                        and ((dict_genus == genus and sp_genus == genus)
+                             or dict_genus != genus and sp_genus != genus)
+                    ):
+                        taxes[species] = tax_species
+
+            #: if species is 'genus sp.', adding genus instead
+            else:
+                if genus not in taxes:
+                    taxes[genus] = tax_genus
+                else:
+                    dict_genus = taxes[genus].split(";")[-2]
+                    g_genus = tax_genus.split(";")[-2]
+                    dict_len = len(taxes[genus].split(";"))
+                    g_len = len(tax_genus.split(";"))
+
+                    #: if correct taxonomy found, uses genus as category
+                    if (
+                        dict_genus != genus
+                        and g_genus == genus
+                    ):
+                        taxes[genus] = tax_genus
+
+                    #: if both either correct or wrong
+                    #: but new is longer (more detailed)
+                    elif (
+                        g_len > dict_len
+                        and ((dict_genus == genus and g_genus == genus)
+                             or dict_genus != genus and g_genus != genus)
+                    ):
+                        taxes[genus] = tax_genus
+
+    #: adds all missing genus from species
+    final_taxes = taxes.copy()
+    for species, tax in taxes.items():
+        if len(species.split(" ")) == 2:
+            genus = species.split(" ")[0]
+            if genus not in final_taxes:
+                final_taxes[genus] = "{};{}".format(
+                    ";".join(tax.split(";")[:-1]),
+                    genus
+                )
+
+    with open(tax_db_file, 'w') as tax_db:
+        for sp in final_taxes:
+            tax_db.write(final_taxes[sp] + "\n")
 
 
 def read_taxdb():
@@ -153,16 +208,12 @@ def read_taxdb():
     run_path = return_proj_path() + '100'
     tax_db_file = run_path + '/tax_db'
     tax_db = {}
-    added_keys = []
 
     with open(tax_db_file, 'r') as tax_file:
         for line in tax_file:
             tax = line.rstrip()
             species = " ".join(tax.split(";")[-1].split(" ")[:2])
-            #: ignore duplicates (move to process db?)
-            if species not in added_keys:
-                tax_db[species] = tax
-                added_keys.append(species)
+            tax_db[species] = tax
 
     return tax_db
 
@@ -200,7 +251,7 @@ def get_lineage(species):
     return tax
 
 
-def find_taxonomy(in_tax, tax_dict):
+def find_taxonomy(in_tax, tax_dict, str_id):
     """Takes a taxonomy (used when Chlor/Mito present) and tries to find it
     first in the tax_db file and then using ETE3, if found in none replace
     first col with Chlor/Mito and keep taxonomy as is.
@@ -230,22 +281,19 @@ def find_taxonomy(in_tax, tax_dict):
         split = temp_tax.split(";")[1:-1]
         split.append(species)
         tax = ";".join(split)
+
     elif genus in tax_dict:
         temp_tax = tax_dict[genus]
         split = temp_tax.split(";")[1:-1]
         split.append(species)
         tax = ";".join(split)
 
-    #: if not in tax_db - find in NCBI taxonomy using ETE3
+    #: if not in either
     if not tax:
-        tax = get_lineage(species)
-
-    #: if not in either - use input tax but move chlor/mito
-    if not tax:
-        tax_split.remove(chlr_mito)
-        tax_split.remove(tax_split[-1])
-        tax_join = ";".join(tax_split)
-        tax = "{};{}".format(tax_join, species)
+        if int(str_id) == 100:
+            pass
+        else:
+            tax = "{};undefined taxonomy;{}".format(chlr_mito, species)
 
     #: creating new tax_line
     #: if there are any strain/variation information for species
@@ -265,6 +313,9 @@ def create_cluster_tax(str_id, loop=False):
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
+    tax_db = ''
+    if not loop:
+        tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -301,7 +352,6 @@ def create_cluster_tax(str_id, loop=False):
                                     loop_repr
                                 )
                             else:
-                                tax_db = read_taxdb()
                                 curr_id = remove_cf_line(lines.rstrip())
 
                                 #: fixes chloro/mito taxonomies
@@ -311,7 +361,11 @@ def create_cluster_tax(str_id, loop=False):
                                 ):
                                     id_label = curr_id.split(" ")[0]
                                     curr_tax = " ".join(curr_id.split(" ")[1:])
-                                    f_tax = find_taxonomy(curr_tax, tax_db)
+                                    f_tax = find_taxonomy(
+                                                          curr_tax,
+                                                          tax_db,
+                                                          str_id
+                                    )
                                     curr_id = id_label + " " + f_tax
 
                             clust_out.write("{}\n".format(curr_id))

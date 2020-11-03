@@ -72,7 +72,7 @@ def create_final_repr(str_id, cent_loop=False):
                     ):
                         #: check to prevent index errors
                         if len(repr_tax.split(";")) > 2:
-                            repr_tax = find_taxonomy(repr_tax, tax_db)
+                            repr_tax = find_taxonomy(repr_tax, tax_db, str_id)
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
