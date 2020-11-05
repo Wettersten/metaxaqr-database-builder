@@ -2,7 +2,6 @@ from .handling import return_proj_path, tax_list_to_str
 import os
 import subprocess
 from collections import Counter
-from ete3 import NCBITaxa
 
 #: global list of accepted/excluded flags for prompt_accept/exclude flags
 accepted_flags = []
@@ -216,39 +215,6 @@ def read_taxdb():
             tax_db[species] = tax
 
     return tax_db
-
-
-def translate_lineage(lin):
-    """
-    """
-    lin_list = lin[3:]
-
-    tax = ''
-    for cat in lin_list:
-        tax += cat + ";"
-
-    return tax[:-1]
-
-
-def get_lineage(species):
-    """
-    """
-    ncbi = NCBITaxa()
-    # ncbi.update_taxonomy_database()
-    tax = ''
-
-    try:
-        tax_id = ncbi.get_name_translator([species])[species][0]
-    except KeyError:
-        tax_id = ''
-
-    if tax_id:
-        lineage = ncbi.get_lineage(tax_id)
-        names = ncbi.get_taxid_translator(lineage)
-        lin = [names[taxid] for taxid in lineage]
-        tax = translate_lineage(lin)
-
-    return tax
 
 
 def find_taxonomy(in_tax_dict, tax_dict, str_id):
@@ -504,7 +470,7 @@ def repr_taxonomy(tax_cluster):
 
     new_cluster = []
     for tax in tax_cluster:
-        if tax[-1][0].isupper():
+        if tax[-1][0].isupper() and 'undefined taxonomy' not in tax:
             new_cluster.append(tax)
 
     #: loop for species
@@ -695,38 +661,6 @@ def flag_header(str_id):
             header[flag] = int(occurence)
 
     return header
-
-
-def process_entry(entry, inc_check=False):
-    """Deprecated - ignore incertae, ETE3 handles Mito/Chlor.
-    Processes a taxonomic entry (label, taxonomy) to stop at the category
-    before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
-    categories to the first position, replacing Eukaryota/Bacteria.
-    TODO - Remove
-    """
-    label = entry.split(" ")[0]
-    inc_sed = 'Incertae Sedis'
-    mito_chlor = ['Mitochondria', 'Chloroplast']
-
-    #: if 'Incertae Sedis' in the taxonomy
-    if inc_check:
-        if inc_sed in entry.split(";"):
-            tax_entry = " ".join(entry.split(" ")[1:]).split(";")
-            cut_tax = tax_entry[:tax_entry.index(inc_sed)]
-            entry = "{} {}".format(label, ";".join(cut_tax))
-
-    #: if mitochondria or chlorplast in the taxonomy
-    mc_found = [i for i in mito_chlor if i in entry.split(";")]
-    if mc_found:
-        tax_entry = " ".join(entry.split(" ")[1:]).split(";")
-        new_tax_entry = [mc_found[0]]
-        for tax in tax_entry[1:tax_entry.index(mc_found[0])]:
-            new_tax_entry.append(tax)
-        for tax in tax_entry[tax_entry.index(mc_found[0])+1:]:
-            new_tax_entry.append(tax)
-        entry = "{} {}".format(label, ";".join(new_tax_entry))
-
-    return entry
 
 
 def repr_and_flag(str_id):
