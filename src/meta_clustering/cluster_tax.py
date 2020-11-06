@@ -272,10 +272,10 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
                 if found_tax:
                     tax = "{};{}".format(found_tax, species)
                 else:
-                    tax = "{};undefined taxonomy;{}".format(chlr_mito, species)
+                    tax = "undefined taxonomy;{}".format(species)
                     not_found = True
             else:
-                tax = "{};undefined taxonomy;{}".format(chlr_mito, species)
+                tax = "undefined taxonomy;{}".format(species)
 
         #: creating new tax_line
         #: if there are any strain/variation information for species
@@ -370,7 +370,7 @@ def create_cluster_tax(str_id, loop=False):
                                 curr_id = curr_line.split(" ")[0]
                                 id_dict[tax_nr] = curr_id
                                 curr_tax = " ".join(curr_line.split(" ")[1:])
-                                orig_dict[tax_nr] = curr_taxn
+                                orig_dict[tax_nr] = curr_tax
 
                                 #: adding chloro/mito taxonomies
                                 if (
