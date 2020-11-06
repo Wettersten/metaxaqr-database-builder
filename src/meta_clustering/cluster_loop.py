@@ -1,4 +1,4 @@
-from .cluster_tax import repr_and_flag, create_cluster_tax, get_lineage
+from .cluster_tax import repr_and_flag, create_cluster_tax
 from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
 from .handling import return_proj_path
