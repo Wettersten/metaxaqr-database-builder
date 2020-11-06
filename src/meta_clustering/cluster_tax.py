@@ -365,6 +365,7 @@ def create_cluster_tax(str_id, loop=False):
                                     loop_tlabel,
                                     loop_repr
                                 )
+                                clust_out.write("{}\n".format(curr_id))
                             else:
                                 curr_line = remove_cf_line(lines.rstrip())
                                 curr_id = curr_line.split(" ")[0]
@@ -392,9 +393,7 @@ def create_cluster_tax(str_id, loop=False):
                         out_dict = orig_dict
 
                     #: writing out the entries from the cluster
-                    if loop:
-                        clust_out.write("{}\n".format(curr_id))
-                    else:
+                    if not loop:
                         for i in out_dict:
                             curr_id = "{} {}".format(id_dict[i], out_dict[i])
                             clust_out.write("{}\n".format(curr_id))
