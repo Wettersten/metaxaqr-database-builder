@@ -548,7 +548,10 @@ def calc_repr_taxonomy(tax_cluster, opt):
     algorithm.
     """
     eq_tax = True
-    repr_tax = tax_cluster[0]
+    repr_tax = ''
+    for tax in tax_cluster:
+        if tax != "No Match":
+            repr_tax = tax
     flag = ''
     mc = []
 
@@ -559,8 +562,7 @@ def calc_repr_taxonomy(tax_cluster, opt):
                 break
             if len(tax) > len(repr_tax):
                 repr_tax = tax
-            if len(tax) > 1:
-                mc.append(tax[-2])
+            mc.append(tax[-2])
 
         elif opt == 'rest':
             if tax != repr_tax:
