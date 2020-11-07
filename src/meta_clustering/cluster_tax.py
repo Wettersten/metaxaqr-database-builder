@@ -549,33 +549,38 @@ def calc_repr_taxonomy(tax_cluster, opt):
     """
     eq_tax = True
     repr_tax = ''
+    pruned_tax_cluster = []
     for tax in tax_cluster:
-        if tax != "No Match":
-            repr_tax = tax
+        if len(tax) > 3:
+            pruned_tax_cluster.append(tax)
+
     flag = ''
     mc = []
 
-    for tax in tax_cluster:
-        if opt == 'species':
-            if tax[-1] != repr_tax[-1]:
-                eq_tax = False
-                break
-            if len(tax) > len(repr_tax):
-                repr_tax = tax
-            if len(tax) > 1:
-                mc.append(tax[-2])
-
-        elif opt == 'rest':
-            if tax != repr_tax:
-                eq_tax = False
-                break
-
-    if opt == 'species':
-        mc_term = Counter(mc).most_common(1)[0][0]
+    if pruned_tax_cluster:
         for tax in tax_cluster:
-            if mc_term in tax:
-                repr_tax = tax
-                break
+            if opt == 'species':
+                if tax[-1] != repr_tax[-1]:
+                    eq_tax = False
+                    break
+                if len(tax) > len(repr_tax):
+                    repr_tax = tax
+                if len(tax) > 1:
+                    mc.append(tax[-2])
+
+            elif opt == 'rest':
+                if tax != repr_tax:
+                    eq_tax = False
+                    break
+
+        if opt == 'species' and eq_tax:
+            mc_term = Counter(mc).most_common(1)[0][0]
+            for tax in tax_cluster:
+                if mc_term in tax:
+                    repr_tax = tax
+                    break
+    else:
+        eq_tax = False
 
     if not eq_tax:
         eq_tax, repr_tax, flag = algo_repr(tax_cluster, opt)
