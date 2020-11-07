@@ -553,20 +553,20 @@ def calc_repr_taxonomy(tax_cluster, opt):
     for tax in tax_cluster:
         if len(tax) > 3:
             pruned_tax_cluster.append(tax)
+            repr_tax = tax
 
     flag = ''
     mc = []
 
     if pruned_tax_cluster:
-        for tax in tax_cluster:
+        for tax in pruned_tax_cluster:
             if opt == 'species':
                 if tax[-1] != repr_tax[-1]:
                     eq_tax = False
                     break
                 if len(tax) > len(repr_tax):
                     repr_tax = tax
-                if len(tax) > 1:
-                    mc.append(tax[-2])
+                mc.append(tax[-2])
 
             elif opt == 'rest':
                 if tax != repr_tax:
