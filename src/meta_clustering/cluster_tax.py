@@ -562,7 +562,8 @@ def calc_repr_taxonomy(tax_cluster, opt):
                 break
             if len(tax) > len(repr_tax):
                 repr_tax = tax
-            mc.append(tax[-2])
+            if len(tax) > 1:
+                mc.append(tax[-2])
 
         elif opt == 'rest':
             if tax != repr_tax:
