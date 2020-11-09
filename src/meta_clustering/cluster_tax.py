@@ -467,13 +467,20 @@ def repr_taxonomy(tax_cluster):
     sp_splits = find_spsplits(tax_cluster)
     opt = ''
     shortest = 20
-
+    undef = 'undefined taxonomy'
+    undef_all = all(undef in ls for ls in [lst for lst in tax_cluster])
     new_cluster = []
+
+    #: includes undef if all in the list are undef
     for tax in tax_cluster:
-        if tax[-1][0].isupper() and 'undefined taxonomy' not in tax:
-            new_cluster.append(tax)
         if len(tax) < shortest:
             shortest = len(tax)
+        if undef_all:
+            if tax[-1][0].isupper():
+                new_cluster.append(tax)
+        else:
+            if tax[-1][0].isupper() and undef not in tax:
+                new_cluster.append(tax)
 
     #: loop for species
     if new_cluster:
@@ -526,6 +533,7 @@ def repr_taxonomy(tax_cluster):
                 repr_tax = new_repr_tax
                 if new_flag and new_flag not in flag.split(", "):
                     flag += new_flag + ", "
+            else:
                 break
 
     #: check for Incertae Sedis in last position
@@ -551,7 +559,7 @@ def calc_repr_taxonomy(tax_cluster, opt):
     repr_tax = ''
     pruned_tax_cluster = []
     for tax in tax_cluster:
-        if len(tax) > 3:
+        if len(tax) >= 3:
             pruned_tax_cluster.append(tax)
             repr_tax = tax
 
