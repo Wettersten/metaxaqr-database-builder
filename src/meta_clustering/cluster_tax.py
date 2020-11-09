@@ -466,11 +466,14 @@ def repr_taxonomy(tax_cluster):
     found = False
     sp_splits = find_spsplits(tax_cluster)
     opt = ''
+    shortest = 20
 
     new_cluster = []
     for tax in tax_cluster:
         if tax[-1][0].isupper() and 'undefined taxonomy' not in tax:
             new_cluster.append(tax)
+        if len(tax) < shortest:
+            shortest = len(tax)
 
     #: loop for species
     if new_cluster:
@@ -506,11 +509,9 @@ def repr_taxonomy(tax_cluster):
     #: categories it starts at category nr 4 to speed up the process
     if not found:
         opt = 'rest'
-        start = 0
-        if len(tax_cluster[0]) > 4:
-            start = len(tax_cluster[0])-5
+        start = 2  # TODO - algo to skip few categories if long?
 
-        for i in range(start, len(tax_cluster[0])):
+        for i in range(start, shortest):
             curr_cluster = []
             for tax in tax_cluster:
                 if tax[:i+1][-1][0].isupper():
@@ -525,7 +526,6 @@ def repr_taxonomy(tax_cluster):
                 repr_tax = new_repr_tax
                 if new_flag and new_flag not in flag.split(", "):
                     flag += new_flag + ", "
-            else:
                 break
 
     #: check for Incertae Sedis in last position
