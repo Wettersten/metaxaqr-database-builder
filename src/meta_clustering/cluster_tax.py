@@ -2,7 +2,6 @@ from .handling import return_proj_path, tax_list_to_str
 import os
 import subprocess
 from collections import Counter
-from ete3 import NCBITaxa
 
 #: global list of accepted/excluded flags for prompt_accept/exclude flags
 accepted_flags = []
@@ -118,33 +117,88 @@ def process_taxdb():
     run_path = return_proj_path() + '100'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_db_file = run_path + '/tax_db'
-    taxes = []
-    old_genus = ''
+    taxes = {}
+    final_taxes = {}
 
-    with open(tax_db_raw_file, 'r') as raw_file, \
-         open(tax_db_file, 'w') as tax_db:
+    with open(tax_db_raw_file, 'r') as raw_file:
 
         for line in raw_file:
+            species = ''
+            genus = ''
+
             curr_line = line.rstrip()
             tax_cats = ";".join(curr_line.split(";")[:-1])
-            species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
+            if 'sp.' not in curr_line.split(";")[-1]:
+                species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
+                tax_species = "{};{}".format(tax_cats, species)
             genus = curr_line.split(";")[-1].split(" ")[0]
-
-            #: tax_db_raw is sorted by name, no need to search old taxes
-            if genus != old_genus:
-                taxes = []
-
-            tax_species = "{};{}".format(tax_cats, species)
             tax_genus = "{};{}".format(tax_cats, genus)
-            curr = [tax_species, tax_genus]
 
-            #: makes sure only uniques in db, after removing strain info
-            for tax in curr:
-                if tax not in taxes:
-                    taxes.append(tax)
-                    tax_db.write("{}\n".format(tax))
+            if species:
+                if species not in taxes:
+                    taxes[species] = tax_species
+                else:
+                    dict_genus = taxes[species].split(";")[-2]
+                    sp_genus = tax_species.split(";")[-2]
+                    dict_len = len(taxes[species].split(";"))
+                    sp_len = len(tax_species.split(";"))
 
-            old_genus = genus
+                    #: if correct taxonomy found, uses genus as category
+                    if (
+                        dict_genus != genus
+                        and sp_genus == genus
+                    ):
+                        taxes[species] = tax_species
+
+                    #: if both either correct or wrong
+                    #: but new is longer (more detailed)
+                    elif (
+                        sp_len > dict_len
+                        and ((dict_genus == genus and sp_genus == genus)
+                             or dict_genus != genus and sp_genus != genus)
+                    ):
+                        taxes[species] = tax_species
+
+            #: if species is 'genus sp.', adding genus instead
+            else:
+                if genus not in taxes:
+                    taxes[genus] = tax_genus
+                else:
+                    dict_genus = taxes[genus].split(";")[-2]
+                    g_genus = tax_genus.split(";")[-2]
+                    dict_len = len(taxes[genus].split(";"))
+                    g_len = len(tax_genus.split(";"))
+
+                    #: if correct taxonomy found, uses genus as category
+                    if (
+                        dict_genus != genus
+                        and g_genus == genus
+                    ):
+                        taxes[genus] = tax_genus
+
+                    #: if both either correct or wrong
+                    #: but new is longer (more detailed)
+                    elif (
+                        g_len > dict_len
+                        and ((dict_genus == genus and g_genus == genus)
+                             or dict_genus != genus and g_genus != genus)
+                    ):
+                        taxes[genus] = tax_genus
+
+    #: adds all missing genus from species
+    final_taxes = taxes.copy()
+    for species, tax in taxes.items():
+        if len(species.split(" ")) == 2:
+            genus = species.split(" ")[0]
+            if genus not in final_taxes:
+                final_taxes[genus] = "{};{}".format(
+                    ";".join(tax.split(";")[:-1]),
+                    genus
+                )
+
+    with open(tax_db_file, 'w') as tax_db:
+        for sp in final_taxes:
+            tax_db.write(final_taxes[sp] + "\n")
 
 
 def read_taxdb():
@@ -153,108 +207,112 @@ def read_taxdb():
     run_path = return_proj_path() + '100'
     tax_db_file = run_path + '/tax_db'
     tax_db = {}
-    added_keys = []
 
     with open(tax_db_file, 'r') as tax_file:
         for line in tax_file:
             tax = line.rstrip()
             species = " ".join(tax.split(";")[-1].split(" ")[:2])
-            #: ignore duplicates (move to process db?)
-            if species not in added_keys:
-                tax_db[species] = tax
-                added_keys.append(species)
+            tax_db[species] = tax
 
     return tax_db
 
 
-def translate_lineage(lin):
-    """
-    """
-    lin_list = lin[3:]
-
-    tax = ''
-    for cat in lin_list:
-        tax += cat + ";"
-
-    return tax[:-1]
-
-
-def get_lineage(species):
-    """
-    """
-    ncbi = NCBITaxa()
-    # ncbi.update_taxonomy_database()
-    tax = ''
-
-    try:
-        tax_id = ncbi.get_name_translator([species])[species][0]
-    except KeyError:
-        tax_id = ''
-
-    if tax_id:
-        lineage = ncbi.get_lineage(tax_id)
-        names = ncbi.get_taxid_translator(lineage)
-        lin = [names[taxid] for taxid in lineage]
-        tax = translate_lineage(lin)
-
-    return tax
-
-
-def find_taxonomy(in_tax, tax_dict):
+def find_taxonomy(in_tax_dict, tax_dict, str_id):
     """Takes a taxonomy (used when Chlor/Mito present) and tries to find it
-    first in the tax_db file and then using ETE3, if found in none replace
-    first col with Chlor/Mito and keep taxonomy as is.
+    first in the tax_db file as species, then the genus. If one entry in the
+    input is not found it is replaced with the taxonomy found in others
+    (in 100 str_id only). If none found the taxonomy is replaced with
+    Chlr/Mito;undefined taxonomy;Species name.
     """
-    tax_split = in_tax.split(";")
-    sp_split = tax_split[-1].split(" ")
-    species = " ".join(sp_split[:2])
-    genus = sp_split[0]
-    chlr_mito = ''
-    str_info = ''
-    tax = ''
-    new_tax = ''
+    new_taxes = {}
+    undef_taxes = {}
+    found_taxes = {}
+    found_tax = ''
 
-    if "Chloroplast" in tax_split:
-        chlr_mito = 'Chloroplast'
-    elif "Mitochondria" in tax_split:
-        chlr_mito = 'Mitochondria'
-
-    if len(sp_split) > 2:
-        str_info = " ".join(sp_split[2:])
-    else:
+    for nr_tax in in_tax_dict:
+        tax_split = in_tax_dict[nr_tax].split(";")
+        sp_split = tax_split[-1].split(" ")
+        species = " ".join(sp_split[:2])
+        genus = sp_split[0]
+        chlr_mito = ''
         str_info = ''
+        tax = ''
+        new_tax = ''
+        not_found = False
 
-    #: find in tax_db
-    if species in tax_dict:
-        temp_tax = tax_dict[species]
-        split = temp_tax.split(";")[1:-1]
-        split.append(species)
-        tax = ";".join(split)
-    elif genus in tax_dict:
-        temp_tax = tax_dict[genus]
-        split = temp_tax.split(";")[1:-1]
-        split.append(species)
-        tax = ";".join(split)
+        if "Chloroplast" in tax_split:
+            chlr_mito = 'Chloroplast'
+        elif "Mitochondria" in tax_split:
+            chlr_mito = 'Mitochondria'
 
-    #: if not in tax_db - find in NCBI taxonomy using ETE3
-    if not tax:
-        tax = get_lineage(species)
+        if len(sp_split) > 2:
+            str_info = " ".join(sp_split[2:])
+        else:
+            str_info = ''
 
-    #: if not in either - use input tax but move chlor/mito
-    if not tax:
-        tax_split.remove(chlr_mito)
-        tax_split.remove(tax_split[-1])
-        tax_join = ";".join(tax_split)
-        tax = "{};{}".format(tax_join, species)
+        #: find in tax_db (species name)
+        if species in tax_dict:
+            temp_tax = tax_dict[species]
+            split = temp_tax.split(";")[1:-1]
+            split.append(species)
+            tax = ";".join(split)
+            found_tax = ";".join(tax.split(";")[:-1])
 
-    #: creating new tax_line
-    #: if there are any strain/variation information for species
-    if str_info:
-        new_tax = "{cm};{tx} {st}".format(cm=chlr_mito, tx=tax, st=str_info)
+        #: find in tax_db (genus)
+        elif (
+            genus in tax_dict
+            and genus != 'Eukaryota'
+        ):
+            temp_tax = tax_dict[genus]
+            split = temp_tax.split(";")[1:-1]
+            split.append(species)
+            tax = ";".join(split)
+            found_tax = ";".join(tax.split(";")[:-1])
+
+        #: if not in either
+        if not tax:
+            if int(str_id) == 100:
+                if found_tax:
+                    tax = "{};{}".format(found_tax, species)
+                else:
+                    tax = "undefined taxonomy;{}".format(species)
+                    not_found = True
+            else:
+                tax = "undefined taxonomy;{}".format(species)
+
+        #: creating new tax_line
+        #: if there are any strain/variation information for species
+        if str_info:
+            new_tax = "{cm};{tx} {st}".format(
+                cm=chlr_mito,
+                tx=tax,
+                st=str_info
+            )
+
+        else:
+            new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
+
+        if not_found:
+            undef_taxes[nr_tax] = new_tax
+        else:
+            found_taxes[nr_tax] = new_tax
+
+    #: if any taxonomies considered undef before found a taxonomy to use
+    if undef_taxes:
+        if found_tax:
+            for nr in undef_taxes:
+                chlr_mito = undef_taxes[nr].split(";")[0]
+                species = undef_taxes[nr].split(";")[-1]
+                undef_taxes[nr] = "{cm};{tx};{sp}".format(
+                    cm=chlr_mito,
+                    tx=found_tax,
+                    sp=species
+                )
+        new_taxes = {**found_taxes, **undef_taxes}
     else:
-        new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
+        new_taxes = found_taxes
 
-    return new_tax
+    return new_taxes
 
 
 def create_cluster_tax(str_id, loop=False):
@@ -265,6 +323,9 @@ def create_cluster_tax(str_id, loop=False):
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
+    tax_db = ''
+    if not loop:
+        tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -277,7 +338,14 @@ def create_cluster_tax(str_id, loop=False):
                 cluster_file = cluster_dir + "/cluster_" + curr_cluster
 
                 with open(cluster_file, 'r') as read_cluster:
+                    tax_nr = 0
+                    id_dict = {}
+                    orig_dict = {}
+                    cm_dict = {}
+                    upd_cm_dict = {}
+                    out_dict = {}
                     new_cluster = curr_cluster
+
                     if loop:
                         new_cluster = curr_line[9].split("_")[2]
                     clust_out.write("MQR_{}_{}\n".format(
@@ -300,20 +368,37 @@ def create_cluster_tax(str_id, loop=False):
                                     loop_tlabel,
                                     loop_repr
                                 )
+                                clust_out.write("{}\n".format(curr_id))
                             else:
-                                tax_db = read_taxdb()
-                                curr_id = remove_cf_line(lines.rstrip())
+                                curr_line = remove_cf_line(lines.rstrip())
+                                curr_id = curr_line.split(" ")[0]
+                                id_dict[tax_nr] = curr_id
+                                curr_tax = " ".join(curr_line.split(" ")[1:])
+                                orig_dict[tax_nr] = curr_tax
 
-                                #: fixes chloro/mito taxonomies
+                                #: adding chloro/mito taxonomies
                                 if (
-                                    "Chloroplast" in curr_id.split(";")
-                                    or "Mitochondria" in curr_id.split(";")
+                                    "Chloroplast" in curr_line.split(";")
+                                    or "Mitochondria" in curr_line.split(";")
                                 ):
-                                    id_label = curr_id.split(" ")[0]
-                                    curr_tax = " ".join(curr_id.split(" ")[1:])
-                                    f_tax = find_taxonomy(curr_tax, tax_db)
-                                    curr_id = id_label + " " + f_tax
+                                    cm_dict[tax_nr] = curr_tax
 
+                            tax_nr += 1
+
+                    #: fixes chloro/mito taxonomies
+                    if cm_dict:
+                        upd_cm_dict = find_taxonomy(cm_dict, tax_db, str_id)
+                        for k, v in orig_dict.items():
+                            if k not in upd_cm_dict:
+                                upd_cm_dict[k] = v
+                        out_dict = upd_cm_dict
+                    else:
+                        out_dict = orig_dict
+
+                    #: writing out the entries from the cluster
+                    if not loop:
+                        for i in out_dict:
+                            curr_id = "{} {}".format(id_dict[i], out_dict[i])
                             clust_out.write("{}\n".format(curr_id))
 
         clust_out.write("end")
@@ -384,11 +469,21 @@ def repr_taxonomy(tax_cluster):
     found = False
     sp_splits = find_spsplits(tax_cluster)
     opt = ''
-
+    shortest = 20
+    undef = 'undefined taxonomy'
+    undef_all = all(undef in ls for ls in [lst for lst in tax_cluster])
     new_cluster = []
+
+    #: includes undef if all in the list are undef
     for tax in tax_cluster:
-        if tax[-1][0].isupper():
-            new_cluster.append(tax)
+        if len(tax) < shortest:
+            shortest = len(tax)
+        if undef_all:
+            if tax[-1][0].isupper():
+                new_cluster.append(tax)
+        else:
+            if tax[-1][0].isupper() and undef not in tax:
+                new_cluster.append(tax)
 
     #: loop for species
     if new_cluster:
@@ -425,10 +520,10 @@ def repr_taxonomy(tax_cluster):
     if not found:
         opt = 'rest'
         start = 0
-        if len(tax_cluster[0]) > 4:
-            start = len(tax_cluster[0])-5
+        if shortest > 4:
+            start = 2
 
-        for i in range(start, len(tax_cluster[0])):
+        for i in range(start, shortest):
             curr_cluster = []
             for tax in tax_cluster:
                 if tax[:i+1][-1][0].isupper():
@@ -466,30 +561,46 @@ def calc_repr_taxonomy(tax_cluster, opt):
     algorithm.
     """
     eq_tax = True
-    repr_tax = tax_cluster[0]
+    repr_tax = ''
+    pruned_tax_cluster = []
+    for tax in tax_cluster:
+        if len(tax) >= 3:
+            pruned_tax_cluster.append(tax)
+            repr_tax = tax
+        else:
+            repr_tax = tax_cluster[0]
+
     flag = ''
     mc = []
+    if pruned_tax_cluster:
+        for tax in pruned_tax_cluster:
+            if opt == 'species':
+                if tax[-1] != repr_tax[-1]:
+                    eq_tax = False
+                    break
+                if len(tax) > len(repr_tax):
+                    repr_tax = tax
+                mc.append(tax[-2])
 
-    for tax in tax_cluster:
-        if opt == 'species':
-            if tax[-1] != repr_tax[-1]:
-                eq_tax = False
-                break
-            if len(tax) > len(repr_tax):
-                repr_tax = tax
-            mc.append(tax[-2])
+            elif opt == 'rest':
+                if tax != repr_tax:
+                    eq_tax = False
+                    break
 
-        elif opt == 'rest':
-            if tax != repr_tax:
-                eq_tax = False
-                break
-
-    if opt == 'species':
-        mc_term = Counter(mc).most_common(1)[0][0]
-        for tax in tax_cluster:
-            if mc_term in tax:
-                repr_tax = tax
-                break
+        if opt == 'species' and eq_tax:
+            mc_term = Counter(mc).most_common(1)[0][0]
+            for tax in tax_cluster:
+                if mc_term in tax:
+                    repr_tax = tax
+                    break
+    else:
+        if opt == 'rest':
+            for tax in tax_cluster:
+                if tax != repr_tax:
+                    eq_tax = False
+                    break
+        else:
+            eq_tax = False
 
     if not eq_tax:
         eq_tax, repr_tax, flag = algo_repr(tax_cluster, opt)
@@ -578,38 +689,6 @@ def flag_header(str_id):
             header[flag] = int(occurence)
 
     return header
-
-
-def process_entry(entry, inc_check=False):
-    """Deprecated - ignore incertae, ETE3 handles Mito/Chlor.
-    Processes a taxonomic entry (label, taxonomy) to stop at the category
-    before 'Incertae Sedis' if present, and move the chlorplast/mitochondria
-    categories to the first position, replacing Eukaryota/Bacteria.
-    TODO - Remove
-    """
-    label = entry.split(" ")[0]
-    inc_sed = 'Incertae Sedis'
-    mito_chlor = ['Mitochondria', 'Chloroplast']
-
-    #: if 'Incertae Sedis' in the taxonomy
-    if inc_check:
-        if inc_sed in entry.split(";"):
-            tax_entry = " ".join(entry.split(" ")[1:]).split(";")
-            cut_tax = tax_entry[:tax_entry.index(inc_sed)]
-            entry = "{} {}".format(label, ";".join(cut_tax))
-
-    #: if mitochondria or chlorplast in the taxonomy
-    mc_found = [i for i in mito_chlor if i in entry.split(";")]
-    if mc_found:
-        tax_entry = " ".join(entry.split(" ")[1:]).split(";")
-        new_tax_entry = [mc_found[0]]
-        for tax in tax_entry[1:tax_entry.index(mc_found[0])]:
-            new_tax_entry.append(tax)
-        for tax in tax_entry[tax_entry.index(mc_found[0])+1:]:
-            new_tax_entry.append(tax)
-        entry = "{} {}".format(label, ";".join(new_tax_entry))
-
-    return entry
 
 
 def repr_and_flag(str_id):
