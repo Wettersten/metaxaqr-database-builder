@@ -259,7 +259,10 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
             found_tax = ";".join(tax.split(";")[:-1])
 
         #: find in tax_db (genus)
-        elif genus in tax_dict:
+        elif (
+            genus in tax_dict
+            and genus != 'Eukaryota'
+        ):
             temp_tax = tax_dict[genus]
             split = temp_tax.split(";")[1:-1]
             split.append(species)
@@ -516,7 +519,9 @@ def repr_taxonomy(tax_cluster):
     #: categories it starts at category nr 4 to speed up the process
     if not found:
         opt = 'rest'
-        start = 2  # TODO - algo to skip few categories if long?
+        start = 0
+        if shortest > 4:
+            start = 2
 
         for i in range(start, shortest):
             curr_cluster = []
@@ -562,10 +567,11 @@ def calc_repr_taxonomy(tax_cluster, opt):
         if len(tax) >= 3:
             pruned_tax_cluster.append(tax)
             repr_tax = tax
+        else:
+            repr_tax = tax_cluster[0]
 
     flag = ''
     mc = []
-
     if pruned_tax_cluster:
         for tax in pruned_tax_cluster:
             if opt == 'species':
@@ -588,7 +594,13 @@ def calc_repr_taxonomy(tax_cluster, opt):
                     repr_tax = tax
                     break
     else:
-        eq_tax = False
+        if opt == 'rest':
+            for tax in tax_cluster:
+                if tax != repr_tax:
+                    eq_tax = False
+                    break
+        else:
+            eq_tax = False
 
     if not eq_tax:
         eq_tax, repr_tax, flag = algo_repr(tax_cluster, opt)
