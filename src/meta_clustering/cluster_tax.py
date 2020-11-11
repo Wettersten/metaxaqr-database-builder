@@ -618,9 +618,9 @@ def algo_repr(tax_cluster, opt):
     if len(tax_cluster) > 10:
         for tax in tax_cluster:
             if opt == 'species':
-                new_cluster.append(tax_list_to_str(tax[-1]))
+                new_cluster.append(tax[-1])
             elif opt == 'rest':
-                new_cluster.append(tax_list_to_str(tax))
+                new_cluster.append(";".join(tax))
 
         c_cluster = []
         high_fract = 0.0
