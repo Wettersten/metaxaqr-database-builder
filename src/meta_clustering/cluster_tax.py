@@ -443,18 +443,15 @@ def chlor_mito_flag(cluster):
 
 
 def find_spsplits(tax_cluster):
-    """Gets how many words (split by spaces) in the entry with most words in
+    """Gets how many words (split by spaces) in the entry with least words in
     the tax_cluster.
     """
     sps = []
-    sp_splits = 0
 
     for tax in tax_cluster:
-        sps.append(tax[-1].split(" "))
+        sps.append(len(tax[-1].split(" ")))
 
-    for sp in sps:
-        if len(sp) > sp_splits:
-            sp_splits = len(sp)
+    sp_splits = min(sps)
 
     return sp_splits
 
@@ -621,9 +618,9 @@ def algo_repr(tax_cluster, opt):
     if len(tax_cluster) > 10:
         for tax in tax_cluster:
             if opt == 'species':
-                new_cluster.append(tax_list_to_str(tax[-1]))
+                new_cluster.append(tax[-1])
             elif opt == 'rest':
-                new_cluster.append(tax_list_to_str(tax))
+                new_cluster.append(";".join(tax))
 
         c_cluster = []
         high_fract = 0.0

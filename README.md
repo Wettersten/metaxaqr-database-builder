@@ -8,7 +8,6 @@ Takes a database of sequences in FASTA format, comprised of taxonomic informatio
 
 - VSEARCH 2.15.0
 - pathlib (?) (conda install -c menpo pathlib)
-- ETEtoolkit 3.1.2 (conda install -c etetoolkit ete3 ete_toolchain)
 
 Text here explaining packages needed
 
@@ -75,7 +74,7 @@ src/meta_clustering/
 
 #### meta_clustering.py
 
-Main module, executing the program when used. 
+Main module, executing the program when used.
 
 1. Creates the argparse parse and retrieves the input arguments from user
 2. Error checking which checks if correct arguments are input, if the files are valid and if all dependencies are installed.
