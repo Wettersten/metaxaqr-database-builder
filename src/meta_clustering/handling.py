@@ -63,7 +63,11 @@ def error_check(args):
     """
     check_installation()
     check_args(args)
-    check_prereqs(args)
+    if (
+        args.args.opt_clustering
+        or args.opt_finalize
+    ):
+        check_prereqs(args)
 
 
 def check_args(args):

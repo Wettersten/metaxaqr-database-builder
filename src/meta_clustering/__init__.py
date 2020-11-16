@@ -15,4 +15,4 @@ from .handling import create_dir_structure
 from .handling import tax_list_to_str
 from .handling import set_proj_path
 
-from .dbstats import db_dupestats
+from .db_stats import db_dupestats
