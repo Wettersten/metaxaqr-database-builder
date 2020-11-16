@@ -46,6 +46,10 @@ def create_parser():
                         help="""Creates a Metaxa2 databse from the created
                         files""")
 
+    parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,
+                        metavar='',
+                        help="""{FILENAME} FASTA database for stats""")
+
     parser.add_argument('-q', '--quiet', dest='log_quiet',
                         action='store_true', default=False,
                         help="""No status print out, only writing to log file
