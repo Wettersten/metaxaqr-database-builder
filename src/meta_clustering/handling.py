@@ -61,7 +61,11 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    check_installation()
+    if (  # TODO - maybe move to check_installation()
+        args.opt_clustering
+        or args.opt_finalize
+    ):
+        check_installation()
     check_args(args)
     check_prereqs(args)
 
