@@ -79,4 +79,4 @@ def main_mc(args):
 
     #: running duplicate stats method
     if args.opt_ds:
-        db_dupestats(opt_ds)
+        db_dupestats(args.opt_ds)
