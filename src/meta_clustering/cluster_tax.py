@@ -461,7 +461,7 @@ def repr_taxonomy(tax_cluster):
     first and the continuing down to lower categories. Returning representative
     taxonomy and any flags.
     """
-    repr_tax = 'No Match'  # if no repr_tax is found
+    repr_tax = 'Mismatch'  # if no repr_tax is found
     flag = ''
     found = False
     sp_splits = find_spsplits(tax_cluster)
@@ -546,8 +546,8 @@ def repr_taxonomy(tax_cluster):
     tmp_flag = flag_check(tax_cluster)
     if tmp_flag and tmp_flag not in flag.split(", "):
         flag += tmp_flag + ", "
-    if repr_tax == 'No Match':
-        flag += 'No_Match, '
+    if repr_tax == 'Mismatch':
+        flag += 'Mismatch, '
 
     return flag[:-2], repr_tax
 
