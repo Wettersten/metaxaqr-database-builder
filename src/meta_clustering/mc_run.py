@@ -76,7 +76,7 @@ def main_mc(args):
 
     #: running the make database command
     if args.opt_makedb:
-        makedb()
+        make_db()
 
     #: running duplicate stats method
     if args.opt_ds:
