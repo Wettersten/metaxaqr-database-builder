@@ -16,3 +16,5 @@ from .handling import tax_list_to_str
 from .handling import set_proj_path
 
 from .db_stats import db_dupestats
+
+from .make_db import make_db

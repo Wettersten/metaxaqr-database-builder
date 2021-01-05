@@ -43,7 +43,7 @@ def create_parser():
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
-                        help="""Creates a Metaxa2 databse from the created
+                        help="""Creates a Metaxa2 databse from the output
                         files""")
 
     parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,

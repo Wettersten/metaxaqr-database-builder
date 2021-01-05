@@ -8,6 +8,7 @@ from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, set_proj_path
 from .db_stats import db_dupestats
+from .make_db import make_db
 
 
 def main_mc(args):
@@ -75,7 +76,7 @@ def main_mc(args):
 
     #: running the make database command
     if args.opt_makedb:
-        pass
+        makedb()
 
     #: running duplicate stats method
     if args.opt_ds:
