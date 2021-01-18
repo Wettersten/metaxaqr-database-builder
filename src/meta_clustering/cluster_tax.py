@@ -511,6 +511,9 @@ def repr_taxonomy(tax_cluster, algo_run):
             if tax[-1][0].isupper() and undef not in tax:
                 new_cluster.append(tax)
 
+    if not new_cluster:
+        print("No cluster found")
+
     #: loop for species
     if new_cluster:
         opt = 'species'
