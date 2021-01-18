@@ -511,39 +511,43 @@ def repr_taxonomy(tax_cluster, algo_run):
             if tax[-1][0].isupper() and undef not in tax:
                 new_cluster.append(tax)
 
+    #: if all species start with lower character 'uncultured x'...
     if not new_cluster:
-        print("No cluster found\n")
-        print(tax_cluster)
+        for tax in tax_cluster:
+            if undef_all:
+                new_cluster.append(tax)
+            else:
+                if undef not in tax:
+                    new_cluster.append(tax)
 
     #: loop for species
-    if new_cluster:
-        opt = 'species'
-        for i in range(sp_splits):
-            curr_cluster = []
-            for tax in new_cluster:
-                stripped_tax = tax[:-1]
-                sp_tax = " ".join((tax[-1].split(" ")[:(sp_splits-i)]))
-                stripped_tax.append(sp_tax)
-                curr_cluster.append(stripped_tax)
+    opt = 'species'
+    for i in range(sp_splits):
+        curr_cluster = []
+        for tax in new_cluster:
+            stripped_tax = tax[:-1]
+            sp_tax = " ".join((tax[-1].split(" ")[:(sp_splits-i)]))
+            stripped_tax.append(sp_tax)
+            curr_cluster.append(stripped_tax)
 
-            found, new_repr_tax, new_flag = calc_repr_taxonomy(
-                curr_cluster,
-                opt,
-                algo_run
-            )
-            if (
-                new_repr_tax[-3:] == 'sp.'
-                or new_repr_tax[-1:] == '#'
-                or 'environmental' in new_repr_tax.split(";")[-1].split(" ")
-                or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
-            ):
-                found = False
+        found, new_repr_tax, new_flag = calc_repr_taxonomy(
+            curr_cluster,
+            opt,
+            algo_run
+        )
+        if (
+            new_repr_tax[-3:] == 'sp.'
+            or new_repr_tax[-1:] == '#'
+            or 'environmental' in new_repr_tax.split(";")[-1].split(" ")
+            or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
+        ):
+            found = False
 
-            if found:
-                repr_tax = new_repr_tax
-                if new_flag and new_flag not in flag.split(", "):
-                    flag += new_flag + ", "
-                break
+        if found:
+            repr_tax = new_repr_tax
+            if new_flag and new_flag not in flag.split(", "):
+                flag += new_flag + ", "
+            break
 
     #: loop for categories below species
     #: starting at lowest category and moving upwards, if more than 4
