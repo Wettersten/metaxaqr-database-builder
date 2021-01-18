@@ -420,6 +420,10 @@ def flag_check(cluster):
     if chl_flag:
         flag += chl_flag + ", "
 
+    dom_flag = domain_flag(cluster)
+    if dom_flag:
+        flag += dom_flag + ", "
+
     return flag[:-2]
 
 
@@ -435,8 +439,33 @@ def chlor_mito_flag(cluster):
             chlor_check = True
         elif "Mitochondria" in tax:
             mito_check = True
+
         if chlor_check and mito_check:
             flag_out = "Chlr_Mito"
+            break
+
+    return flag_out
+
+
+def domain_flag(cluster):
+    """Flags if there are more than one domain in the cluster. (Archaea,
+    Bacteria, Eukaryota)
+    """
+    arc_check = 0
+    bac_check = 0
+    euk_check = 0
+    flag_out = ''
+
+    for tax in cluster:
+        if "Archaea" in tax:
+            arc_check = 1
+        elif "Bacteria" in tax:
+            bac_check = 1
+        elif "Eukaryota" in tax:
+            euk_check = 1
+
+        if (arc_check + bac_check + euk_check) > 1:
+            flag_out = "Domain"
             break
 
     return flag_out
@@ -456,12 +485,12 @@ def find_spsplits(tax_cluster):
     return sp_splits
 
 
-def repr_taxonomy(tax_cluster):
+def repr_taxonomy(tax_cluster, algo_run):
     """Calculates the representative taxonomy for a cluster, checking species
     first and the continuing down to lower categories. Returning representative
     taxonomy and any flags.
     """
-    repr_tax = 'No Match'  # if no repr_tax is found
+    repr_tax = 'Mismatch'  # if no repr_tax is found
     flag = ''
     found = False
     sp_splits = find_spsplits(tax_cluster)
@@ -495,7 +524,8 @@ def repr_taxonomy(tax_cluster):
 
             found, new_repr_tax, new_flag = calc_repr_taxonomy(
                 curr_cluster,
-                opt
+                opt,
+                algo_run
             )
             if (
                 new_repr_tax[-3:] == 'sp.'
@@ -528,7 +558,8 @@ def repr_taxonomy(tax_cluster):
             if curr_cluster:
                 found, new_repr_tax, new_flag = calc_repr_taxonomy(
                     curr_cluster,
-                    opt
+                    opt,
+                    algo_run
                 )
 
             if found:
@@ -546,13 +577,13 @@ def repr_taxonomy(tax_cluster):
     tmp_flag = flag_check(tax_cluster)
     if tmp_flag and tmp_flag not in flag.split(", "):
         flag += tmp_flag + ", "
-    if repr_tax == 'No Match':
-        flag += 'No_Match, '
+    if repr_tax == 'Mismatch':
+        flag += 'Mismatch, '
 
     return flag[:-2], repr_tax
 
 
-def calc_repr_taxonomy(tax_cluster, opt):
+def calc_repr_taxonomy(tax_cluster, opt, algo_run):
     """Gets the representative taxonomy for species, first checking if all
     entries in the cluster are equal then checking if they match using the
     algorithm.
@@ -599,7 +630,7 @@ def calc_repr_taxonomy(tax_cluster, opt):
         else:
             eq_tax = False
 
-    if not eq_tax:
+    if not eq_tax and algo_run:
         eq_tax, repr_tax, flag = algo_repr(tax_cluster, opt)
 
     return eq_tax, tax_list_to_str(repr_tax), flag
@@ -698,6 +729,10 @@ def repr_and_flag(str_id):
     tax_clusters_file = run_path + '/tax_clusters'
     repr_clusters_file = run_path + '/repr_clusters'
     flag_clusters_file = run_path + '/flag_clusters' + '.bak'
+    if int(str_id) == 100:
+        algo_run = True
+    else:
+        algo_run = False
 
     with open(tax_clusters_file, 'r') as tax_file, \
          open(repr_clusters_file, 'w') as repr_file, \
@@ -716,7 +751,10 @@ def repr_and_flag(str_id):
 
                 if not first_line:
                     my_cluster = Cluster(old_label, curr_cluster)
-                    flag, repr_tax = repr_taxonomy(my_cluster.get_taxeslist())
+                    flag, repr_tax = repr_taxonomy(
+                                                   my_cluster.get_taxeslist(),
+                                                   algo_run
+                                                   )
 
                     my_cluster.change_flags(flag)
                     my_cluster.change_reprtax(repr_tax)
@@ -1074,7 +1112,7 @@ def prompt_print(my_cluster):
     )
 
     prompt_clust_full = prompt_before + prompt_clust + prompt_after
-    old_prompt_text = """
+    old_prompt_text_deprecated = """
 
 Accept suggestion, alt. accept all/all from one flag: accept [all] [flag]
 Manual entry: manual Taxonomy;To;Use
@@ -1112,6 +1150,7 @@ def prompt_remove(input, my_cluster):
     """
     cluster = my_cluster.get_taxeslist()
     valid_input = check_input_rem(input.split(" ")[1:])
+    algo_run = True
 
     if valid_input:
         remove_loop = True
@@ -1136,7 +1175,7 @@ def prompt_remove(input, my_cluster):
             if i+1 not in removed_ids:
                 new_cluster.append(cluster[i])
 
-        _, temp_repr_tax = repr_taxonomy(new_cluster)
+        _, temp_repr_tax = repr_taxonomy(new_cluster, algo_run)
 
         removed_ids_str = ''
         kept_ids_str = ''
