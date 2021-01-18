@@ -600,7 +600,7 @@ def calc_repr_taxonomy(tax_cluster, opt, algo_run):
     repr_tax = ''
     pruned_tax_cluster = []
     for tax in tax_cluster:
-        if len(tax) >= 3:
+        if len(tax) >= 2:
             pruned_tax_cluster.append(tax)
             repr_tax = tax
         else:
