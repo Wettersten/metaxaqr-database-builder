@@ -512,7 +512,8 @@ def repr_taxonomy(tax_cluster, algo_run):
                 new_cluster.append(tax)
 
     if not new_cluster:
-        print("No cluster found")
+        print("No cluster found\n")
+        print(tax_cluster)
 
     #: loop for species
     if new_cluster:
