@@ -6,7 +6,7 @@ Takes a database of sequences in FASTA format, comprised of taxonomic informatio
 
 ## Dependencies
 
-- VSEARCH 2.15.0
+- VSEARCH 2.15.0 (conda install -c bioconda vsearch)
 - pathlib (?) (conda install -c menpo pathlib)
 
 Text here explaining packages needed
@@ -16,7 +16,7 @@ Text here explaining packages needed
 ## "Help" output
 
 
-python metaclustering.py -h	
+python metaclustering.py -h
 usage: meta_clustering [-h] [-c] [-i] [-o] [-r] [-f] [-m] [-q] [--version]
 
 Analyse taxonomy within clusters based on sequence identity.

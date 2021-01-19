@@ -65,11 +65,7 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    if (  # TODO - maybe move to check_installation()
-        args.opt_clustering
-        or args.opt_finalize
-    ):
-        check_installation()
+    check_installation()
     check_args(args)
     check_prereqs(args)
 
@@ -127,9 +123,14 @@ def check_file(file):
 
 
 def check_installation():
-    """Checks if valid installation, if vsearch + ? is found.
+    """Checks if valid installation, checking for dependencies.
     """
-    reqs = ['vsearch', 'ete3']
+    reqs = []
+    if (
+        args.opt_clustering
+        or args.opt_finalize
+    ):
+        reqs = ['vsearch']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
