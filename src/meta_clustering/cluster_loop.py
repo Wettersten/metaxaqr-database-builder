@@ -1,3 +1,8 @@
+"""Handles the iteration loop used by Finalize (-f) to create final files such
+as final_repr, final_centroids, tree_labels and cluster the final_centroids
+file to continue with next iteration.
+"""
+
 from .cluster_tax import repr_and_flag, create_cluster_tax
 from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs

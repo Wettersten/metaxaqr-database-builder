@@ -1,3 +1,7 @@
+"""Methods related to various handling functions, such as getting the path to
+the project etc
+"""
+
 import time
 import os
 import pathlib

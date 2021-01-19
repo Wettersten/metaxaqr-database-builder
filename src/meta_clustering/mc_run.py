@@ -1,3 +1,6 @@
+"""Main method, compiling all module options to run the program
+"""
+
 import time
 import argparse
 import os

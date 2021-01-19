@@ -1,3 +1,6 @@
+"""Creates the final output files used by Metaxa2 as a new database
+"""
+
 import os
 import pathlib
 import shutil

@@ -1,3 +1,7 @@
+"""Methods related to creating representative taxonomies, handling clusters,
+flags, manual review and correction and all related functions.
+"""
+
 from .handling import return_proj_path, tax_list_to_str
 import os
 import subprocess
@@ -412,7 +416,6 @@ def remove_cf_line(tax_line):
 
 def flag_check(cluster):
     """Checks various flag scenarios and returns appropriate flags.
-    TODO - Expand to further flags
     """
     flag = ''
 
@@ -1120,18 +1123,6 @@ def prompt_print(my_cluster):
     )
 
     prompt_clust_full = prompt_before + prompt_clust + prompt_after
-    old_prompt_text_deprecated = """
-
-Accept suggestion, alt. accept all/all from one flag: accept [all] [flag]
-Manual entry: manual Taxonomy;To;Use
-Keep entry to represent: keep id [c-2 / s-3]
-Need suggestion by removing ids: remove id1-id3 id5
-Ignore current cluster and save it for later review: exclude
-Show flags and their respective occurences: flags
-Exit, discarding all remaining suggestions: exit
-
-
-Input: """
 
     prompt_text = """
 
