@@ -14,7 +14,7 @@ from .db_stats import db_dupestats
 from .make_db import make_db
 
 
-def main_mc(args):
+def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
     quiet = args.log_quiet

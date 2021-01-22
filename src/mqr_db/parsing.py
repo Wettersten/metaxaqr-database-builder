@@ -6,7 +6,7 @@ import os
 import argparse
 
 seq_version = 0.1
-seq_name = 'meta_clustering'
+seq_name = 'MetaxaQR Database Builder'
 
 
 def create_parser():
@@ -17,8 +17,8 @@ def create_parser():
     """
     parser = argparse.ArgumentParser(
         prog=seq_name,
-        description="""Analyse taxonomy within clusters based on sequence
-        identity.""",
+        description="""Create database for MetaxaQR using taxonomic database of
+        genetic markers.""",
         epilog='Examples: ')
 
     parser.add_argument('-c', '--cluster', dest='opt_clustering',
@@ -43,7 +43,7 @@ def create_parser():
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
-                        help="""Creates a Metaxa2 databse from the output
+                        help="""Creates a MetaxaQR database from the output
                         files""")
 
     parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,

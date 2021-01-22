@@ -1,6 +1,6 @@
-# Meta_clustering
+# MetaxaQR Database Builder
 
-Takes a database of sequences in FASTA format, comprised of taxonomic information coupled with sequences of a genetic marker, these are clustered together in order to build a database for Metaxa2.
+Takes a database of sequences in FASTA format, comprised of taxonomic information coupled with sequences of a genetic marker, these are clustered together in order to build a database for MetaxaQR.
 
 
 
@@ -16,8 +16,8 @@ Text here explaining packages needed
 ## "Help" output
 
 
-python metaclustering.py -h
-usage: meta_clustering [-h] [-c] [-i] [-o] [-r] [-f] [-m] [-q] [--version]
+python mqr_db.py -h
+usage: mqr_db [-h] [-c] [-i] [-o] [-r] [-f] [-m] [-q] [--version]
 
 Analyse taxonomy within clusters based on sequence identity.
 
@@ -29,7 +29,7 @@ optional arguments:
 - -o , --output   {PATH} Specify output path, path/mqr_db/...
 - -r, --review    Manual review of flagged clusters
 - -f, --finalize  Further clustering of their output centroid files from manual review down to 95% identity
-- -m, --makedb    Creates a Metaxa2 databse from the created files
+- -m, --makedb    Creates a MetaxaQR databse from the created files
 - -q, --quiet     No status print out, only writing to log file
 - --version       show program's version number and exit
 
@@ -40,11 +40,11 @@ Examples:
 
 ## Running
 
-python meta_clustering.py -c -i silva_trunc_database.FASTA
+python mqr_db.py -c -i silva_trunc_database.FASTA
 
-python meta_clustering.py -r
+python mqr_db.py -r
 
-python meta_clustering.py -f
+python mqr_db.py -f
 
 
 
@@ -56,12 +56,12 @@ A full run of SILVA truncated database (2.4M sequences) from start to finish is 
 
 ### Structure
 
-meta_clustering.py
+mqr_db.py
 
 src/
 	init.py
 
-src/meta_clustering/
+src/mqr_db/
 	init.py
 	cluster_loop.py
 	cluster_tax.py
