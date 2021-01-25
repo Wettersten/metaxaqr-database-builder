@@ -50,7 +50,7 @@ def main_mqrdb(args):
         str_id = '100'
 
         #: manual review of flag file and creation of corrected repr file
-        msg = "Running manual review of flagged clusters\n"
+        msg = "Running manual review of flagged clusters"
         logging(quiet=quiet, custom=True, custom_msg=msg)
         start_time = time.time()
 
@@ -79,7 +79,14 @@ def main_mqrdb(args):
 
     #: running the make database command
     if args.opt_makedb:
+        msg = "Creating final MetaxaQR database"
+        logging(quiet=quiet, custom=True, custom_msg=msg)
+        start_time = time.time()
+
         make_db()
+
+        elapsed_time = time.time() - start_time
+        logging(etime=elapsed_time, time_log=True, quiet=quiet)
 
     #: running duplicate stats method
     if args.opt_ds:

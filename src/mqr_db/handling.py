@@ -6,8 +6,8 @@ import time
 import os
 import pathlib
 import argparse
-from shutil import which
 import importlib
+from shutil import which
 
 
 def create_dir_structure(str_id):
@@ -66,7 +66,7 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    check_installation()
+    check_installation(args)
     check_args(args)
     check_prereqs(args)
 
@@ -123,7 +123,7 @@ def check_file(file):
     return os.path.isfile(file)
 
 
-def check_installation():
+def check_installation(args):
     """Checks if valid installation, checking for dependencies.
     """
     reqs = []
