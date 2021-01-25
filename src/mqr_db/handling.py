@@ -84,15 +84,8 @@ def check_args(args):
         error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
         quit(error_msg)
 
-    if (
-        (args.input and not args.opt_clustering)
-        or (args.output and not args.opt_clustering)
-    ):
-        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]"
-        quit(error_msg)
-
-    if args.input:
-        file = args.input
+    if args.opt_clustering:
+        file = args.opt_clustering
         error_msg = "ERROR: Could not find the file: {}".format(file)
         if not check_file(file):
             quit(error_msg)
@@ -155,10 +148,6 @@ def check_prereqs(args):
 
         if check_dir(dir):
             error_msg = "ERROR: {} already exists".format(dir)
-            quit(error_msg)
-
-        if not args.input:
-            error_msg = "ERROR: no input database specified"
             quit(error_msg)
 
     if args.opt_review:

@@ -23,7 +23,7 @@ def main_mqrdb(args):
     if args.opt_clustering:
         str_id = '100'
         float_id = 1.0
-        db = args.input
+        db = args.opt_clustering
         if args.output:
             path = args.output
             set_proj_path(path)

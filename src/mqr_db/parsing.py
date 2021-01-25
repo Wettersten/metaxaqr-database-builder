@@ -12,7 +12,6 @@ seq_name = 'MetaxaQR Database Builder'
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
     Required arguments: One of the main 4 arguments, -c/-r/-f/-m
-    -c requires the use -i to specify input database (in FASTA)
     Optional arguments:
     """
     parser = argparse.ArgumentParser(
@@ -21,13 +20,10 @@ def create_parser():
         genetic markers.""",
         epilog='Examples: ')
 
-    parser.add_argument('-c', '--cluster', dest='opt_clustering',
-                        action='store_true', default=False,
+    parser.add_argument('-c', '--cluster', dest='opt_clustering', type=str,
+                        metavar='',
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
-
-    parser.add_argument('-i', '--input', dest='input', type=str, metavar='',
-                        help="""{FILENAME} FASTA database to be clustered""")
 
     parser.add_argument('-o', '--output', dest='output', type=str, metavar='',
                         help="""{PATH} Specify output path, path/mqr_db/...""")
