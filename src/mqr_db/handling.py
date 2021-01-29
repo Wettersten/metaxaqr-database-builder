@@ -133,10 +133,13 @@ def check_installation(args):
         if not is_tool(tool):
             quit(error_msg)
 
+    #: Checks python modules installed, disabled because of python errors
+    """
     for package in preqs:
         error_msg = "{} was not found".format(package)
         if not is_package(package):
             quit(error_msg)
+    """
 
 
 def check_prereqs(args):
