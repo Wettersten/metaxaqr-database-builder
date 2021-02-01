@@ -1,3 +1,6 @@
+"""Methods related to evaluating database quality
+"""
+
 import os
 import subprocess
 import argparse

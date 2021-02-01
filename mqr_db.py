@@ -1,9 +1,13 @@
+"""todo
+
+"""
+
 import argparse
 import time
 
-from src.meta_clustering.handling import error_check
-from src.meta_clustering.parsing import create_parser, return_args
-from src.meta_clustering.mc_run import main_mc
+from src.mqr_db.handling import error_check
+from src.mqr_db.parsing import create_parser, return_args
+from src.mqr_db.mqrdb_run import main_mqrdb
 
 
 if __name__ == "__main__":
@@ -15,4 +19,4 @@ if __name__ == "__main__":
     error_check(args)
 
     #: runs the main loop of meta_clustering
-    main_mc(args)
+    main_mqrdb(args)

@@ -1,3 +1,7 @@
+"""Methods related to creating representative taxonomies, handling clusters,
+flags, manual review and correction and all related functions.
+"""
+
 from .handling import return_proj_path, tax_list_to_str
 import os
 import subprocess
@@ -412,7 +416,6 @@ def remove_cf_line(tax_line):
 
 def flag_check(cluster):
     """Checks various flag scenarios and returns appropriate flags.
-    TODO - Expand to further flags
     """
     flag = ''
 
@@ -511,35 +514,43 @@ def repr_taxonomy(tax_cluster, algo_run):
             if tax[-1][0].isupper() and undef not in tax:
                 new_cluster.append(tax)
 
+    #: if all species start with lower character 'uncultured x'...
+    if not new_cluster:
+        for tax in tax_cluster:
+            if undef_all:
+                new_cluster.append(tax)
+            else:
+                if undef not in tax:
+                    new_cluster.append(tax)
+
     #: loop for species
-    if new_cluster:
-        opt = 'species'
-        for i in range(sp_splits):
-            curr_cluster = []
-            for tax in new_cluster:
-                stripped_tax = tax[:-1]
-                sp_tax = " ".join((tax[-1].split(" ")[:(sp_splits-i)]))
-                stripped_tax.append(sp_tax)
-                curr_cluster.append(stripped_tax)
+    opt = 'species'
+    for i in range(sp_splits):
+        curr_cluster = []
+        for tax in new_cluster:
+            stripped_tax = tax[:-1]
+            sp_tax = " ".join((tax[-1].split(" ")[:(sp_splits-i)]))
+            stripped_tax.append(sp_tax)
+            curr_cluster.append(stripped_tax)
 
-            found, new_repr_tax, new_flag = calc_repr_taxonomy(
-                curr_cluster,
-                opt,
-                algo_run
-            )
-            if (
-                new_repr_tax[-3:] == 'sp.'
-                or new_repr_tax[-1:] == '#'
-                or 'environmental' in new_repr_tax.split(";")[-1].split(" ")
-                or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
-            ):
-                found = False
+        found, new_repr_tax, new_flag = calc_repr_taxonomy(
+            curr_cluster,
+            opt,
+            algo_run
+        )
+        if (
+            new_repr_tax[-3:] == 'sp.'
+            or new_repr_tax[-1:] == '#'
+            or 'environmental' in new_repr_tax.split(";")[-1].split(" ")
+            or 'Incertae' in new_repr_tax.split(";")[-1].split(" ")
+        ):
+            found = False
 
-            if found:
-                repr_tax = new_repr_tax
-                if new_flag and new_flag not in flag.split(", "):
-                    flag += new_flag + ", "
-                break
+        if found:
+            repr_tax = new_repr_tax
+            if new_flag and new_flag not in flag.split(", "):
+                flag += new_flag + ", "
+            break
 
     #: loop for categories below species
     #: starting at lowest category and moving upwards, if more than 4
@@ -592,7 +603,7 @@ def calc_repr_taxonomy(tax_cluster, opt, algo_run):
     repr_tax = ''
     pruned_tax_cluster = []
     for tax in tax_cluster:
-        if len(tax) >= 3:
+        if len(tax) >= 2:
             pruned_tax_cluster.append(tax)
             repr_tax = tax
         else:
@@ -1112,18 +1123,6 @@ def prompt_print(my_cluster):
     )
 
     prompt_clust_full = prompt_before + prompt_clust + prompt_after
-    old_prompt_text_deprecated = """
-
-Accept suggestion, alt. accept all/all from one flag: accept [all] [flag]
-Manual entry: manual Taxonomy;To;Use
-Keep entry to represent: keep id [c-2 / s-3]
-Need suggestion by removing ids: remove id1-id3 id5
-Ignore current cluster and save it for later review: exclude
-Show flags and their respective occurences: flags
-Exit, discarding all remaining suggestions: exit
-
-
-Input: """
 
     prompt_text = """
 

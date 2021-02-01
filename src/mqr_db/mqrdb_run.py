@@ -1,3 +1,6 @@
+"""Main method, compiling all module options to run the program
+"""
+
 import time
 import argparse
 import os
@@ -11,7 +14,7 @@ from .db_stats import db_dupestats
 from .make_db import make_db
 
 
-def main_mc(args):
+def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
     quiet = args.log_quiet
@@ -20,7 +23,7 @@ def main_mc(args):
     if args.opt_clustering:
         str_id = '100'
         float_id = 1.0
-        db = args.input
+        db = args.opt_clustering
         if args.output:
             path = args.output
             set_proj_path(path)
@@ -47,7 +50,7 @@ def main_mc(args):
         str_id = '100'
 
         #: manual review of flag file and creation of corrected repr file
-        msg = "Running manual review of flagged clusters\n"
+        msg = "Running manual review of flagged clusters"
         logging(quiet=quiet, custom=True, custom_msg=msg)
         start_time = time.time()
 
@@ -76,7 +79,14 @@ def main_mc(args):
 
     #: running the make database command
     if args.opt_makedb:
+        msg = "Creating final MetaxaQR database"
+        logging(quiet=quiet, custom=True, custom_msg=msg)
+        start_time = time.time()
+
         make_db()
+
+        elapsed_time = time.time() - start_time
+        logging(etime=elapsed_time, time_log=True, quiet=quiet)
 
     #: running duplicate stats method
     if args.opt_ds:

@@ -6,28 +6,24 @@ import os
 import argparse
 
 seq_version = 0.1
-seq_name = 'meta_clustering'
+seq_name = 'MetaxaQR Database Builder'
 
 
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
     Required arguments: One of the main 4 arguments, -c/-r/-f/-m
-    -c requires the use -i to specify input database (in FASTA)
     Optional arguments:
     """
     parser = argparse.ArgumentParser(
         prog=seq_name,
-        description="""Analyse taxonomy within clusters based on sequence
-        identity.""",
+        description="""Create database for MetaxaQR using taxonomic database of
+        genetic markers.""",
         epilog='Examples: ')
 
-    parser.add_argument('-c', '--cluster', dest='opt_clustering',
-                        action='store_true', default=False,
+    parser.add_argument('-c', '--cluster', dest='opt_clustering', type=str,
+                        metavar='',
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
-
-    parser.add_argument('-i', '--input', dest='input', type=str, metavar='',
-                        help="""{FILENAME} FASTA database to be clustered""")
 
     parser.add_argument('-o', '--output', dest='output', type=str, metavar='',
                         help="""{PATH} Specify output path, path/mqr_db/...""")
@@ -43,7 +39,7 @@ def create_parser():
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
-                        help="""Creates a Metaxa2 databse from the output
+                        help="""Creates a MetaxaQR database from the output
                         files""")
 
     parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,

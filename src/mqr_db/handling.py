@@ -1,13 +1,18 @@
+"""Methods related to various handling functions, such as getting the path to
+the project etc
+"""
+
 import time
 import os
 import pathlib
 import argparse
+import importlib
 from shutil import which
 
 
 def create_dir_structure(str_id):
     """Creates the directory structure used by clustering and subsequent
-    handling of clusters. Cluster files in mc_db/identity/clusters/
+    handling of clusters. Cluster files in mqr_db/identity/clusters/
     """
     cluster_dir = return_proj_path() + str_id + '/clusters/'
     pathlib.Path(cluster_dir).mkdir(parents=True, exist_ok=True)
@@ -17,7 +22,7 @@ def return_proj_path():
     """Returns the path to project dir, if output path specified mqr_db will be
     created in that path.
     """
-    path_file = os.getcwd() + "/mc_init.txt"
+    path_file = os.getcwd() + "/mqrdb_init.txt"
     if check_file(path_file):
         with open(path_file, 'r') as file:
             proj_path = file.readline().rstrip() + '/mqr_db/'
@@ -31,7 +36,7 @@ def set_proj_path(path):
     """Sets custom project path (if -p given when -c is used), this is saves as
     the first line in a local file for later retrieval.
     """
-    path_file = os.getcwd() + "/mc_init.txt"
+    path_file = os.getcwd() + "/mqrdb_init.txt"
     if check_file(path_file):
         os.remove(path_file)
 
@@ -61,11 +66,7 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    if (  # TODO - maybe move to check_installation()
-        args.opt_clustering
-        or args.opt_finalize
-    ):
-        check_installation()
+    check_installation(args)
     check_args(args)
     check_prereqs(args)
 
@@ -83,15 +84,8 @@ def check_args(args):
         error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
         quit(error_msg)
 
-    if (
-        (args.input and not args.opt_clustering)
-        or (args.output and not args.opt_clustering)
-    ):
-        error_msg = "ERROR: [-i]/[-o] only works using clustering [-c]"
-        quit(error_msg)
-
-    if args.input:
-        file = args.input
+    if args.opt_clustering:
+        file = args.opt_clustering
         error_msg = "ERROR: Could not find the file: {}".format(file)
         if not check_file(file):
             quit(error_msg)
@@ -122,15 +116,30 @@ def check_file(file):
     return os.path.isfile(file)
 
 
-def check_installation():
-    """Checks if valid installation, if vsearch + ? is found.
+def check_installation(args):
+    """Checks if valid installation, checking for dependencies.
     """
-    reqs = ['vsearch', 'ete3']
+    reqs = []
+    preqs = []
+    if (
+        args.opt_clustering
+        or args.opt_finalize
+    ):
+        reqs = ['vsearch']
+        preqs = ['pathlib']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
         if not is_tool(tool):
             quit(error_msg)
+
+    #: Checks python modules installed, disabled because of python errors
+    """
+    for package in preqs:
+        error_msg = "{} was not found".format(package)
+        if not is_package(package):
+            quit(error_msg)
+    """
 
 
 def check_prereqs(args):
@@ -142,10 +151,6 @@ def check_prereqs(args):
 
         if check_dir(dir):
             error_msg = "ERROR: {} already exists".format(dir)
-            quit(error_msg)
-
-        if not args.input:
-            error_msg = "ERROR: no input database specified"
             quit(error_msg)
 
     if args.opt_review:
@@ -182,6 +187,16 @@ def is_tool(name):
     return which(name)
 
 
+def is_package(name):
+    """Check whether `name` is an installed python package
+    """
+    package = importlib.util.find_spec(name)
+    if package:
+        return True
+    else:
+        return False
+
+
 def logging(
         str_id='',
         etime='',
@@ -195,7 +210,7 @@ def logging(
     """Used for logging messages/time spent on processes etc
     """
     log_msg = ''
-    logging_file = os.getcwd() + '/mc_log.txt'
+    logging_file = os.getcwd() + '/mqrdb_log.txt'
 
     if time_log:
         time_log_msg = "Done in Hours:Minutes:Seconds"

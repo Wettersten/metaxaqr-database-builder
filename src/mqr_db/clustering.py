@@ -1,3 +1,6 @@
+"""Clustering related methods, using VSEARCH
+"""
+
 import subprocess
 from .handling import return_proj_path, float_to_str_id, create_dir_structure
 

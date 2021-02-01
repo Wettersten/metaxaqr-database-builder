@@ -1,3 +1,6 @@
+"""Creates the final output files used by MetaxaQR as a new database
+"""
+
 import os
 import pathlib
 import shutil
@@ -64,7 +67,7 @@ def get_repr(path, result_path, v_loop):
 
 
 def make_db():
-    """Creates the output datasets used by Metaxa2. A centroid file which
+    """Creates the output datasets used by MetaxaQR. A centroid file which
     contains all entries clustered at 100% sequence identity, a representative
     taxonomy file containing all representative taxonomies at all sequence
     identity levels and finally a file containing the tree structure of all
