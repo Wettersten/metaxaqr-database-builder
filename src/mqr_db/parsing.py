@@ -42,6 +42,19 @@ def create_parser():
                         help="""Creates a MetaxaQR database from the output
                         files""")
 
+    parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
+                        metavar='',
+                        help="""Reads FASTA format file of new entries and adds
+                        to a finished database""")
+
+    parser.add_argument('--format', dest='opt_format', type=str,
+                        metavar='',
+                        help="""Format used in the input FASTA file [x]""")
+
+    parser.add_argument('--db', dest='opt_db', type=str,
+                        metavar='',
+                        help="""Path to finished database, used by --addseq""")
+
     parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,
                         metavar='',
                         help="""{FILENAME} FASTA database for stats""")

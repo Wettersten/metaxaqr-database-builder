@@ -18,3 +18,5 @@ from .handling import set_proj_path
 from .db_stats import db_dupestats
 
 from .make_db import make_db
+
+from .add_entries import add_entries

@@ -12,6 +12,7 @@ from .clustering import cluster_vs
 from .handling import logging, set_proj_path
 from .db_stats import db_dupestats
 from .make_db import make_db
+from .add_entries import add_entries
 
 
 def main_mqrdb(args):
@@ -91,3 +92,7 @@ def main_mqrdb(args):
     #: running duplicate stats method
     if args.opt_ds:
         db_dupestats(args.opt_ds)
+
+    #: running the add new sequences method
+    if args.opt_addseq:
+        add_entries(args.opt_addseq, args.opt_db)
