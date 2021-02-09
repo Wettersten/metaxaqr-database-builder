@@ -419,44 +419,22 @@ def flag_check(cluster):
     """
     flag = ''
 
-    chl_flag = chlor_mito_flag(cluster)
-    if chl_flag:
-        flag += chl_flag + ", "
-
-    dom_flag = domain_flag(cluster)
-    if dom_flag:
-        flag += dom_flag + ", "
+    ori_flag = origin_flag(cluster)
+    if ori_flag:
+        flag += ori_flag + ", "
 
     return flag[:-2]
 
 
-def chlor_mito_flag(cluster):
-    """Flags if both Chloroplast and Mitochondria are in the same cluster.
-    """
-    chlor_check = False
-    mito_check = False
-    flag_out = ''
-
-    for tax in cluster:
-        if "Chloroplast" in tax:
-            chlor_check = True
-        elif "Mitochondria" in tax:
-            mito_check = True
-
-        if chlor_check and mito_check:
-            flag_out = "Chlr_Mito"
-            break
-
-    return flag_out
-
-
-def domain_flag(cluster):
-    """Flags if there are more than one domain in the cluster. (Archaea,
-    Bacteria, Eukaryota)
+def ori_flag(cluster):
+    """Flags if there are more than one origin in the cluster. (Archaea,
+    Bacteria, Chloroplast, Eukaryota, Mitochondria)
     """
     arc_check = 0
     bac_check = 0
+    chl_check = 0
     euk_check = 0
+    mit_check = 0
     flag_out = ''
 
     for tax in cluster:
@@ -464,11 +442,15 @@ def domain_flag(cluster):
             arc_check = 1
         elif "Bacteria" in tax:
             bac_check = 1
+        elif "Chloroplast" in tax:
+            euk_check = 1
         elif "Eukaryota" in tax:
             euk_check = 1
+        elif "Mitochondria" in tax:
+            euk_check = 1
 
-        if (arc_check + bac_check + euk_check) > 1:
-            flag_out = "Domain"
+        if (arc_check + bac_check + chl_check + euk_check + mit_check) > 1:
+            flag_out = "Origin"
             break
 
     return flag_out
@@ -677,8 +659,6 @@ def algo_repr(tax_cluster, opt):
         high_fract = highest/total_count
         if high_fract >= 0.9:
             found = True
-            # removing outlier flag for now, doesn't add to review process
-            # flag = 'Outlier'
             if opt == 'species':
                 for tax in tax_cluster:
                     if repr_tax[0] in tax:

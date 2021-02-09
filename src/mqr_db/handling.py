@@ -80,8 +80,9 @@ def check_args(args):
         and not args.opt_review
         and not args.opt_finalize
         and not args.opt_makedb
+        and not args.opt_addseq
     ):
-        error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
+        error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m/-a]"
         quit(error_msg)
 
     if args.opt_clustering:
