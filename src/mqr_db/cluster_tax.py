@@ -426,7 +426,7 @@ def flag_check(cluster):
     return flag[:-2]
 
 
-def ori_flag(cluster):
+def origin_flag(cluster):
     """Flags if there are more than one origin in the cluster. (Archaea,
     Bacteria, Chloroplast, Eukaryota, Mitochondria)
     """
