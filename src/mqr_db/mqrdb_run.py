@@ -1,7 +1,6 @@
 """Main method, compiling all module options to run the program
 """
 
-import time
 import argparse
 import os
 
@@ -20,8 +19,9 @@ def main_mqrdb(args):
     """
     quiet = args.log_quiet
 
-    #: running start command, clustering at 100 identity
+    #: running start command, clustering at 100% identity
     if args.opt_clustering:
+        logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
         db = args.opt_clustering
@@ -29,36 +29,27 @@ def main_mqrdb(args):
             path = args.output
             set_proj_path(path)
 
-        logging(str_id=str_id, db=db, quiet=quiet, start=True)
-        start_time = time.time()
-
+        logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
+        logging("clustering_seq_end", quiet=quiet)
 
-        elapsed_time = time.time() - start_time
-        logging(etime=elapsed_time, time_log=True, quiet=quiet)
-
-        #: create tax_db
+        logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-
-        #: create tax_clusters files
         create_cluster_tax(str_id)
-
-        #: create flag and repr cluster files
         repr_and_flag(str_id)
+        logging("clustering_tax_end", quiet=quiet)
+
+        logging("clustering_end", quiet=quiet)
 
     #: running the manual review
     if args.opt_review:
         str_id = '100'
 
         #: manual review of flag file and creation of corrected repr file
-        msg = "Running manual review of flagged clusters"
-        logging(quiet=quiet, custom=True, custom_msg=msg)
-        start_time = time.time()
 
+        logging("manual review_start", quiet=quiet)
         flag_correction(str_id)
-
-        elapsed_time = time.time() - start_time
-        logging(etime=elapsed_time, time_log=True, quiet=quiet)
+        logging("manual review_end", quiet=quiet)
 
     #: finalizing files and further clustering
     if args.opt_finalize:
@@ -68,26 +59,21 @@ def main_mqrdb(args):
         b_loop = [str(a) for a in range(85, 50-5, -5)]
         v_loop = a_loop + b_loop
 
+        logging("finalize_start", quiet=quiet)
+
         for id in v_loop:
 
-            logging(str_id=id, quiet=quiet)
-            start_time = time.time()
-
+            logging("finalize_loop_start", id=id, quiet=quiet)
             cluster_loop(id)
+            logging("finalize_loop_end", id=id, quiet=quiet)
 
-            elapsed_time = time.time() - start_time
-            logging(etime=elapsed_time, time_log=True, quiet=quiet)
+        logging("finalize_end", quiet=quiet)
 
     #: running the make database command
     if args.opt_makedb:
-        msg = "Creating final MetaxaQR database"
-        logging(quiet=quiet, custom=True, custom_msg=msg)
-        start_time = time.time()
-
+        logging("make db_start", quiet=quiet)
         make_db()
-
-        elapsed_time = time.time() - start_time
-        logging(etime=elapsed_time, time_log=True, quiet=quiet)
+        logging("make db_end", quiet=quiet)
 
     #: running duplicate stats method
     if args.opt_ds:
@@ -95,4 +81,6 @@ def main_mqrdb(args):
 
     #: running the add new sequences method
     if args.opt_addseq:
+        logging("add entries_start", quiet=quiet)
         add_entries(args.opt_addseq, args.opt_db)
+        logging("add entries_end", quiet=quiet)

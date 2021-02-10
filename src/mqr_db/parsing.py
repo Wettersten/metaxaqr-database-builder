@@ -4,8 +4,9 @@ for valid installation(s) etc
 
 import os
 import argparse
+from .handling import get_version
 
-seq_version = 0.1
+seq_version = get_version()
 seq_name = 'MetaxaQR Database Builder'
 
 
@@ -65,7 +66,7 @@ def create_parser():
                         """)
 
     parser.add_argument('--version', action='version',
-                        version='{}: version {}'.format(seq_name, seq_version))
+                        version='{} - {}'.format(seq_name, seq_version))
     return parser
 
 
