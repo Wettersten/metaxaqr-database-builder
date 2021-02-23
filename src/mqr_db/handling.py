@@ -151,7 +151,7 @@ def check_prereqs(args):
             error_msg = "ERROR: {} already exists".format(dir)
             quit(error_msg)
 
-    if args.opt_review:
+    if args.opt_makedb:
         flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(
             file=flag_file,

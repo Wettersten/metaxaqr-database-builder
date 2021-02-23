@@ -24,7 +24,7 @@ def main_mqrdb(args):
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
-        db = args.opt_clustering
+        db = args.opt_prepare
         if args.output:
             path = args.output
             set_proj_path(path)
