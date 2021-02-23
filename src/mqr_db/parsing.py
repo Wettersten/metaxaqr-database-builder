@@ -65,6 +65,10 @@ def create_parser():
                         help="""No status print out, only writing to log file
                         """)
 
+    parser.add_argument('--license', dest='opt_license',
+                        action='store_true', default=False,
+                        help="""Displays the license""")
+
     parser.add_argument('--version', action='version',
                         version='{} - {}'.format(seq_name, seq_version))
     return parser

@@ -3,7 +3,7 @@ the project etc
 """
 
 import os
-import pathlib
+from pathlib import Path
 import argparse
 import importlib
 from datetime import datetime
@@ -15,7 +15,7 @@ def create_dir_structure(str_id):
     handling of clusters. Cluster files in mqr_db/identity/clusters/
     """
     cluster_dir = return_proj_path() + str_id + '/clusters/'
-    pathlib.Path(cluster_dir).mkdir(parents=True, exist_ok=True)
+    Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
 def return_proj_path():
@@ -127,20 +127,17 @@ def check_installation(args):
         or args.opt_finalize
     ):
         reqs = ['vsearch']
-        preqs = ['pathlib']
+        preqs = []
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
         if not is_tool(tool):
             quit(error_msg)
 
-    #: Checks python modules installed, disabled because of python errors
-    """
     for package in preqs:
         error_msg = "{} was not found".format(package)
         if not is_package(package):
             quit(error_msg)
-    """
 
 
 def check_prereqs(args):
@@ -431,4 +428,16 @@ def get_header(option):
 
 
 def get_version():
+    """Current version of the MetaxaQR Database Builder.
+    """
     return "Version: 0.2"
+
+
+def print_license():
+    """Prints the GNU GPL 3 license.
+    """
+    license_file = "{}/LICENSE".format(Path(__file__).parent)
+
+    with open(license_file2, 'r') as f:
+        a = f.read()
+        print(a)

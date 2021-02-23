@@ -336,10 +336,10 @@ def create_cluster_tax(str_id, loop=False):
 
                     if loop:
                         new_cluster = curr_line[9].split("_")[2]
-                    clust_out.write("MQR_{}_{}\n".format(
-                                                         str_id,
-                                                         new_cluster
-                                                         ))
+                        clust_out.write("MQR_{}_{}\n".format(
+                                                             str_id,
+                                                             new_cluster
+                                                             ))
 
                     for lines in read_cluster:
                         if lines[0] == ">":
@@ -409,7 +409,11 @@ def create_cluster_tax(str_id, loop=False):
                         out_dict = orig_dict
 
                     #: writing out the entries from the cluster
-                    if not loop:
+                    if not loop and len(deleted_entries) < len(out_dict):
+                        clust_out.write("MQR_{}_{}\n".format(
+                                                             str_id,
+                                                             new_cluster
+                                                             ))
                         for i in out_dict:
                             if i not in deleted_entries:
                                 curr_id = "{} {}".format(
@@ -417,6 +421,13 @@ def create_cluster_tax(str_id, loop=False):
                                     out_dict[i]
                                 )
                                 clust_out.write("{}\n".format(curr_id))
+                    elif not loop and len(deleted_entries) == len(out_dict):
+                        exc_clusters = run_path + "/excluded_clusters"
+                        with open(exc_clusters, 'a+') as f:
+                            f.write("MQR_{}_{}\n".format(
+                                                         str_id,
+                                                         new_cluster
+                            ))
 
                     if deleted_entries:
                         with open(deleted_entries_file, 'a+') as f:
@@ -427,7 +438,10 @@ def create_cluster_tax(str_id, loop=False):
 
 
 def compare_tax_cats(tax_in, tax_db):
-    """
+    """Compares similarity in taxonomic categories between two taxonomies. If
+    at least 80% of the taxonomic categories in the database entry matches the
+    input taxonomy returns true (to keep), else returns false (remove as low
+    quality entry).
     """
     tax_db_split = (tax_db.split(";"))
     tax_in_split = (tax_in.split(";"))
@@ -778,7 +792,7 @@ def repr_and_flag(str_id):
             if (curr_line[0:3] == 'MQR' or curr_line == 'end'):
                 old_label = c_label
 
-                if not first_line:
+                if not first_line and curr_cluster:
                     my_cluster = Cluster(old_label, curr_cluster)
                     flag, repr_tax = repr_taxonomy(
                                                    my_cluster.get_taxeslist(),
@@ -944,6 +958,9 @@ def prompt_accept(input, header, flags):
 
 
 def cluster_exclude(my_cluster):
+    """Excludes clusters in the manual review, saved to a excluded cluster
+    file.
+    """
     run_path = return_proj_path() + '100'
     exclusions_file = run_path + '/flag_exclusions'
 
@@ -1032,6 +1049,8 @@ def prompt_flag(o_header, r_header):
 
 
 def rem_flag_update(header, flags):
+    """Updates number of flags remaining after removing flags in manual review.
+    """
     for flag in flags:
         header[flag.title()] -= 1
 
