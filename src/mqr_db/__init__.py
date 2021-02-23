@@ -16,7 +16,7 @@ from .handling import tax_list_to_str
 from .handling import set_proj_path
 from .handling import get_version
 from .handling import logging
-from .handling import get_license
+from .handling import print_license
 
 from .db_stats import db_dupestats
 

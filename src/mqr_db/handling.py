@@ -81,8 +81,9 @@ def check_args(args):
         and not args.opt_finalize
         and not args.opt_makedb
         and not args.opt_addseq
+        and not args.opt_license
     ):
-        error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m/-a]"
+        error_msg = "ERROR: No option chosen."
         quit(error_msg)
 
     if args.opt_clustering:
@@ -436,8 +437,8 @@ def get_version():
 def print_license():
     """Prints the GNU GPL 3 license.
     """
-    license_file = "{}/LICENSE".format(Path(__file__).parent)
+    license_file = "{}/LICENSE".format(Path(__file__).parent.parent.parent)
 
-    with open(license_file2, 'r') as f:
+    with open(license_file, 'r') as f:
         a = f.read()
         print(a)
