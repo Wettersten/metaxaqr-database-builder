@@ -20,7 +20,7 @@ def main_mqrdb(args):
     quiet = args.log_quiet
 
     #: running start command, clustering at 100% identity
-    if args.opt_clustering:
+    if args.opt_prepare:
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
@@ -41,18 +41,16 @@ def main_mqrdb(args):
 
         logging("clustering_end", quiet=quiet)
 
-    #: running the manual review
-    if args.opt_review:
+    #: running creation of the MetaxaQR database
+    if args.opt_makedb:
         str_id = '100'
 
         #: manual review of flag file and creation of corrected repr file
-
         logging("manual review_start", quiet=quiet)
         flag_correction(str_id)
         logging("manual review_end", quiet=quiet)
 
-    #: finalizing files and further clustering
-    if args.opt_finalize:
+        #: finalizing files and further clustering
         #: loop down from 100 to 50, clustering using the centroid files
         #: 100, 99, ... 90, 85, 80, ... 50
         a_loop = [str(i) for i in range(100, 90-1, -1)]
@@ -69,8 +67,7 @@ def main_mqrdb(args):
 
         logging("finalize_end", quiet=quiet)
 
-    #: running the make database command
-    if args.opt_makedb:
+        #: creating the database
         logging("make db_start", quiet=quiet)
         make_db()
         logging("make db_end", quiet=quiet)

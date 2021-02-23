@@ -76,12 +76,11 @@ def check_args(args):
     used, the input file and output paths are valid.
     """
     if (
-        not args.opt_clustering
-        and not args.opt_review
-        and not args.opt_finalize
+        not args.opt_prepare
         and not args.opt_makedb
         and not args.opt_addseq
         and not args.opt_license
+        and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen."
         quit(error_msg)
