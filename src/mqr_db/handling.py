@@ -85,8 +85,8 @@ def check_args(args):
         error_msg = "ERROR: No option chosen."
         quit(error_msg)
 
-    if args.opt_clustering:
-        file = args.opt_clustering
+    if args.opt_prepare:
+        file = args.opt_prepare
         error_msg = "ERROR: Could not find the file: {}".format(file)
         if not check_file(file):
             quit(error_msg)
@@ -123,8 +123,8 @@ def check_installation(args):
     reqs = []
     preqs = []
     if (
-        args.opt_clustering
-        or args.opt_finalize
+        args.opt_prepare
+        or args.opt_makedb
     ):
         reqs = ['vsearch']
         preqs = []
@@ -144,7 +144,7 @@ def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting
     with the review before using initial clustering).
     """
-    if args.opt_clustering:
+    if args.opt_prepare:
         dir = return_proj_path()
 
         if check_dir(dir):
@@ -155,11 +155,13 @@ def check_prereqs(args):
         flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(
             file=flag_file,
-            txt="missing, please perform clustering [-c] first"
+            txt="missing, please perform preparation [-p] first"
             )
         if not check_file(flag_file):
             quit(error_msg)
 
+    #: deprecated
+"""
     if args.opt_finalize:
         repr_file = return_proj_path() + '100/repr_correction'
         error_msg = "ERROR: {file} {txt}".format(
@@ -177,6 +179,7 @@ def check_prereqs(args):
             )
         if not check_file(tree_file):
             quit(error_msg)
+"""
 
 
 def is_tool(name):
