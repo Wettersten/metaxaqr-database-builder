@@ -9,7 +9,7 @@ from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging, set_proj_path, print_license
+from .handling import logging, set_proj_path, print_license, return_proj_path
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
@@ -32,7 +32,7 @@ def main_mqrdb(args):
             set_proj_path(path)
 
         removed_path = "{}removed".format(path)
-        Path(result_path).mkdir(parents=True, exist_ok=True)
+        Path(removed_path).mkdir(parents=True, exist_ok=True)
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -74,7 +74,7 @@ def main_mqrdb(args):
 
         #: creating the database
         logging("make db_start", quiet=quiet)
-        make_db()
+        make_db(args.opt_qc)
         logging("make db_end", quiet=quiet)
 
     #: running duplicate stats method

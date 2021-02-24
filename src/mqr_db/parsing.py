@@ -47,13 +47,17 @@ def create_parser():
                         metavar='',
                         help="""Path to finished database, used by --addseq""")
 
-    parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,
+    parser.add_argument('--ds', dest='opt_ds', type=str,
                         metavar='',
                         help="""{FILENAME} FASTA database for stats""")
 
     parser.add_argument('-q', '--quiet', dest='log_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")
+
+    parser.add_argument('--qc', dest='opt_qc',
+                        action='store_false', default=True,
+                        help="""Turns off quality check steps""")
 
     parser.add_argument('--license', dest='opt_license',
                         action='store_true', default=False,
