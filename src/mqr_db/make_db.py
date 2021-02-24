@@ -4,7 +4,7 @@
 import os
 from pathlib import Path
 import shutil
-from .handling import return_proj_path
+from .handling import return_proj_path, check_file
 
 
 def get_deleted_clusters(path):
