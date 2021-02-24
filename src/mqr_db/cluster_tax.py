@@ -306,11 +306,12 @@ def create_cluster_tax(str_id, loop=False):
     followed by the label + taxonomy of all hits in the cluster.
     """
     run_path = return_proj_path() + str_id
+    removed_path = return_proj_path() + 'removed'
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
-    deleted_entries_file = run_path + "/deleted_entries"
+    deleted_entries_file = removed_path + "/deleted_entries_100"
     if not loop:
         tax_db = read_taxdb()
 
@@ -422,7 +423,7 @@ def create_cluster_tax(str_id, loop=False):
                                 )
                                 clust_out.write("{}\n".format(curr_id))
                     elif not loop and len(deleted_entries) == len(out_dict):
-                        exc_clusters = run_path + "/excluded_clusters"
+                        exc_clusters = removed_path + "/deleted_clusters_100"
                         with open(exc_clusters, 'a+') as f:
                             f.write("MQR_{}_{}\n".format(
                                                          str_id,
@@ -961,8 +962,8 @@ def cluster_exclude(my_cluster):
     """Excludes clusters in the manual review, saved to a excluded cluster
     file.
     """
-    run_path = return_proj_path() + '100'
-    exclusions_file = run_path + '/flag_exclusions'
+    removed_path = return_proj_path() + 'removed'
+    exclusions_file = removed_path + '/flag_exclusions'
 
     with open(exclusions_file, 'a+') as exclusions:
 
@@ -1291,7 +1292,8 @@ def manual_correction(my_cluster, rem_header):
     review = ''
     str_id = my_cluster.get_strid()
     run_path = return_proj_path() + str_id
-    flag_exclusions_file = run_path + '/flag_exclusions'
+    removed_path = return_proj_path() + 'removed'
+    flag_exclusions_file = removed_path + '/flag_exclusions'
     orig_header = flag_header(str_id)
 
     def_prompt = prompt_print(my_cluster)
@@ -1474,9 +1476,10 @@ def flag_correction(str_id):
     excluded_flags = []
 
     run_path = return_proj_path() + str_id
+    removed_path = return_proj_path() + 'removed'
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
-    flag_exclusions_file = run_path + '/flag_exclusions'
+    flag_exclusions_file = removed_path + '/flag_exclusions'
 
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)

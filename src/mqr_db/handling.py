@@ -160,27 +160,6 @@ def check_prereqs(args):
         if not check_file(flag_file):
             quit(error_msg)
 
-    #: deprecated
-"""
-    if args.opt_finalize:
-        repr_file = return_proj_path() + '100/repr_correction'
-        error_msg = "ERROR: {file} {txt}".format(
-            file=repr_file,
-            txt="missing, please perform review [-r] first"
-            )
-        if not check_file(repr_file):
-            quit(error_msg)
-
-    if args.opt_makedb:
-        tree_file = return_proj_path() + '95/label_tree'
-        error_msg = "ERROR: {file} {txt}".format(
-            file=tree_file,
-            txt="missing, please perform finalize [-f] first"
-            )
-        if not check_file(tree_file):
-            quit(error_msg)
-"""
-
 
 def is_tool(name):
     """Check whether `name` is on PATH and marked as executable

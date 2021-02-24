@@ -2,7 +2,7 @@
 """
 
 import os
-import pathlib
+from pathlib import Path
 import shutil
 from .handling import return_proj_path
 
@@ -10,8 +10,8 @@ from .handling import return_proj_path
 def get_centroids(path, result_path):
     """Copies the 'final_centroids' file from mqr_db/100/ to db result path
     """
-    my_cent = pathlib.Path("{}100/final_centroids".format(path))
-    to_cent = pathlib.Path("{}/final_centroids".format(result_path))
+    my_cent = Path("{}100/final_centroids".format(path))
+    to_cent = Path("{}/final_centroids".format(result_path))
     shutil.copy(my_cent, to_cent)
 
 
@@ -75,7 +75,7 @@ def make_db():
     """
     path = return_proj_path()
     result_path = "{}results".format(path)
-    pathlib.Path(result_path).mkdir(parents=True, exist_ok=True)
+    Path(result_path).mkdir(parents=True, exist_ok=True)
     a_loop = [str(i) for i in range(100, 90-1, -1)]
     b_loop = [str(a) for a in range(85, 50-5, -5)]
     v_loop = a_loop + b_loop

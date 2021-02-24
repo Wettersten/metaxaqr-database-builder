@@ -3,6 +3,7 @@
 
 import argparse
 import os
+from pathlib import Path
 
 from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
@@ -25,9 +26,13 @@ def main_mqrdb(args):
         str_id = '100'
         float_id = 1.0
         db = args.opt_prepare
+        path = return_proj_path()
         if args.output:
             path = args.output
             set_proj_path(path)
+
+        removed_path = "{}removed".format(path)
+        Path(result_path).mkdir(parents=True, exist_ok=True)
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
