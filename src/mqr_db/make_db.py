@@ -12,13 +12,18 @@ def get_deleted_clusters(path):
     bad_hits = Path("{}removed/bad_hits".format(path))
     del_clusters = Path("{}removed/deleted_clusters_100".format(path))
     excluded_clusters = []
-    with open(bad_hits, 'r') as bh, \
-         open(del_clusters, 'r') as dc:
 
-        full = bh.read() + dc.read()
-        for label in full.split("\n"):
-            if label.rstrip() not in excluded_clusters:
-                excluded_clusters.append(label.rstrip())
+    if check_file(bad_hits):
+        with open(bad_hits, 'r') as f:
+            for label in f:
+                if label.rstrip() not in excluded_clusters:
+                    excluded_clusters.append(label.rstrip())
+
+    if check_file(del_clusters):
+        with open(del_clusters, 'r') as f:
+            for label in f:
+                if label.rstrip() not in excluded_clusters:
+                    excluded_clusters.append(label.rstrip())
 
     return excluded_clusters
 
@@ -42,13 +47,13 @@ def get_centroids(path, result_path, qc):
                 curr_line = line.rstrip()
 
                 if curr_line[0] == '>':
-                    cluster = header.split("\t")[1]
                     if not first_line and cluster not in excluded_clusters:
                         of.write("{}\n{}\n".format(header, sequence))
 
                     header = curr_line
                     sequence = ''
                     first_line = False
+                    cluster = header.split("\t")[1]
 
                 else:
                     sequence += curr_line + '\n'
@@ -173,6 +178,7 @@ def make_db(qc=True):
     b_loop = [str(a) for a in range(85, 50-5, -5)]
     v_loop = a_loop + b_loop
 
+    find_bad_hits()
     get_centroids(path, result_path, qc)
     get_label_tree(path, result_path, v_loop, qc)
     get_repr(path, result_path, v_loop, qc)
