@@ -23,7 +23,7 @@ def clean_singleton(repr_tax):
     return repr_tax
 
 
-def create_final_repr(str_id, cent_loop=False):
+def create_final_repr(str_id, run_label, cent_loop=False):
     """Creates the final_repr file, includes the cluster label, centroid entry
     label and the representative taxonomy for every centroid. Cent_loop is used
     when the method is called from the cluster_loop method at identities below
@@ -52,14 +52,16 @@ def create_final_repr(str_id, cent_loop=False):
             if curr_line[0] == "C":
                 excluded = False
                 if cent_loop:
-                    cluster_label = "MQR_{}_{}".format(
+                    cluster_label = "MQR_{}_{}_{}".format(
+                        run_label,
                         str_id,
-                        curr_line[9].split("_")[2]
+                        curr_line[9].split("_")[3]
                         )
                     centroid_label = ">{}".format(curr_line[8])
                     singleton_repr = curr_line[10]
                 else:
-                    cluster_label = "MQR_{}_{}".format(
+                    cluster_label = "MQR_{}_{}_{}".format(
+                        run_label,
                         str_id,
                         str(curr_line[1]))
                     centroid_label = ">{}".format(curr_line[8].split(" ")[0])
@@ -153,7 +155,7 @@ def create_final_cent(str_id, cent_loop=False):
                     cent_out.write(curr_line + "\n")
 
 
-def create_label_tree(str_id, tree_loop=False):
+def create_label_tree(str_id, run_label, tree_loop=False):
     """Creates the label_tree file, containing all cluster labels and their
     relation all other cluster labels that are in their centroid, from current
     str_id up to max str_id. Tree_loop is called when the identity is below 99
@@ -186,9 +188,10 @@ def create_label_tree(str_id, tree_loop=False):
 
             if curr_line[0] == "C":
                 tree_labels = ''
-                new_label = "MQR_{}_{}".format(
+                new_label = "MQR_{}_{}_{}".format(
+                    run_label,
                     str_id,
-                    curr_line[9].split("_")[2]
+                    curr_line[9].split("_")[3]
                 )
 
                 entries = int(curr_line[2])
@@ -242,7 +245,7 @@ def loop_repr_corr(str_id):
     os.rename(repr_cluster_file, repr_corr_file)
 
 
-def cluster_loop(str_id, cleanup=False):
+def cluster_loop(str_id, run_label, loop):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
@@ -266,11 +269,11 @@ def cluster_loop(str_id, cleanup=False):
             tree_loop = True
 
     #: creating final_repr and final_cent files for clustering
-    create_final_repr(str_id, cent_loop)
+    create_final_repr(str_id, run_label, cent_loop)
     create_final_cent(str_id, cent_loop)
 
     if cent_loop:
-        create_label_tree(str_id, tree_loop)
+        create_label_tree(str_id, run_label, tree_loop)
 
     run_path = return_proj_path() + str_id
     final_cent_file = run_path + '/final_centroids'
@@ -278,11 +281,3 @@ def cluster_loop(str_id, cleanup=False):
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
         cluster_vs(final_cent_file, float(next_ident/100), loop=False)
-
-    #: cleanup unnecessary files
-    if cleanup:
-        os.remove(run_path + '/centroids')
-        os.remove(run_path + '/uc')
-        os.remove(run_path + '/tax_clusters')
-        os.remove(run_path + '/repr_correction')
-        rmtree(run_path + '/clusters/')

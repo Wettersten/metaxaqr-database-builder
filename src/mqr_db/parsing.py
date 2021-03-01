@@ -26,8 +26,10 @@ def create_parser():
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
 
-    parser.add_argument('-o', '--output', dest='output', type=str, metavar='',
-                        help="""{PATH} Specify output path, path/mqr_db/...""")
+    parser.add_argument('-l', '--label', dest='opt_label', type=str,
+                        metavar='',
+                        help="""{label} Specify label for the output database,
+required when running --prepare""")
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,

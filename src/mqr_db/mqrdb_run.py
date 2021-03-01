@@ -9,7 +9,7 @@ from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging, set_proj_path, print_license, return_proj_path
+from .handling import logging, return_label, print_license, return_proj_path
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
@@ -25,14 +25,20 @@ def main_mqrdb(args):
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
+        run_label = ''
         db = args.opt_prepare
         path = return_proj_path()
-        if args.output:
-            path = args.output
-            set_proj_path(path)
 
         removed_path = "{}removed".format(path)
+        init_path = "{}init".format(path)
         Path(removed_path).mkdir(parents=True, exist_ok=True)
+        Path(init_path).mkdir(parents=True, exist_ok=True)
+
+        if args.opt_label:
+            run_label = args.opt_label
+            label_file = "{}/label"
+            with open(label_file, 'w') as f:
+                f.write(run_label)
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -40,7 +46,7 @@ def main_mqrdb(args):
 
         logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-        create_cluster_tax(str_id)
+        create_cluster_tax(str_id, label)
         repr_and_flag(str_id)
         logging("clustering_tax_end", quiet=quiet)
 
@@ -49,6 +55,7 @@ def main_mqrdb(args):
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
         str_id = '100'
+        label = return_label()
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
@@ -67,7 +74,7 @@ def main_mqrdb(args):
         for id in v_loop:
 
             logging("finalize_loop_start", id=id, quiet=quiet)
-            cluster_loop(id)
+            cluster_loop(id, label)
             logging("finalize_loop_end", id=id, quiet=quiet)
 
         logging("finalize_end", quiet=quiet)

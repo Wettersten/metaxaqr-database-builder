@@ -19,32 +19,23 @@ def create_dir_structure(str_id):
 
 
 def return_proj_path():
-    """Returns the path to project dir, if output path specified mqr_db will be
-    created in that path.
+    """Returns the path to project dir.
     """
-    path_file = os.getcwd() + "/mqrdb_init.txt"
-    if check_file(path_file):
-        with open(path_file, 'r') as file:
-            proj_path = file.readline().rstrip() + '/mqr_db/'
-    else:
-        proj_path = os.getcwd() + '/mqr_db/'
+    proj_path = os.getcwd() + '/mqr_db/'
 
     return proj_path
 
 
-def set_proj_path(path):
-    """Sets custom project path (if -p given when -c is used), this is saves as
-    the first line in a local file for later retrieval.
+def return_label():
     """
-    path_file = os.getcwd() + "/mqrdb_init.txt"
-    if check_file(path_file):
-        os.remove(path_file)
+    """
+    label = ''
+    label_file = "{}init/label".format(return_proj_path())
+    if check_file(label_file):
+        with open(label_file, 'r') as f:
+            label = f.read()
 
-    with open(path_file, 'w') as file:
-        if path[-1] == '/':
-            file.write(path[:-1])
-        else:
-            file.write(path)
+    return label
 
 
 def tax_list_to_str(tlist):
@@ -112,7 +103,7 @@ def check_dir(path):
 
 
 def check_file(file):
-    """Checks if the file exists, retuning True/False
+    """Checks if the file exists, returning True/False
     """
     return os.path.isfile(file)
 

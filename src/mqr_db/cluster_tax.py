@@ -29,7 +29,7 @@ class Cluster:
         self.cluster_entries = cluster_entries
         self.flags = flags
         self.repr_tax = repr_tax
-        self.str_id = str(label.split("_")[1])
+        self.str_id = str(label.split("_")[2])
 
     def add_entry(self, tax):
         self.cluster_entries.append(tax)
@@ -301,7 +301,7 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
     return new_taxes
 
 
-def create_cluster_tax(str_id, loop=False):
+def create_cluster_tax(str_id, run_label, loop=False):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
@@ -337,7 +337,8 @@ def create_cluster_tax(str_id, loop=False):
 
                     if loop:
                         new_cluster = curr_line[9].split("_")[2]
-                        clust_out.write("MQR_{}_{}\n".format(
+                        clust_out.write("MQR_{}_{}_{}\n".format(
+                                                             run_label,
                                                              str_id,
                                                              new_cluster
                                                              ))
@@ -347,9 +348,10 @@ def create_cluster_tax(str_id, loop=False):
                             if loop:
                                 loop_line = lines.rstrip().split("\t")
                                 loop_tlabel = loop_line[0]
-                                loop_clabel = "MQR_{}_{}".format(
+                                loop_clabel = "MQR_{}_{}_{}".format(
+                                    run_label,
                                     str_id,
-                                    loop_line[1].split("_")[2]
+                                    loop_line[1].split("_")[3]
                                 )
                                 loop_repr = loop_line[2]
 
@@ -411,7 +413,8 @@ def create_cluster_tax(str_id, loop=False):
 
                     #: writing out the entries from the cluster
                     if not loop and len(deleted_entries) < len(out_dict):
-                        clust_out.write("MQR_{}_{}\n".format(
+                        clust_out.write("MQR_{}_{}_{}\n".format(
+                                                             run_label,
                                                              str_id,
                                                              new_cluster
                                                              ))
@@ -425,7 +428,8 @@ def create_cluster_tax(str_id, loop=False):
                     elif not loop and len(deleted_entries) == len(out_dict):
                         exc_clusters = removed_path + "/deleted_clusters_100"
                         with open(exc_clusters, 'a+') as f:
-                            f.write("MQR_{}_{}\n".format(
+                            f.write("MQR_{}_{}_{}\n".format(
+                                                         run_label,
                                                          str_id,
                                                          new_cluster
                             ))

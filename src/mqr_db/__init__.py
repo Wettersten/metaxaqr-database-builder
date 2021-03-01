@@ -13,7 +13,7 @@ from .handling import float_to_str_id
 from .handling import return_proj_path
 from .handling import create_dir_structure
 from .handling import tax_list_to_str
-from .handling import set_proj_path
+from .handling import return_label
 from .handling import get_version
 from .handling import logging
 from .handling import print_license

@@ -131,7 +131,7 @@ def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
     removed_path = return_proj_path() + 'removed'
     label_file = "{}/label_tree".format(run_path)
     bad_hits = "{}/bad_hits".format(removed_path)
-    hit_label = "MQR_100_"
+    hit_label = "_100_"
 
     with open(label_file, 'r') as tree, \
          open(bad_hits, 'w') as out:
