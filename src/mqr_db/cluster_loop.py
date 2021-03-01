@@ -224,13 +224,13 @@ def create_label_tree(str_id, run_label, tree_loop=False):
                 ))
 
 
-def loop_repr_corr(str_id):
+def loop_repr_corr(str_id, run_label):
     """Creates the clusters_tax and repr_correction files needed in order to
     create the final_centroids and final_repr files. Used for identites below
     100.
     """
     #: create_cluser_tax
-    create_cluster_tax(str_id, loop=True)
+    create_cluster_tax(str_id, run_label, loop=True)
 
     #: repr_and_flag
     repr_and_flag(str_id)
@@ -245,7 +245,7 @@ def loop_repr_corr(str_id):
     os.rename(repr_cluster_file, repr_corr_file)
 
 
-def cluster_loop(str_id, run_label, loop):
+def cluster_loop(str_id, run_label):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
@@ -264,7 +264,7 @@ def cluster_loop(str_id, run_label, loop):
         cent_loop = False
     else:
         cent_loop = True
-        loop_repr_corr(str_id)
+        loop_repr_corr(str_id, run_label)
         if int(str_id) < 99:
             tree_loop = True
 

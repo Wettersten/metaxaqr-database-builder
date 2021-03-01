@@ -76,25 +76,6 @@ def check_args(args):
         error_msg = "ERROR: No option chosen."
         quit(error_msg)
 
-    if args.opt_prepare:
-        file = args.opt_prepare
-        error_msg = "ERROR: Could not find the file: {}".format(file)
-        if not check_file(file):
-            quit(error_msg)
-
-    if args.output:
-        out_dir = args.output
-
-        if out_dir[-1] == '/':
-            dir = out_dir + "mqr_db/"
-        else:
-            dir = args.output + "/mqr_db/"
-
-        error_msg = "ERROR: {} already exists".format(dir)
-
-        if check_dir(dir):
-            quit(error_msg)
-
 
 def check_dir(path):
     """Checks if the directory/path exists, returning True/False

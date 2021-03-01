@@ -36,7 +36,7 @@ def main_mqrdb(args):
 
         if args.opt_label:
             run_label = args.opt_label
-            label_file = "{}/label"
+            label_file = "{}/label".format(init_path)
             with open(label_file, 'w') as f:
                 f.write(run_label)
 
@@ -46,7 +46,7 @@ def main_mqrdb(args):
 
         logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-        create_cluster_tax(str_id, label)
+        create_cluster_tax(str_id, run_label)
         repr_and_flag(str_id)
         logging("clustering_tax_end", quiet=quiet)
 
@@ -55,7 +55,7 @@ def main_mqrdb(args):
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
         str_id = '100'
-        label = return_label()
+        run_label = return_label()
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
@@ -74,7 +74,7 @@ def main_mqrdb(args):
         for id in v_loop:
 
             logging("finalize_loop_start", id=id, quiet=quiet)
-            cluster_loop(id, label)
+            cluster_loop(id, run_label)
             logging("finalize_loop_end", id=id, quiet=quiet)
 
         logging("finalize_end", quiet=quiet)
