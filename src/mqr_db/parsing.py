@@ -4,8 +4,9 @@ for valid installation(s) etc
 
 import os
 import argparse
+from .handling import get_version
 
-seq_version = 0.1
+seq_version = get_version()
 seq_name = 'MetaxaQR Database Builder'
 
 
@@ -20,7 +21,7 @@ def create_parser():
         genetic markers.""",
         epilog='Examples: ')
 
-    parser.add_argument('-c', '--cluster', dest='opt_clustering', type=str,
+    parser.add_argument('-p', '--prepare', dest='opt_prepare', type=str,
                         metavar='',
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
@@ -28,31 +29,42 @@ def create_parser():
     parser.add_argument('-o', '--output', dest='output', type=str, metavar='',
                         help="""{PATH} Specify output path, path/mqr_db/...""")
 
-    parser.add_argument('-r', '--review', dest='opt_review',
-                        action='store_true', default=False,
-                        help="""Manual review of flagged clusters""")
-
-    parser.add_argument('-f', '--finalize', dest='opt_finalize',
-                        action='store_true', default=False,
-                        help="""Further clustering of their output centroid
-                        files from manual review down to 95%% identity""")
-
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
-                        help="""Creates a MetaxaQR database from the output
-                        files""")
+                        help="""Starts the manual review followed creation of
+                        the output MetaxaQR database files""")
 
-    parser.add_argument('-ds', '--dupstats', dest='opt_ds', type=str,
+    parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
+                        metavar='',
+                        help="""Reads FASTA format file of new entries and adds
+                        to a finished database""")
+
+    parser.add_argument('--format', dest='opt_format', type=str,
+                        metavar='',
+                        help="""Format used in the input FASTA file [x]""")
+
+    parser.add_argument('--db', dest='opt_db', type=str,
+                        metavar='',
+                        help="""Path to finished database, used by --addseq""")
+
+    parser.add_argument('--ds', dest='opt_ds', type=str,
                         metavar='',
                         help="""{FILENAME} FASTA database for stats""")
 
     parser.add_argument('-q', '--quiet', dest='log_quiet',
                         action='store_true', default=False,
-                        help="""No status print out, only writing to log file
-                        """)
+                        help="""No status print out""")
+
+    parser.add_argument('--qc', dest='opt_qc',
+                        action='store_false', default=True,
+                        help="""Turns off quality check steps""")
+
+    parser.add_argument('--license', dest='opt_license',
+                        action='store_true', default=False,
+                        help="""Displays the license""")
 
     parser.add_argument('--version', action='version',
-                        version='{}: version {}'.format(seq_name, seq_version))
+                        version='{} - {}'.format(seq_name, seq_version))
     return parser
 
 

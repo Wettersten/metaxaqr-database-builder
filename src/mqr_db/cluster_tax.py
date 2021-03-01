@@ -74,10 +74,11 @@ class Cluster:
 
 
 def create_taxdb():
-    """Creates a taxonomy database from clusters, only Euk, no chloro/mito.
+    """Creates a taxonomy database from all entries, no chloro/mito.
     """
     run_path = return_proj_path() + '100'
     cluster_dir = run_path + '/clusters/'
+    tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_cmd = []
 
@@ -86,9 +87,8 @@ def create_taxdb():
     #: gets only taxonomy (everything after first space)
     cmd_cut = "cut -d ' ' -f 2-"
     #: filters out Archaea, Bacteria, chlor/mito, etc
-    cmd_grep_seq = "grep -v {arc} {bac} {mit} {chl} {sam} {low} {sp}".format(
-        arc="-e \"Archaea\"",
-        bac="-e \"Bacteria\"",
+    cmd_grep_seq = "grep -v {can} {mit} {chl} {sam} {low} {sp}".format(
+        can="-e \";Candidatus;\"",
         mit="-e \";Mitochondria;\"",
         chl="-e \";Chloroplast;\"",
         sam="-e \"sample\"",
@@ -103,7 +103,7 @@ def create_taxdb():
         ct=cmd_cut,
         gs=cmd_grep_seq,
         st=cmd_sort,
-        tf=tax_db_raw_file
+        tf=tax_db_tmp_file
     )
 
     #: runs the command
@@ -112,17 +112,38 @@ def create_taxdb():
     process_taxdb()
     #: removing the raw file
     os.remove(tax_db_raw_file)
+    os.remove(tax_db_tmp_file)
 
 
 def process_taxdb():
-    """Processing the tax_db_raw file, removing strain info, adding all
-    (unique) taxonomies of species and genuses (for easier indexing later).
+    """Processing the tax_db_raw file, creating a database of all "correct"
+    unique genus entries and their taxonomy, correct taxonomy defined as the
+    one with genus as the last taxonomic category before species and the
+    taxonomy with most taxonomic categories.
     """
     run_path = return_proj_path() + '100'
+    tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_db_file = run_path + '/tax_db'
     taxes = {}
     final_taxes = {}
+
+    with open(tax_db_tmp_file, 'r') as tmp_file, \
+         open(tax_db_raw_file, 'w') as out_file:
+
+        for line in tmp_file:
+            curr_line = line.rstrip()
+
+            if curr_line.split(";")[-1][0].isupper():
+                tax = ";".join(curr_line.split(";")[:-1])
+                genus = curr_line.split(";")[-1].split(" ")[0]
+                new_tax = ""
+
+                if genus == "Candidatus":
+                    genus = " ".join(curr_line.split(";")[-1].split(" ")[:2])
+
+                new_tax = "{};{}\n".format(tax, genus)
+                out_file.write(new_tax)
 
     with open(tax_db_raw_file, 'r') as raw_file:
 
@@ -132,11 +153,9 @@ def process_taxdb():
 
             curr_line = line.rstrip()
             tax_cats = ";".join(curr_line.split(";")[:-1])
-            if 'sp.' not in curr_line.split(";")[-1]:
-                species = " ".join(curr_line.split(";")[-1].split(" ")[0:2])
-                tax_species = "{};{}".format(tax_cats, species)
+            species = curr_line.split(";")[-1]
+            tax_species = "{};{}".format(tax_cats, species)
             genus = curr_line.split(";")[-1].split(" ")[0]
-            tax_genus = "{};{}".format(tax_cats, genus)
 
             if species:
                 if species not in taxes:
@@ -155,7 +174,7 @@ def process_taxdb():
                         taxes[species] = tax_species
 
                     #: if both either correct or wrong
-                    #: but new is longer (more detailed)
+                    #: but new is longer (more taxonomic categories)
                     elif (
                         sp_len > dict_len
                         and ((dict_genus == genus and sp_genus == genus)
@@ -163,46 +182,9 @@ def process_taxdb():
                     ):
                         taxes[species] = tax_species
 
-            #: if species is 'genus sp.', adding genus instead
-            else:
-                if genus not in taxes:
-                    taxes[genus] = tax_genus
-                else:
-                    dict_genus = taxes[genus].split(";")[-2]
-                    g_genus = tax_genus.split(";")[-2]
-                    dict_len = len(taxes[genus].split(";"))
-                    g_len = len(tax_genus.split(";"))
-
-                    #: if correct taxonomy found, uses genus as category
-                    if (
-                        dict_genus != genus
-                        and g_genus == genus
-                    ):
-                        taxes[genus] = tax_genus
-
-                    #: if both either correct or wrong
-                    #: but new is longer (more detailed)
-                    elif (
-                        g_len > dict_len
-                        and ((dict_genus == genus and g_genus == genus)
-                             or dict_genus != genus and g_genus != genus)
-                    ):
-                        taxes[genus] = tax_genus
-
-    #: adds all missing genus from species
-    final_taxes = taxes.copy()
-    for species, tax in taxes.items():
-        if len(species.split(" ")) == 2:
-            genus = species.split(" ")[0]
-            if genus not in final_taxes:
-                final_taxes[genus] = "{};{}".format(
-                    ";".join(tax.split(";")[:-1]),
-                    genus
-                )
-
     with open(tax_db_file, 'w') as tax_db:
-        for sp in final_taxes:
-            tax_db.write(final_taxes[sp] + "\n")
+        for sp in taxes:
+            tax_db.write(taxes[sp] + "\n")
 
 
 def read_taxdb():
@@ -215,7 +197,7 @@ def read_taxdb():
     with open(tax_db_file, 'r') as tax_file:
         for line in tax_file:
             tax = line.rstrip()
-            species = " ".join(tax.split(";")[-1].split(" ")[:2])
+            species = tax.split(";")[-1]
             tax_db[species] = tax
 
     return tax_db
@@ -324,10 +306,12 @@ def create_cluster_tax(str_id, loop=False):
     followed by the label + taxonomy of all hits in the cluster.
     """
     run_path = return_proj_path() + str_id
+    removed_path = return_proj_path() + 'removed'
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
+    deleted_entries_file = removed_path + "/deleted_entries_100"
     if not loop:
         tax_db = read_taxdb()
 
@@ -348,14 +332,15 @@ def create_cluster_tax(str_id, loop=False):
                     cm_dict = {}
                     upd_cm_dict = {}
                     out_dict = {}
+                    deleted_entries = {}
                     new_cluster = curr_cluster
 
                     if loop:
                         new_cluster = curr_line[9].split("_")[2]
-                    clust_out.write("MQR_{}_{}\n".format(
-                                                         str_id,
-                                                         new_cluster
-                                                         ))
+                        clust_out.write("MQR_{}_{}\n".format(
+                                                             str_id,
+                                                             new_cluster
+                                                             ))
 
                     for lines in read_cluster:
                         if lines[0] == ">":
@@ -379,6 +364,12 @@ def create_cluster_tax(str_id, loop=False):
                                 id_dict[tax_nr] = curr_id
                                 curr_tax = " ".join(curr_line.split(" ")[1:])
                                 orig_dict[tax_nr] = curr_tax
+                                curr_genus = curr_tax.split(
+                                    ";")[-1].split(" ")[0]
+                                if curr_genus == "Candidatus":
+                                    curr_genus = curr_genus = " ".join(
+                                        curr_tax.split(";")[-1].split(" ")[:2]
+                                    )
 
                                 #: adding chloro/mito taxonomies
                                 if (
@@ -386,6 +377,25 @@ def create_cluster_tax(str_id, loop=False):
                                     or "Mitochondria" in curr_line.split(";")
                                 ):
                                     cm_dict[tax_nr] = curr_tax
+                                #: checking tax and replacing/removing for rest
+                                elif curr_genus in tax_db:
+                                    curr_species = curr_tax.split(";")[-1]
+                                    curr_tax_entry = ";".join(
+                                        curr_tax.split(";")[:-1]
+                                        + [curr_genus]
+                                    )
+                                    tax_db_entry = tax_db[curr_genus]
+
+                                    if compare_tax_cats(
+                                        curr_tax_entry, tax_db_entry
+                                    ):
+                                        new_tax = ";".join(
+                                            tax_db_entry.split(";")[:-1]
+                                            + [curr_species]
+                                            )
+                                        orig_dict[tax_nr] = new_tax
+                                    else:
+                                        deleted_entries[tax_nr] = curr_line
 
                             tax_nr += 1
 
@@ -400,12 +410,55 @@ def create_cluster_tax(str_id, loop=False):
                         out_dict = orig_dict
 
                     #: writing out the entries from the cluster
-                    if not loop:
+                    if not loop and len(deleted_entries) < len(out_dict):
+                        clust_out.write("MQR_{}_{}\n".format(
+                                                             str_id,
+                                                             new_cluster
+                                                             ))
                         for i in out_dict:
-                            curr_id = "{} {}".format(id_dict[i], out_dict[i])
-                            clust_out.write("{}\n".format(curr_id))
+                            if i not in deleted_entries:
+                                curr_id = "{} {}".format(
+                                    id_dict[i],
+                                    out_dict[i]
+                                )
+                                clust_out.write("{}\n".format(curr_id))
+                    elif not loop and len(deleted_entries) == len(out_dict):
+                        exc_clusters = removed_path + "/deleted_clusters_100"
+                        with open(exc_clusters, 'a+') as f:
+                            f.write("MQR_{}_{}\n".format(
+                                                         str_id,
+                                                         new_cluster
+                            ))
+
+                    if deleted_entries:
+                        with open(deleted_entries_file, 'a+') as f:
+                            for entry in deleted_entries:
+                                f.write(deleted_entries[entry] + "\n")
 
         clust_out.write("end")
+
+
+def compare_tax_cats(tax_in, tax_db):
+    """Compares similarity in taxonomic categories between two taxonomies. If
+    at least 80% of the taxonomic categories in the database entry matches the
+    input taxonomy returns true (to keep), else returns false (remove as low
+    quality entry).
+    """
+    tax_db_split = (tax_db.split(";"))
+    tax_in_split = (tax_in.split(";"))
+    tax_db_count = len(tax_db_split)
+    tax_in_count = len(tax_in_split)
+    tax_in_hits = 0
+
+    for i in range(tax_in_count):
+        if tax_in_split[i] in tax_db_split:
+            tax_in_hits += 1
+
+    matching_tax = False
+    if tax_in_hits / tax_db_count >= 0.8:
+        matching_tax = True
+
+    return matching_tax
 
 
 def remove_cf_line(tax_line):
@@ -419,44 +472,22 @@ def flag_check(cluster):
     """
     flag = ''
 
-    chl_flag = chlor_mito_flag(cluster)
-    if chl_flag:
-        flag += chl_flag + ", "
-
-    dom_flag = domain_flag(cluster)
-    if dom_flag:
-        flag += dom_flag + ", "
+    ori_flag = origin_flag(cluster)
+    if ori_flag:
+        flag += ori_flag + ", "
 
     return flag[:-2]
 
 
-def chlor_mito_flag(cluster):
-    """Flags if both Chloroplast and Mitochondria are in the same cluster.
-    """
-    chlor_check = False
-    mito_check = False
-    flag_out = ''
-
-    for tax in cluster:
-        if "Chloroplast" in tax:
-            chlor_check = True
-        elif "Mitochondria" in tax:
-            mito_check = True
-
-        if chlor_check and mito_check:
-            flag_out = "Chlr_Mito"
-            break
-
-    return flag_out
-
-
-def domain_flag(cluster):
-    """Flags if there are more than one domain in the cluster. (Archaea,
-    Bacteria, Eukaryota)
+def origin_flag(cluster):
+    """Flags if there are more than one origin in the cluster. (Archaea,
+    Bacteria, Chloroplast, Eukaryota, Mitochondria)
     """
     arc_check = 0
     bac_check = 0
+    chl_check = 0
     euk_check = 0
+    mit_check = 0
     flag_out = ''
 
     for tax in cluster:
@@ -464,11 +495,15 @@ def domain_flag(cluster):
             arc_check = 1
         elif "Bacteria" in tax:
             bac_check = 1
+        elif "Chloroplast" in tax:
+            euk_check = 1
         elif "Eukaryota" in tax:
             euk_check = 1
+        elif "Mitochondria" in tax:
+            euk_check = 1
 
-        if (arc_check + bac_check + euk_check) > 1:
-            flag_out = "Domain"
+        if (arc_check + bac_check + chl_check + euk_check + mit_check) > 1:
+            flag_out = "Origin"
             break
 
     return flag_out
@@ -677,8 +712,6 @@ def algo_repr(tax_cluster, opt):
         high_fract = highest/total_count
         if high_fract >= 0.9:
             found = True
-            # removing outlier flag for now, doesn't add to review process
-            # flag = 'Outlier'
             if opt == 'species':
                 for tax in tax_cluster:
                     if repr_tax[0] in tax:
@@ -760,7 +793,7 @@ def repr_and_flag(str_id):
             if (curr_line[0:3] == 'MQR' or curr_line == 'end'):
                 old_label = c_label
 
-                if not first_line:
+                if not first_line and curr_cluster:
                     my_cluster = Cluster(old_label, curr_cluster)
                     flag, repr_tax = repr_taxonomy(
                                                    my_cluster.get_taxeslist(),
@@ -926,8 +959,11 @@ def prompt_accept(input, header, flags):
 
 
 def cluster_exclude(my_cluster):
-    run_path = return_proj_path() + '100'
-    exclusions_file = run_path + '/flag_exclusions'
+    """Excludes clusters in the manual review, saved to a excluded cluster
+    file.
+    """
+    removed_path = return_proj_path() + 'removed'
+    exclusions_file = removed_path + '/flag_exclusions'
 
     with open(exclusions_file, 'a+') as exclusions:
 
@@ -1014,6 +1050,8 @@ def prompt_flag(o_header, r_header):
 
 
 def rem_flag_update(header, flags):
+    """Updates number of flags remaining after removing flags in manual review.
+    """
     for flag in flags:
         header[flag.title()] -= 1
 
@@ -1254,7 +1292,8 @@ def manual_correction(my_cluster, rem_header):
     review = ''
     str_id = my_cluster.get_strid()
     run_path = return_proj_path() + str_id
-    flag_exclusions_file = run_path + '/flag_exclusions'
+    removed_path = return_proj_path() + 'removed'
+    flag_exclusions_file = removed_path + '/flag_exclusions'
     orig_header = flag_header(str_id)
 
     def_prompt = prompt_print(my_cluster)
@@ -1437,9 +1476,10 @@ def flag_correction(str_id):
     excluded_flags = []
 
     run_path = return_proj_path() + str_id
+    removed_path = return_proj_path() + 'removed'
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
-    flag_exclusions_file = run_path + '/flag_exclusions'
+    flag_exclusions_file = removed_path + '/flag_exclusions'
 
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)

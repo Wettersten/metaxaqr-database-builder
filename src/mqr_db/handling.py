@@ -2,11 +2,11 @@
 the project etc
 """
 
-import time
 import os
-import pathlib
+from pathlib import Path
 import argparse
 import importlib
+from datetime import datetime
 from shutil import which
 
 
@@ -15,7 +15,7 @@ def create_dir_structure(str_id):
     handling of clusters. Cluster files in mqr_db/identity/clusters/
     """
     cluster_dir = return_proj_path() + str_id + '/clusters/'
-    pathlib.Path(cluster_dir).mkdir(parents=True, exist_ok=True)
+    Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
 def return_proj_path():
@@ -76,16 +76,17 @@ def check_args(args):
     used, the input file and output paths are valid.
     """
     if (
-        not args.opt_clustering
-        and not args.opt_review
-        and not args.opt_finalize
+        not args.opt_prepare
         and not args.opt_makedb
+        and not args.opt_addseq
+        and not args.opt_license
+        and not args.opt_ds
     ):
-        error_msg = "ERROR: No option chosen, use one from [-c/-r/-f/-m]"
+        error_msg = "ERROR: No option chosen."
         quit(error_msg)
 
-    if args.opt_clustering:
-        file = args.opt_clustering
+    if args.opt_prepare:
+        file = args.opt_prepare
         error_msg = "ERROR: Could not find the file: {}".format(file)
         if not check_file(file):
             quit(error_msg)
@@ -122,62 +123,41 @@ def check_installation(args):
     reqs = []
     preqs = []
     if (
-        args.opt_clustering
-        or args.opt_finalize
+        args.opt_prepare
+        or args.opt_makedb
     ):
         reqs = ['vsearch']
-        preqs = ['pathlib']
+        preqs = []
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
         if not is_tool(tool):
             quit(error_msg)
 
-    #: Checks python modules installed, disabled because of python errors
-    """
     for package in preqs:
         error_msg = "{} was not found".format(package)
         if not is_package(package):
             quit(error_msg)
-    """
 
 
 def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting
     with the review before using initial clustering).
     """
-    if args.opt_clustering:
+    if args.opt_prepare:
         dir = return_proj_path()
 
         if check_dir(dir):
             error_msg = "ERROR: {} already exists".format(dir)
             quit(error_msg)
 
-    if args.opt_review:
+    if args.opt_makedb:
         flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(
             file=flag_file,
-            txt="missing, please perform clustering [-c] first"
+            txt="missing, please perform preparation [-p] first"
             )
         if not check_file(flag_file):
-            quit(error_msg)
-
-    if args.opt_finalize:
-        repr_file = return_proj_path() + '100/repr_correction'
-        error_msg = "ERROR: {file} {txt}".format(
-            file=repr_file,
-            txt="missing, please perform review [-r] first"
-            )
-        if not check_file(repr_file):
-            quit(error_msg)
-
-    if args.opt_makedb:
-        tree_file = return_proj_path() + '95/label_tree'
-        error_msg = "ERROR: {file} {txt}".format(
-            file=tree_file,
-            txt="missing, please perform finalize [-f] first"
-            )
-        if not check_file(tree_file):
             quit(error_msg)
 
 
@@ -197,62 +177,249 @@ def is_package(name):
         return False
 
 
-def logging(
-        str_id='',
-        etime='',
-        db='',
-        time_log=False,
-        quiet=False,
-        start=False,
-        custom=False,
-        custom_msg=''
-):
-    """Used for logging messages/time spent on processes etc
+def logging(option, id='', quiet=False):
     """
-    log_msg = ''
-    logging_file = os.getcwd() + '/mqrdb_log.txt'
+    """
+    ln = "-----------------------------------------------------------------"
 
-    if time_log:
-        time_log_msg = "Done in Hours:Minutes:Seconds"
-        time_msg = time.strftime("%H:%M:%S", time.gmtime(etime))
-        log_msg = "{}\n{}\n\n".format(time_log_msg, time_msg)
+    if option == "initialize":
+        print("{he}\n{ln}\n{dt} : {st}\n{ln}".format(
+            he=get_header(option),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Starting MetaxaQR_DB Clustering..."
+        ))
 
-    elif custom:
-        log_msg = custom_msg
+    elif option == "clustering_start":
+        print("{he}\n{ln}\n{dt} : {st}".format(
+            he=get_header(option.split("_")[0]),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Clustering input database at 100% sequence identity"
+            " (this may take a long while)..."
+        ))
 
-    else:
-        if start:
-            log_msg = "{txt1}: {id}, {txt2}: {idb}\n".format(
-                    txt1="Running VSEARCH at id",
-                    id=str_id,
-                    txt2="using database",
-                    idb=db
-                )
-        elif int(str_id) > 50:
-            if int(str_id) > 90:
-                nxt_id = str(int(str_id)-1)
-            else:
-                nxt_id = str(int(str_id)-5)
+    elif option == "clustering_seq_end":
+        print("{dt} : {st}".format(
+            dt=get_dateinfo(),
+            st="Clustering at 100% sequence identity finished."
+        ))
 
-            log_msg = "{txt1}: {id1} {txt2}: {id2}\n".format(
-                    txt1="Finalizing id",
-                    id1=str_id,
-                    txt2="and running VSEARCH at id",
-                    id2=nxt_id
-                )
+    elif option == "clustering_tax_start":
+        print("{dt} : {st}".format(
+            dt=get_dateinfo(),
+            st="Taxonomic flagging and processing started."
+        ))
+
+    elif option == "clustering_tax_end":
+        print("{dt} : {st}".format(
+            dt=get_dateinfo(),
+            st="Taxonomic flagging and processing finished."
+        ))
+
+    elif option == "clustering_end":
+        print("{dt} : {st}\n{ln}".format(
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Clustering finished!"
+        ))
+
+    elif option == "manual review_start":
+        print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {tt}".format(
+            he=get_header(option.split("_")[0]),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Starting MetaxaQR_DB Manual Review...",
+            tt="Manual Review of flagged clusters started."
+        ))
+
+    elif option == "manual review_end":
+        print("{dt} : {st}\n{ln}".format(
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Manual Review of flagged clusters finished!"
+        ))
+
+    elif option == "finalize_start":
+        print("{dt} : {st}\n{ln}\n{he}\n{ln}".format(
+            he=get_header(option.split("_")[0]),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Starting MetaxaQR_DB Finalize..."
+        ))
+
+    elif option == "finalize_loop_start":
+        st = ""
+        if int(id) == 100:
+            st = "Clustering at 99% sequence identity..."
+        elif int(id) == 50:
+            st = "Finalizing output from the 50% sequence identity run..."
+        elif int(id) > 90:
+            st = "Clustering at {id2}% sequence identity...".format(
+                id2=str(int(id)-1)
+            )
         else:
-            log_msg = "Finalizing output\n"
+            st = "Clustering at {id2}% sequence identity...".format(
+                id2=str(int(id)-5)
+            )
 
-    if start:
-        if os.path.isfile(logging_file):
-            os.remove(logging_file)
-        with open(logging_file, 'w') as log_file:
-            log_file.write(log_msg)
-            if not quiet:
-                print(log_msg)
+        print("{dt} : {st}".format(
+            dt=get_dateinfo(),
+            st=st
+        ))
 
-    else:
-        with open(logging_file, 'a') as log_file:
-            log_file.write(log_msg)
-            if not quiet:
-                print(log_msg)
+    elif option == "finalize_loop_end":
+        st = ""
+        if int(id) == 50:
+            pass
+        elif int(id) > 90:
+            st = "Clustering at {id}% sequence identity is finished.".format(
+                id=str(int(id)-1)
+            )
+
+            print("{dt} : {st}".format(
+                dt=get_dateinfo(),
+                st=st
+            ))
+        else:
+            st = "Clustering at {id}% sequence identity is finished.".format(
+                id=str(int(id)-5)
+            )
+
+            print("{dt} : {st}".format(
+                dt=get_dateinfo(),
+                st=st
+            ))
+
+    elif option == "finalize_end":
+        print("{dt} : {st}\n{ln}".format(
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Clustering and finalization of output is finished!"
+        ))
+
+    elif option == "make db_start":
+        print("{he}\n{ln}\n{dt} : {st}".format(
+            he=get_header(option.split("_")[0]),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Creating the MetaxaQR database..."
+        ))
+
+    elif option == "make db_end":
+        print("{dt} : {st}\n".format(
+            dt=get_dateinfo(),
+            st="MetaxaQR database has been created!"
+        ))
+
+    elif option == "add entries_start":
+        print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {at}".format(
+            he=get_header(option.split("_")[0]),
+            ln=ln,
+            dt=get_dateinfo(),
+            st="Starting MetaxaQR_DB Add Entries...",
+            at="Adding new entries to the MetaxaQR database..."
+        ))
+    elif option == "add entries_end":
+        print("{dt} : {st}\n".format(
+            dt=get_dateinfo(),
+            st="New entries have been added to the MetaxaQR database!"
+        ))
+
+
+def get_dateinfo():
+    date = datetime.today()
+    weekday = date.strftime('%a')
+    month = date.strftime('%b')
+    day = date.strftime('%d')
+    time = date.strftime('%X')
+    year = date.strftime('%Y')
+    out_date = "{} {} {} {} {}".format(
+        weekday,
+        month,
+        day,
+        time,
+        year
+    )
+    return out_date
+
+
+def get_header(option):
+    header = ""
+    version = get_version()
+    bytext = "by Sebastian Wettersten, University of Gothenburg."
+    license = "This program is distributed under the GNU GPL 3 license, use" \
+              " the --license option for more information on this license."
+
+    if option == "initialize":
+        htext = "MetaxaQR Database Builder -- Automatic curation of genetic" \
+                " marker databases for MetaxaQR"
+        header = "{}\n{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+            license
+        )
+
+    elif option == "clustering":
+        htext = "MetaxaQR_DB Clustering -- Clusters a database using" \
+                " VSEARCH"
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    elif option == "manual review":
+        htext = "MetaxaQR_DB Manual Review -- Manual review of clusters" \
+                " flagged during taxonomic processing"
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    elif option == "finalize":
+        htext = "MetaxaQR_DB Finalize -- Preparation of final output files" \
+                " and clustering down to 50% sequence identity."
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    elif option == "make db":
+        htext = "MetaxaQR_DB Make DB -- Creates the MetaxaQR database from" \
+            " the output of 'Finalize'."
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    elif option == "add entries":
+        htext = "MetaxaQR_DB Add Entries -- Adds new entries from a FASTA" \
+            " file to a finished MetaxaQR database."
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    return header
+
+
+def get_version():
+    """Current version of the MetaxaQR Database Builder.
+    """
+    return "Version: 0.2"
+
+
+def print_license():
+    """Prints the GNU GPL 3 license.
+    """
+    license_file = "{}/LICENSE".format(Path(__file__).parent.parent.parent)
+
+    with open(license_file, 'r') as f:
+        a = f.read()
+        print(a)

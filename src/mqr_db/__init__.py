@@ -14,7 +14,12 @@ from .handling import return_proj_path
 from .handling import create_dir_structure
 from .handling import tax_list_to_str
 from .handling import set_proj_path
+from .handling import get_version
+from .handling import logging
+from .handling import print_license
 
 from .db_stats import db_dupestats
 
 from .make_db import make_db
+
+from .add_entries import add_entries
