@@ -47,13 +47,13 @@ required when running --prepare""")
 
     parser.add_argument('--db', dest='opt_db', type=str,
                         metavar='',
-                        help="""Path to finished database, used by --addseq""")
+                        help="""Path to MetaxaQR database, used by --addseq""")
 
     parser.add_argument('--ds', dest='opt_ds', type=str,
                         metavar='',
                         help="""{FILENAME} FASTA database for stats""")
 
-    parser.add_argument('-q', '--quiet', dest='log_quiet',
+    parser.add_argument('--quiet', dest='log_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")
 
