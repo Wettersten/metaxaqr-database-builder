@@ -4,7 +4,7 @@
 import os
 from pathlib import Path
 import shutil
-from .handling import return_proj_path, check_file
+from .handling import return_proj_path, check_file, return_label
 
 
 def get_deleted_clusters(path):
@@ -28,11 +28,11 @@ def get_deleted_clusters(path):
     return excluded_clusters
 
 
-def get_centroids(path, result_path, qc):
+def get_centroids(path, result_path, qc, run_label):
     """Copies the 'final_centroids' file from mqr_db/100/ to db result path
     """
     my_cent = Path("{}100/final_centroids".format(path))
-    to_cent = Path("{}/final_centroids".format(result_path))
+    to_cent = Path("{}/{}_final_centroids".format(result_path, run_label))
 
     if qc:
         excluded_clusters = get_deleted_clusters(path)
@@ -62,7 +62,7 @@ def get_centroids(path, result_path, qc):
         shutil.copy(my_cent, to_cent)
 
 
-def get_label_tree(path, result_path, v_loop, qc):
+def get_label_tree(path, result_path, v_loop, qc, run_label):
     """Takes the label tree created at 50% seqence identity and converts it
     into a dictionary format where the mqr_100 (100% seq id) label is key and
     the values are all the labels of the lower sequence identities, in
@@ -72,7 +72,7 @@ def get_label_tree(path, result_path, v_loop, qc):
     if qc:
         excluded_clusters = get_deleted_clusters(path)
     label_file = "{}50/label_tree".format(path)
-    final_label = "{}/final_label_tree".format(result_path)
+    final_label = "{}/{}_final_label_tree".format(result_path, run_label)
 
     dl = {}
     for v in v_loop:
@@ -103,12 +103,12 @@ def get_label_tree(path, result_path, v_loop, qc):
                         wf.write("{}\n".format(label_out[:-1]))
 
 
-def get_repr(path, result_path, v_loop, qc):
+def get_repr(path, result_path, v_loop, qc, run_label):
     """Creates a final_repr file which contains all lines from all final_repr
     files in the runs from 50-100% sequence identity. Every line is the label,
     entry id, and representative taxonomy, seperated by tabs.
     """
-    final_repr = "{}/final_repr".format(result_path)
+    final_repr = "{}/{}_final_repr".format(result_path, run_label)
 
     with open(final_repr, 'w') as f:
         for id in v_loop:
@@ -171,6 +171,7 @@ def make_db(qc=True):
     identity levels and finally a file containing the tree structure of all
     labels at all sequence identity levels.
     """
+    run_label = return_label()
     path = return_proj_path()
     result_path = "{}results".format(path)
     Path(result_path).mkdir(parents=True, exist_ok=True)
@@ -179,6 +180,6 @@ def make_db(qc=True):
     v_loop = a_loop + b_loop
 
     find_bad_hits()
-    get_centroids(path, result_path, qc)
-    get_label_tree(path, result_path, v_loop, qc)
-    get_repr(path, result_path, v_loop, qc)
+    get_centroids(path, result_path, qc, run_label)
+    get_label_tree(path, result_path, v_loop, qc, run_label)
+    get_repr(path, result_path, v_loop, qc, run_label)
