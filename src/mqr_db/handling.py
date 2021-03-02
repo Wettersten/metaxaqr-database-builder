@@ -2,12 +2,12 @@
 the project etc
 """
 
+import argparse
+from datetime import datetime
+import importlib
 import os
 from pathlib import Path
-import argparse
-import importlib
-from datetime import datetime
-from shutil import which
+import shutil
 
 
 def create_dir_structure(str_id):
@@ -27,7 +27,7 @@ def return_proj_path():
 
 
 def return_label():
-    """
+    """Gets the label specified for the run.
     """
     label = ''
     label_file = "{}init/label".format(return_proj_path())
@@ -112,6 +112,28 @@ def check_installation(args):
             quit(error_msg)
 
 
+def cleanup():
+    """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
+    mqr_db/results to final output directory mqr_label.
+    """
+    run_label = return_label()
+    mqr_path = return_proj_path()
+    src_res = "{}results/".format(return_proj_path())
+    src_rem = "{}removed/".format(return_proj_path())
+    dest = "{}/mqr_{}/".format(os.getcwd(), run_label)
+    Path(dest).mkdir(parents=True, exist_ok=True)
+
+    files_res = os.listdir(src_res)
+    files_rem = os.listdir(src_rem)
+
+    for f in files_res:
+        shutil.move(src_res + f, dest)
+    for f in files_rem:
+        shutil.move(src_rem + f, dest)
+
+    shutil.rmtree(mqr_path)
+
+
 def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting
     with the review before using initial clustering).
@@ -143,7 +165,7 @@ def check_prereqs(args):
 def is_tool(name):
     """Check whether `name` is on PATH and marked as executable
     """
-    return which(name)
+    return shutil.which(name)
 
 
 def is_package(name):
@@ -161,149 +183,148 @@ def logging(option, id='', quiet=False):
     """
     ln = "-----------------------------------------------------------------"
 
-    if option == "initialize":
-        print("{he}\n{ln}\n{dt} : {st}\n{ln}".format(
-            he=get_header(option),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Starting MetaxaQR_DB Clustering..."
-        ))
+    if not quiet:
+        if option == "initialize":
+            print("{he}\n{ln}\n{dt} : {st}\n{ln}".format(
+                he=get_header(option),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Starting MetaxaQR_DB Clustering..."
+            ))
 
-    elif option == "clustering_start":
-        print("{he}\n{ln}\n{dt} : {st}".format(
-            he=get_header(option.split("_")[0]),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Clustering input database at 100% sequence identity"
-            " (this may take a long while)..."
-        ))
+        elif option == "clustering_start":
+            print("{he}\n{ln}\n{dt} : {st}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Clustering input database at 100% sequence identity"
+                " (this may take a long while)..."
+            ))
 
-    elif option == "clustering_seq_end":
-        print("{dt} : {st}".format(
-            dt=get_dateinfo(),
-            st="Clustering at 100% sequence identity finished."
-        ))
-
-    elif option == "clustering_tax_start":
-        print("{dt} : {st}".format(
-            dt=get_dateinfo(),
-            st="Taxonomic flagging and processing started."
-        ))
-
-    elif option == "clustering_tax_end":
-        print("{dt} : {st}".format(
-            dt=get_dateinfo(),
-            st="Taxonomic flagging and processing finished."
-        ))
-
-    elif option == "clustering_end":
-        print("{dt} : {st}\n{ln}".format(
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Clustering finished!"
-        ))
-
-    elif option == "manual review_start":
-        print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {tt}".format(
-            he=get_header(option.split("_")[0]),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Starting MetaxaQR_DB Manual Review...",
-            tt="Manual Review of flagged clusters started."
-        ))
-
-    elif option == "manual review_end":
-        print("{dt} : {st}\n{ln}".format(
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Manual Review of flagged clusters finished!"
-        ))
-
-    elif option == "finalize_start":
-        print("{dt} : {st}\n{ln}\n{he}\n{ln}".format(
-            he=get_header(option.split("_")[0]),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Starting MetaxaQR_DB Finalize..."
-        ))
-
-    elif option == "finalize_loop_start":
-        st = ""
-        if int(id) == 100:
-            st = "Clustering at 99% sequence identity..."
-        elif int(id) == 50:
-            st = "Finalizing output from the 50% sequence identity run..."
-        elif int(id) > 90:
-            st = "Clustering at {id2}% sequence identity...".format(
-                id2=str(int(id)-1)
-            )
-        else:
-            st = "Clustering at {id2}% sequence identity...".format(
-                id2=str(int(id)-5)
-            )
-
-        print("{dt} : {st}".format(
-            dt=get_dateinfo(),
-            st=st
-        ))
-
-    elif option == "finalize_loop_end":
-        st = ""
-        if int(id) == 50:
-            pass
-        elif int(id) > 90:
-            st = "Clustering at {id}% sequence identity is finished.".format(
-                id=str(int(id)-1)
-            )
-
+        elif option == "clustering_seq_end":
             print("{dt} : {st}".format(
                 dt=get_dateinfo(),
-                st=st
+                st="Clustering at 100% sequence identity finished."
             ))
-        else:
-            st = "Clustering at {id}% sequence identity is finished.".format(
-                id=str(int(id)-5)
-            )
+
+        elif option == "clustering_tax_start":
+            print("{dt} : {st}".format(
+                dt=get_dateinfo(),
+                st="Taxonomic flagging and processing started."
+            ))
+
+        elif option == "clustering_tax_end":
+            print("{dt} : {st}".format(
+                dt=get_dateinfo(),
+                st="Taxonomic flagging and processing finished."
+            ))
+
+        elif option == "clustering_end":
+            print("{dt} : {st}\n{ln}".format(
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Clustering finished!"
+            ))
+
+        elif option == "manual review_start":
+            print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {tt}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Starting MetaxaQR_DB Manual Review...",
+                tt="Manual Review of flagged clusters started."
+            ))
+
+        elif option == "manual review_end":
+            print("{dt} : {st}\n{ln}".format(
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Manual Review of flagged clusters finished!"
+            ))
+
+        elif option == "finalize_start":
+            print("{dt} : {st}\n{ln}\n{he}\n{ln}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Starting MetaxaQR_DB Finalize..."
+            ))
+
+        elif option == "finalize_loop_start":
+            st = ""
+            if int(id) == 100:
+                st = "Clustering at 99% sequence identity..."
+            elif int(id) == 50:
+                st = "Finalizing output from the 50% sequence identity run..."
+            elif int(id) > 90:
+                st = "Clustering at {id2}% sequence identity...".format(
+                    id2=str(int(id)-1)
+                )
+            else:
+                st = "Clustering at {id2}% sequence identity...".format(
+                    id2=str(int(id)-5)
+                )
 
             print("{dt} : {st}".format(
                 dt=get_dateinfo(),
                 st=st
             ))
 
-    elif option == "finalize_end":
-        print("{dt} : {st}\n{ln}".format(
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Clustering and finalization of output is finished!"
-        ))
+        elif option == "finalize_loop_end":
+            st = ""
+            if int(id) == 50:
+                pass
+            elif int(id) > 90:
+                st = "Clustering at {id}% sequence identity is \
+finished.".format(id=str(int(id)-1))
 
-    elif option == "make db_start":
-        print("{he}\n{ln}\n{dt} : {st}".format(
-            he=get_header(option.split("_")[0]),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Creating the MetaxaQR database..."
-        ))
+                print("{dt} : {st}".format(
+                    dt=get_dateinfo(),
+                    st=st
+                ))
+            else:
+                st = "Clustering at {id}% sequence identity is \
+finished.".format(id=str(int(id)-5))
 
-    elif option == "make db_end":
-        print("{dt} : {st}\n".format(
-            dt=get_dateinfo(),
-            st="MetaxaQR database has been created!"
-        ))
+                print("{dt} : {st}".format(
+                    dt=get_dateinfo(),
+                    st=st
+                ))
 
-    elif option == "add entries_start":
-        print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {at}".format(
-            he=get_header(option.split("_")[0]),
-            ln=ln,
-            dt=get_dateinfo(),
-            st="Starting MetaxaQR_DB Add Entries...",
-            at="Adding new entries to the MetaxaQR database..."
-        ))
-    elif option == "add entries_end":
-        print("{dt} : {st}\n".format(
-            dt=get_dateinfo(),
-            st="New entries have been added to the MetaxaQR database!"
-        ))
+        elif option == "finalize_end":
+            print("{dt} : {st}\n{ln}".format(
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Clustering and finalization of output is finished!"
+            ))
+
+        elif option == "make db_start":
+            print("{he}\n{ln}\n{dt} : {st}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Creating the MetaxaQR database..."
+            ))
+
+        elif option == "make db_end":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="MetaxaQR database has been created!"
+            ))
+
+        elif option == "add entries_start":
+            print("{dt} : {st}\n{ln}\n{he}\n{ln}\n{dt} : {at}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Starting MetaxaQR_DB Add Entries...",
+                at="Adding new entries to the MetaxaQR database..."
+            ))
+        elif option == "add entries_end":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="New entries have been added to the MetaxaQR database!"
+            ))
 
 
 def get_dateinfo():

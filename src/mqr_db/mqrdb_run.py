@@ -10,6 +10,7 @@ from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
+from .handling import cleanup
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
@@ -83,6 +84,9 @@ def main_mqrdb(args):
         logging("make db_start", quiet=quiet)
         make_db(args.opt_qc)
         logging("make db_end", quiet=quiet)
+
+        if not args.opt_keep:
+            cleanup()
 
     #: running duplicate stats method
     if args.opt_ds:
