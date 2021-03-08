@@ -1,5 +1,5 @@
 """Methods related to various handling functions, such as getting the path to
-the project etc
+the project, checking if files exists, error handling etc.
 """
 
 import argparse
@@ -423,3 +423,78 @@ def print_license():
     with open(license_file, 'r') as f:
         a = f.read()
         print(a)
+
+
+def format_file(file, format):
+    """Formatting method, used to take different inputs formats and format
+    these to SILVA style.
+    """
+    out_file = "{}_formatted".format(file)
+
+    with open(file, 'r') as to_format, \
+         open(out_file, 'w') as formatted:
+
+        if format == "ibol":
+            format_ibol(to_format, formatted)
+        elif format == "unite":
+            format_unite(to_format, formatted)
+
+    return out_file
+
+
+def silva_format(id, tax, seq):
+    """The format used by silva, this is used to create the final output format
+    """
+    silva_out = "{} {}\n{}\n".format(id, tax, seq)
+
+    return silva_out
+
+
+def format_ibol(to_format, formatted):
+    """Formatting used by ibol
+    """
+    to_format.readline()  # removes header
+
+    for line in to_format:
+        splitline = line.rstrip().split("\t")
+
+        tmp_id = splitline[0]
+        id = ">{}".format(tmp_id)
+
+        tmp_tax = splitline[8:15]
+        tax = ";".join(filter(None, tmp_tax))
+
+        tmp_seq = splitline[30]
+        seq = "\n".join([tmp_seq[i:i+80] for i in range(0, len(tmp_seq), 80)])
+
+        formatted.write(silva_format(id, tax, seq))
+
+
+def format_unite(to_format, formatted):
+    """Formatting used by ibol
+    """
+    base_tax = 'Eukaryota;Amorphea;Obazoa;Opisthokonta;Nucletmycea'
+    tax = base_tax
+
+    first_line = True
+
+    for line in to_format:
+        splitline = line.rstrip().split("|")
+
+        if splitline[0][0] == '>':
+            if not first_line:
+                formatted.write(silva_format(id, tax, seq))
+                tax = base_tax
+
+            tmp_id = splitline[1]
+            id = ">{}".format(tmp_id)
+            for tmp_tax in splitline[4].split(";"):
+                split_tax = tmp_tax.split("__")[1]
+                tax += ";" + split_tax.replace('_', ' ').replace('sp', 'sp.')
+
+            first_line = False
+
+        tmp_seq = splitline[0]
+        seq = "\n".join([tmp_seq[i:i+80] for i in range(0, len(tmp_seq), 80)])
+
+    formatted.write(silva_format(id, tax, seq))

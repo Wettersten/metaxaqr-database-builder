@@ -41,6 +41,9 @@ def main_mqrdb(args):
             with open(label_file, 'w') as f:
                 f.write(run_label)
 
+        if args.opt_format:
+            db = format_file(db, args.opt_format)
+
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
         logging("clustering_seq_end", quiet=quiet)

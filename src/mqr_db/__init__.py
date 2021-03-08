@@ -18,6 +18,7 @@ from .handling import return_label
 from .handling import get_version
 from .handling import logging
 from .handling import print_license
+from .handling import format_file
 
 from .db_stats import db_dupestats
 

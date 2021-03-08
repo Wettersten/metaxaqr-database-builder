@@ -43,7 +43,8 @@ required when running --prepare""")
 
     parser.add_argument('--format', dest='opt_format', type=str,
                         metavar='',
-                        help="""Format used in the input FASTA file [x]""")
+                        help="""Format used in the input database, supported
+ formats: {ibol, unite""")
 
     parser.add_argument('--db', dest='opt_db', type=str,
                         metavar='',
