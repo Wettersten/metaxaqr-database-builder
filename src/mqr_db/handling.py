@@ -18,6 +18,14 @@ def create_dir_structure(str_id):
     Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
+def init_path(label):
+    """
+    """
+    proj_path = proj_path = "{}/{}_mqr_db/".format(os.getcwd(), label)
+
+    return proj_path
+
+
 def return_proj_path():
     """Returns the path to project dir.
     """
