@@ -21,7 +21,7 @@ def create_dir_structure(str_id):
 def return_proj_path():
     """Returns the path to project dir.
     """
-    proj_path = os.getcwd() + '/mqr_db/'
+    proj_path = "{}/{}_mqr_db/".format(os.getcwd(), return_label())
 
     return proj_path
 
@@ -73,8 +73,31 @@ def check_args(args):
         and not args.opt_license
         and not args.opt_ds
     ):
-        error_msg = "ERROR: No option chosen."
+        error_msg = "ERROR: No option chosen"
         quit(error_msg)
+
+    if (
+        args.opt_keep and not args.opt_makedb
+        or args.opt_qc and not args.opt_makedb
+    ):
+        error_msg = "ERROR: --keep and --qc only works with -m/--makedb"
+
+    if (
+        args.opt_label and not args.prepare
+    ):
+        error_msg = "ERROR: --label only works with -p/--prepare"
+
+    if (
+        args.opt_format and not args.opt_prepare
+        or args.opt_format and not args.opt_addseq
+    ):
+        error_msg = """ERROR: --format only works with -m/--makedb or
+-a/--addseq"""
+
+    if (
+        args.opt_db and not args.opt_addseq
+    ):
+        error_msg = "ERROR: --db only works with -a/--addseq"
 
 
 def check_dir(path):
@@ -97,6 +120,7 @@ def check_installation(args):
     if (
         args.opt_prepare
         or args.opt_makedb
+        or args.opt_addseq
     ):
         reqs = ['vsearch']
         preqs = []
@@ -112,7 +136,7 @@ def check_installation(args):
             quit(error_msg)
 
 
-def cleanup():
+def cleanup(all=False):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """
@@ -120,7 +144,7 @@ def cleanup():
     mqr_path = return_proj_path()
     src_res = "{}results/".format(return_proj_path())
     src_rem = "{}removed/".format(return_proj_path())
-    dest = "{}/mqr_{}/".format(os.getcwd(), run_label)
+    dest = "{}/{}_results/".format(os.getcwd(), run_label)
     Path(dest).mkdir(parents=True, exist_ok=True)
 
     files_res = os.listdir(src_res)
@@ -131,7 +155,11 @@ def cleanup():
     for f in files_rem:
         shutil.move(src_rem + f, dest)
 
-    shutil.rmtree(mqr_path)
+    shutil.rmtree(src_res)
+    shutil.rmtree(src_rem)
+
+    if all:
+        shutil.rmtree(mqr_path)
 
 
 def check_prereqs(args):
