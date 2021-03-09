@@ -174,8 +174,8 @@ def get_newlabel(repr_file):
     with open(repr_file, 'r') as f:
         for line in f:
             curr_line = line.rstrip()
-            if curr_line.split("\t")[0].split("_")[1] == "100":
-                curr_label = int(curr_line.split("\t")[0].split("_")[2])
+            if curr_line.split("\t")[0].split("_")[-2] == "100":
+                curr_label = int(curr_line.split("\t")[0].split("_")[-1])
                 if curr_label > highest:
                     highest = curr_label
     return str(highest)
@@ -188,7 +188,7 @@ def read_labels(repr_file):
 
     with open(repr_file, 'r') as f:
         for line in f:
-            if line.split("\t")[0].split("_")[1] == "100":
+            if line.split("\t")[0].split("_")[-2] == "100":
                 curr_line = line.rstrip()
                 curr_label = curr_line.split("\t")[0]
                 curr_id = curr_line.split("\t")[1]
@@ -233,7 +233,7 @@ def make_labeltree(new_label, label_tree, perc):
     tmp_labeltree = ""
     new_labeltree = ""
     for lt in label_tree.split(" "):
-        curr_perc = lt.split("_")[1]
+        curr_perc = lt.split("_")[-2]
         if int(curr_perc) <= int(perc):
             tmp_labeltree += "{} ".format(lt)
         else:

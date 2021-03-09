@@ -87,7 +87,7 @@ def get_label_tree(path, result_path, v_loop, qc, run_label):
             label_out = ""
 
             for label in curr_line.split("\t")[1].split(" "):
-                id = label.split("_")[2]
+                id = label.split("_")[-2]
                 dl["curr_{}".format(id)] = label
 
                 if int(id) == 100:

@@ -55,7 +55,7 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                     cluster_label = "MQR_{}_{}_{}".format(
                         run_label,
                         str_id,
-                        curr_line[9].split("_")[3]
+                        curr_line[9].split("_")[-1]
                         )
                     centroid_label = ">{}".format(curr_line[8])
                     singleton_repr = curr_line[10]
@@ -191,7 +191,7 @@ def create_label_tree(str_id, run_label, tree_loop=False):
                 new_label = "MQR_{}_{}_{}".format(
                     run_label,
                     str_id,
-                    curr_line[9].split("_")[3]
+                    curr_line[9].split("_")[-1]
                 )
 
                 entries = int(curr_line[2])

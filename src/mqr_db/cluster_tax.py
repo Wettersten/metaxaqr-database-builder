@@ -29,7 +29,7 @@ class Cluster:
         self.cluster_entries = cluster_entries
         self.flags = flags
         self.repr_tax = repr_tax
-        self.str_id = str(label.split("_")[2])
+        self.str_id = str(label.split("_")[-2])
 
     def add_entry(self, tax):
         self.cluster_entries.append(tax)
@@ -336,7 +336,7 @@ def create_cluster_tax(str_id, run_label, loop=False):
                     new_cluster = curr_cluster
 
                     if loop:
-                        new_cluster = curr_line[9].split("_")[2]
+                        new_cluster = curr_line[9].split("_")[-2]
                         clust_out.write("MQR_{}_{}_{}\n".format(
                                                              run_label,
                                                              str_id,
@@ -351,7 +351,7 @@ def create_cluster_tax(str_id, run_label, loop=False):
                                 loop_clabel = "MQR_{}_{}_{}".format(
                                     run_label,
                                     str_id,
-                                    loop_line[1].split("_")[3]
+                                    loop_line[1].split("_")[-1]
                                 )
                                 loop_repr = loop_line[2]
 

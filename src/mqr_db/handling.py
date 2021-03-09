@@ -148,9 +148,6 @@ def check_prereqs(args):
         if not args.opt_label:
             error_msg = "ERROR: No label specified"
             quit(error_msg)
-        elif '_' in args.opt_label:
-            error_msg = "ERROR: Can not use '_' in the label name"
-            quit(error_msg)
 
     if args.opt_makedb:
         flag_file = return_proj_path() + '100/flag_clusters'
