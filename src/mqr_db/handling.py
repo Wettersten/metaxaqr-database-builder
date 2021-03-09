@@ -83,7 +83,7 @@ def check_args(args):
         error_msg = "ERROR: --keep and --qc only works with -m/--makedb"
 
     if (
-        args.opt_label and not args.prepare
+        args.opt_label and not args.opt_prepare
     ):
         error_msg = "ERROR: --label only works with -p/--prepare"
 
