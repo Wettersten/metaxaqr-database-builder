@@ -10,7 +10,7 @@ from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
-from .handling import cleanup
+from .handling import cleanup, format_file
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
@@ -41,8 +41,13 @@ def main_mqrdb(args):
             with open(label_file, 'w') as f:
                 f.write(run_label)
 
+        #: formatting if another format is used in the database
+        #: TODO add logging?
         if args.opt_format:
             db = format_file(db, args.opt_format)
+
+        #: filtering the database using Metaxa
+        #: TODO add the filtering method here + logging
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)

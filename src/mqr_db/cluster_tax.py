@@ -500,11 +500,11 @@ def origin_flag(cluster):
         elif "Bacteria" in tax:
             bac_check = 1
         elif "Chloroplast" in tax:
-            euk_check = 1
+            chl_check = 1
         elif "Eukaryota" in tax:
             euk_check = 1
         elif "Mitochondria" in tax:
-            euk_check = 1
+            mit_check = 1
 
         if (arc_check + bac_check + chl_check + euk_check + mit_check) > 1:
             flag_out = "Origin"
