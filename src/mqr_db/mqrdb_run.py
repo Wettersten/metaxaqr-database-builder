@@ -10,7 +10,7 @@ from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
-from .handling import cleanup, format_file
+from .handling import cleanup, format_file, sep_tax
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
