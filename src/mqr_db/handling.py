@@ -136,7 +136,7 @@ def check_installation(args):
             quit(error_msg)
 
 
-def cleanup(all=False):
+def cleanup(all=True):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """

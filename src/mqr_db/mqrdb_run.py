@@ -93,8 +93,10 @@ def main_mqrdb(args):
         make_db(args.opt_qc)
         logging("make db_end", quiet=quiet)
 
-        if not args.opt_keep:
-            cleanup(all=True)
+        clean_full = True
+        if args.opt_keep:
+            clean_full = False
+        cleanup(all=clean_full)
 
     #: running duplicate stats method
     if args.opt_ds:
