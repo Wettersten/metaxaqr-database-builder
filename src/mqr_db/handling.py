@@ -523,3 +523,40 @@ def format_unite(to_format, formatted):
         seq = "\n".join([tmp_seq[i:i+80] for i in range(0, len(tmp_seq), 80)])
 
     formatted.write(silva_format(id, tax, seq))
+
+
+def sep_tax(fasta_file, tax_file):
+    """Creates a combined fasta file containing taxonomies, ids and sequences
+    using separate taxonomy and fasta files.
+    """
+    comb_file = "{}.combined".format(fasta_file)
+    tax_dict = {}
+
+    with open(tax_file, 'r') as f:
+        for line in f:
+            split_line = line.rstrip().split("\t")
+            tax_dict[split_line[0]] = split_line[1]
+
+    first_line = True
+    tax = ''
+    seq = ''
+    id = ''
+    with open(comb_file, 'w') as c_out, \
+         open(fasta_file, 'r') as f_read:
+
+        for line in f_read:
+            if line[0] == '>':
+                if not first_line:
+                    c_out.write("{} {}\n{}".format(id, tax, seq))
+
+                id = line.rstrip()
+                tax = tax_dict[id]
+                seq = ''
+                first_line = False
+
+            else:
+                seq += line
+
+        c_out.write("{} {}\n{}".format(id, tax, seq))
+
+    return comb_file

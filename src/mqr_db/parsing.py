@@ -62,6 +62,9 @@ required when running --prepare""")
                         action='store_false', default=True,
                         help="""Turns off quality check steps""")
 
+    parser.add_argument('--taxfile', dest='opt_taxfile', type=str,
+                        metavar='', help="Taxonomy file")
+
     parser.add_argument('--keep', dest='opt_keep',
                         action='store_true', default=False,
                         help="""Keeps intermediate files after run""")

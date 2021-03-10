@@ -41,6 +41,9 @@ def main_mqrdb(args):
             with open(label_file, 'w') as f:
                 f.write(run_label)
 
+        if args.opt_taxfile:
+            db = sep_tax(db, args.opt_taxfile)
+
         #: formatting if another format is used in the database
         #: TODO add logging?
         if args.opt_format:
