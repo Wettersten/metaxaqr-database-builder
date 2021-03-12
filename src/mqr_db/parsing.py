@@ -26,25 +26,36 @@ def create_parser():
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
 
-    parser.add_argument('-l', '--label', dest='opt_label', type=str,
+    parser.add_argument('--label', dest='opt_label', type=str,
                         metavar='',
                         help="""{label} Specify label for the output database,
-required when running --prepare""")
+ required when running --prepare""")
+
+    parser.add_argument('--format', dest='opt_format', type=str,
+                        metavar='',
+                        help="""Format used in the input database, supported
+ formats: {ibol, unite""")
+
+    parser.add_argument('--taxfile', dest='opt_taxfile', type=str,
+                        metavar='', help="Taxonomy file")
 
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files""")
 
+    parser.add_argument('--qc', dest='opt_qc',
+                        action='store_false', default=True,
+                        help="""Turns off quality check steps""")
+
+    parser.add_argument('--keep', dest='opt_keep',
+                        action='store_true', default=False,
+                        help="""Keeps intermediate files after run""")
+
     parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds
                         to a finished database""")
-
-    parser.add_argument('--format', dest='opt_format', type=str,
-                        metavar='',
-                        help="""Format used in the input database, supported
- formats: {ibol, unite""")
 
     parser.add_argument('--db', dest='opt_db', type=str,
                         metavar='',
@@ -58,20 +69,14 @@ required when running --prepare""")
                         action='store_true', default=False,
                         help="""No status print out""")
 
-    parser.add_argument('--qc', dest='opt_qc',
-                        action='store_false', default=True,
-                        help="""Turns off quality check steps""")
-
-    parser.add_argument('--taxfile', dest='opt_taxfile', type=str,
-                        metavar='', help="Taxonomy file")
-
-    parser.add_argument('--keep', dest='opt_keep',
-                        action='store_true', default=False,
-                        help="""Keeps intermediate files after run""")
-
     parser.add_argument('--license', dest='opt_license',
                         action='store_true', default=False,
                         help="""Displays the license""")
+
+    # todo - remove before release
+    parser.add_argument('--dev', dest='opt_dev',
+                        action='store_false', default=True,
+                        help="""Removes error handling""")
 
     parser.add_argument('--version', action='version',
                         version='{} - {}'.format(seq_name, seq_version))
