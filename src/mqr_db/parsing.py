@@ -52,6 +52,11 @@ def create_parser():
                         action='store_true', default=False,
                         help="""Keeps intermediate files after run""")
 
+    parser.add_argument('--exclude_all_flags', dest='opt_exclude_all',
+                        action='store_true', default=False,
+                        help="""Skips the manual review step by excluding all
+ flagged clusters""")
+
     parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds

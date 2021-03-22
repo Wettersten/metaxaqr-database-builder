@@ -1471,7 +1471,7 @@ def valid_input(input):
     return valid
 
 
-def flag_correction(str_id):
+def flag_correction(str_id, exclude_all=False):
     """Opens the flag file, and with the use of manual inputs corrects the
     flagged suggestions of representative taxonomy, into a new file with all
     non-flagged suggestions.
@@ -1489,6 +1489,10 @@ def flag_correction(str_id):
         os.remove(flag_exclusions_file)
 
     rem_header = flag_header(str_id)
+
+    if exclude_all:
+        for flag in rem_header:
+            excluded_flags.append(flag)
 
     with open(flag_clusters_file, 'r') as flag_file, \
          open(flag_correction_file, 'w') as corr_file:

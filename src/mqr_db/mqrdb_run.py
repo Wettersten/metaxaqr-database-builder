@@ -68,10 +68,13 @@ def main_mqrdb(args):
     if args.opt_makedb:
         str_id = '100'
         run_label = return_label()
+        exclude_all = False
+        if args.opt_exclude_all:
+            exclude_all = True
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
-        flag_correction(str_id)
+        flag_correction(str_id, exclude_all)
         logging("manual review_end", quiet=quiet)
 
         #: finalizing files and further clustering
