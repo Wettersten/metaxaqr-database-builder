@@ -1241,9 +1241,12 @@ def prompt_remove(input, my_cluster):
     return input_loop
 
 
-def run_correction(my_cluster, review, rem_header):
+def run_correction(my_cluster, review, rem_header, exclude_all):
     """Wrapping function to perform full correction on cluster.
     """
+    if exclude_all:
+        review = 'exclude'
+
     if review == 'skip' or review == 'exit':
         pass
     elif review == 'exclude':
@@ -1490,10 +1493,6 @@ def flag_correction(str_id, exclude_all=False):
 
     rem_header = flag_header(str_id)
 
-    if exclude_all:
-        for flag in rem_header:
-            excluded_flags.append(flag)
-
     with open(flag_clusters_file, 'r') as flag_file, \
          open(flag_correction_file, 'w') as corr_file:
 
@@ -1530,7 +1529,8 @@ def flag_correction(str_id, exclude_all=False):
                     review, rem_header = run_correction(
                         my_cluster,
                         review,
-                        rem_header
+                        rem_header,
+                        exclude_all
                     )
 
                     if review == 'exit':
