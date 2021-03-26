@@ -301,7 +301,7 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
     return new_taxes
 
 
-def create_cluster_tax(str_id, run_label, loop=False):
+def create_cluster_tax(str_id, run_label, loop=False, qc=True):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
@@ -312,7 +312,7 @@ def create_cluster_tax(str_id, run_label, loop=False):
     cluster_dir = run_path + "/clusters"
     tax_db = ''
     deleted_entries_file = removed_path + "/deleted_entries_100"
-    if not loop:
+    if not loop and qc:
         tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
@@ -380,24 +380,25 @@ def create_cluster_tax(str_id, run_label, loop=False):
                                 ):
                                     cm_dict[tax_nr] = curr_tax
                                 #: checking tax and replacing/removing for rest
-                                elif curr_genus in tax_db:
-                                    curr_species = curr_tax.split(";")[-1]
-                                    curr_tax_entry = ";".join(
-                                        curr_tax.split(";")[:-1]
-                                        + [curr_genus]
-                                    )
-                                    tax_db_entry = tax_db[curr_genus]
+                                elif qc:
+                                    if curr_genus in tax_db:
+                                        curr_species = curr_tax.split(";")[-1]
+                                        curr_tax_entry = ";".join(
+                                            curr_tax.split(";")[:-1]
+                                            + [curr_genus]
+                                        )
+                                        tax_db_entry = tax_db[curr_genus]
 
-                                    if compare_tax_cats(
-                                        curr_tax_entry, tax_db_entry
-                                    ):
-                                        new_tax = ";".join(
-                                            tax_db_entry.split(";")[:-1]
-                                            + [curr_species]
-                                            )
-                                        orig_dict[tax_nr] = new_tax
-                                    else:
-                                        deleted_entries[tax_nr] = curr_line
+                                        if compare_tax_cats(
+                                            curr_tax_entry, tax_db_entry
+                                        ):
+                                            new_tax = ";".join(
+                                                tax_db_entry.split(";")[:-1]
+                                                + [curr_species]
+                                                )
+                                            orig_dict[tax_nr] = new_tax
+                                        else:
+                                            deleted_entries[tax_nr] = curr_line
 
                             tax_nr += 1
 

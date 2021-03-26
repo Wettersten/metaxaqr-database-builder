@@ -58,7 +58,7 @@ def main_mqrdb(args):
 
         logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-        create_cluster_tax(str_id, run_label)
+        create_cluster_tax(str_id, run_label, qc=args.opt_qc)
         repr_and_flag(str_id)
         logging("clustering_tax_end", quiet=quiet)
 
@@ -96,7 +96,7 @@ def main_mqrdb(args):
 
         #: creating the database
         logging("make db_start", quiet=quiet)
-        make_db(args.opt_qc)
+        make_db(qc=args.opt_qc)
         logging("make db_end", quiet=quiet)
 
         clean_full = True

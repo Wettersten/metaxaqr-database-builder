@@ -103,7 +103,7 @@ def get_label_tree(path, result_path, v_loop, qc, run_label):
                         wf.write("{}\n".format(label_out[:-1]))
 
 
-def get_repr(path, result_path, v_loop, qc, run_label):
+def get_repr(path, result_path, v_loop, run_label):
     """Creates a final_repr file which contains all lines from all final_repr
     files in the runs from 50-100% sequence identity. Every line is the label,
     entry id, and representative taxonomy, seperated by tabs.
@@ -182,4 +182,4 @@ def make_db(qc=True):
     find_bad_hits()
     get_centroids(path, result_path, qc, run_label)
     get_label_tree(path, result_path, v_loop, qc, run_label)
-    get_repr(path, result_path, v_loop, qc, run_label)
+    get_repr(path, result_path, v_loop, run_label)
