@@ -179,7 +179,8 @@ def make_db(qc=True):
     b_loop = [str(a) for a in range(85, 50-5, -5)]
     v_loop = a_loop + b_loop
 
-    find_bad_hits()
+    if qc:
+        find_bad_hits()
     get_centroids(path, result_path, qc, run_label)
     get_label_tree(path, result_path, v_loop, qc, run_label)
     get_repr(path, result_path, v_loop, run_label)
