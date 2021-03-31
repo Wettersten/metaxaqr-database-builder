@@ -336,7 +336,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                     new_cluster = curr_cluster
 
                     if loop:
-                        new_cluster = curr_line[9].split("_")[-2]
+                        new_cluster = curr_line[9].split("_")[-1]
                         clust_out.write("MQR_{}_{}_{}\n".format(
                                                              run_label,
                                                              str_id,
