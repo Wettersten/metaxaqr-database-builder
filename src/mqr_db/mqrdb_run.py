@@ -9,7 +9,8 @@ from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging, set_proj_path, print_license, return_proj_path
+from .handling import logging, return_label, print_license, return_proj_path
+from .handling import cleanup, format_file, sep_tax
 from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
@@ -25,14 +26,31 @@ def main_mqrdb(args):
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
+        run_label = ''
         db = args.opt_prepare
         path = return_proj_path()
-        if args.output:
-            path = args.output
-            set_proj_path(path)
 
         removed_path = "{}removed".format(path)
+        init_path = "{}init".format(path)
         Path(removed_path).mkdir(parents=True, exist_ok=True)
+        Path(init_path).mkdir(parents=True, exist_ok=True)
+
+        if args.opt_label:
+            run_label = args.opt_label
+            label_file = "{}/label".format(init_path)
+            with open(label_file, 'w') as f:
+                f.write(run_label)
+
+        if args.opt_taxfile:
+            db = sep_tax(db, args.opt_taxfile)
+
+        #: formatting if another format is used in the database
+        #: TODO add logging?
+        if args.opt_format:
+            db = format_file(db, args.opt_format)
+
+        #: filtering the database using Metaxa
+        #: TODO add the filtering method here + logging
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -40,7 +58,7 @@ def main_mqrdb(args):
 
         logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-        create_cluster_tax(str_id)
+        create_cluster_tax(str_id, run_label, qc=args.opt_qc)
         repr_and_flag(str_id)
         logging("clustering_tax_end", quiet=quiet)
 
@@ -49,10 +67,14 @@ def main_mqrdb(args):
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
         str_id = '100'
+        run_label = return_label()
+        exclude_all = False
+        if args.opt_exclude_all:
+            exclude_all = True
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
-        flag_correction(str_id)
+        flag_correction(str_id, exclude_all)
         logging("manual review_end", quiet=quiet)
 
         #: finalizing files and further clustering
@@ -67,15 +89,20 @@ def main_mqrdb(args):
         for id in v_loop:
 
             logging("finalize_loop_start", id=id, quiet=quiet)
-            cluster_loop(id)
+            cluster_loop(id, run_label)
             logging("finalize_loop_end", id=id, quiet=quiet)
 
         logging("finalize_end", quiet=quiet)
 
         #: creating the database
         logging("make db_start", quiet=quiet)
-        make_db(args.opt_qc)
+        make_db(qc=args.opt_qc)
         logging("make db_end", quiet=quiet)
+
+        clean_full = True
+        if args.opt_keep:
+            clean_full = False
+        cleanup(all=clean_full)
 
     #: running duplicate stats method
     if args.opt_ds:
@@ -83,8 +110,13 @@ def main_mqrdb(args):
 
     #: running the add new sequences method
     if args.opt_addseq:
+        db = args.opt_addseq
+
+        if args.opt_format:
+            db = format_file(db, args.opt_format)
+
         logging("add entries_start", quiet=quiet)
-        add_entries(args.opt_addseq, args.opt_db)
+        add_entries(db, args.opt_db)
         logging("add entries_end", quiet=quiet)
 
     #: returns the license for MetaxaQR Database Builder

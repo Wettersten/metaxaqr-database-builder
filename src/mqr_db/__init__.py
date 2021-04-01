@@ -10,13 +10,16 @@ from .cluster_tax import create_taxdb
 from .clustering import cluster_vs
 
 from .handling import float_to_str_id
+from .handling import cleanup
 from .handling import return_proj_path
 from .handling import create_dir_structure
 from .handling import tax_list_to_str
-from .handling import set_proj_path
+from .handling import return_label
 from .handling import get_version
 from .handling import logging
 from .handling import print_license
+from .handling import format_file
+from .handling import sep_tax
 
 from .db_stats import db_dupestats
 

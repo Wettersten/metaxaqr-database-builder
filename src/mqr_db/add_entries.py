@@ -7,6 +7,7 @@ database. The database is backed up in '_old' files.
 import subprocess
 import math
 import shutil
+from .handling import return_label
 
 
 def add_entries(entries_file, db_path):
@@ -173,8 +174,8 @@ def get_newlabel(repr_file):
     with open(repr_file, 'r') as f:
         for line in f:
             curr_line = line.rstrip()
-            if curr_line.split("\t")[0].split("_")[1] == "100":
-                curr_label = int(curr_line.split("\t")[0].split("_")[2])
+            if curr_line.split("\t")[0].split("_")[-2] == "100":
+                curr_label = int(curr_line.split("\t")[0].split("_")[-1])
                 if curr_label > highest:
                     highest = curr_label
     return str(highest)
@@ -187,7 +188,7 @@ def read_labels(repr_file):
 
     with open(repr_file, 'r') as f:
         for line in f:
-            if line.split("\t")[0].split("_")[1] == "100":
+            if line.split("\t")[0].split("_")[-2] == "100":
                 curr_line = line.rstrip()
                 curr_label = curr_line.split("\t")[0]
                 curr_id = curr_line.split("\t")[1]
@@ -228,19 +229,22 @@ def get_labeltree(label, labeltree_file):
 def make_labeltree(new_label, label_tree, perc):
     """Creates a new label tree
     """
+    run_label = return_label()
     tmp_labeltree = ""
     new_labeltree = ""
     for lt in label_tree.split(" "):
-        curr_perc = lt.split("_")[1]
+        curr_perc = lt.split("_")[-2]
         if int(curr_perc) <= int(perc):
             tmp_labeltree += "{} ".format(lt)
         else:
-            new_lt = "MQR_{}_{}".format(
+            new_lt = "MQR_{}_{}_{}".format(
+                                        run_label,
                                         curr_perc,
                                         new_label
             )
             tmp_labeltree += "{} ".format(new_lt)
-    new_labeltree = "MQR_100_{}\t{}".format(
+    new_labeltree = "MQR_{}_100_{}\t{}".format(
+                                        run_label,
                                         new_label,
                                         tmp_labeltree[:-1]
                                 )
@@ -251,9 +255,11 @@ def make_labeltree(new_label, label_tree, perc):
 def add_centroids(entry, entry_info, label, file):
     """Appends the label, tax, seq id and sequence to the centroids database
     """
+    label = return_label()
     with open(file, 'a') as f:
-        header = ("{}\tMQR_100_{}\t{}".format(
+        header = ("{}\tMQR_{}_100_{}\t{}".format(
                                             entry,
+                                            run_label,
                                             label,
                                             entry_info.split("\t")[0]
         ))
@@ -265,9 +271,11 @@ def add_centroids(entry, entry_info, label, file):
 def add_repr(label, tax, id, perc, repr_file):
     """Appends new label(s) and tax(es) to the repr database
     """
+    run_label = return_label()
     with open(repr_file, 'a') as f:
         for i in range(100, int(perc), -1):
-            f.write("MQR_{}_{}\t{}\t{}\n".format(
+            f.write("MQR_{}_{}_{}\t{}\t{}\n".format(
+                                                 run_label,
                                                  i,
                                                  label,
                                                  id,
