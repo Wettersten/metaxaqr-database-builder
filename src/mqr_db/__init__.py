@@ -21,7 +21,7 @@ from .handling import print_license
 from .handling import format_file
 from .handling import sep_tax
 
-from .db_stats import db_dupestats
+# from .db_stats import db_dupestats
 
 from .make_db import make_db
 

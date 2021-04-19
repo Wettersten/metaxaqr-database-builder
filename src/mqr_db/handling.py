@@ -71,7 +71,7 @@ def check_args(args):
         and not args.opt_makedb
         and not args.opt_addseq
         and not args.opt_license
-        and not args.opt_ds
+        # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
         quit(error_msg)

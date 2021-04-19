@@ -1,5 +1,4 @@
-"""todo
-
+"""Main MetaxaQR Database Builder
 """
 
 import argparse

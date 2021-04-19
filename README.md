@@ -51,7 +51,6 @@ MetaxaQR Database Builder accepts databases of genetic markers in FASTA formats,
 | --exclude_all_flags         | Excludes all flagged clusters, skipping manual review                                                           |
 | --a {file}                  | Addseq - adds new entries to a completed MetaxaQR database                                                      |
 | --db {path}                 | Path to completed MetaxaQR database, required by '-a'                                                           |
-| --ds                        | Temp text here                                                                                                  |
 | --quiet                     | Disables status output                                                                                          |
 | --license                   | Displays the license                                                                                            |
 | --version                   | Displays the current version of the software                                                                    |

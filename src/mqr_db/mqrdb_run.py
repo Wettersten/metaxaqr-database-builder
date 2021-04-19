@@ -104,9 +104,10 @@ def main_mqrdb(args):
             clean_full = False
         cleanup(all=clean_full)
 
+    #: deprecated
     #: running duplicate stats method
-    if args.opt_ds:
-        db_dupestats(args.opt_ds)
+    # if args.opt_ds:
+    #    db_dupestats(args.opt_ds)
 
     #: running the add new sequences method
     if args.opt_addseq:
