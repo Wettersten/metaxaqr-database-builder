@@ -10,8 +10,8 @@ from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
-from .handling import cleanup, format_file, sep_tax
-from .db_stats import db_dupestats
+from .handling import cleanup, format_file, sep_tax, get_v_loop
+# from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
 
@@ -19,7 +19,7 @@ from .add_entries import add_entries
 def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
-    quiet = args.log_quiet
+    quiet = args.opt_quiet
 
     #: running start command, clustering at 100% identity
     if args.opt_prepare:
@@ -79,10 +79,7 @@ def main_mqrdb(args):
 
         #: finalizing files and further clustering
         #: loop down from 100 to 50, clustering using the centroid files
-        #: 100, 99, ... 90, 85, 80, ... 50
-        a_loop = [str(i) for i in range(100, 90-1, -1)]
-        b_loop = [str(a) for a in range(85, 50-5, -5)]
-        v_loop = a_loop + b_loop
+        v_loop = get_v_loop()
 
         logging("finalize_start", quiet=quiet)
 

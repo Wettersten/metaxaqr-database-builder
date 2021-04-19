@@ -560,3 +560,14 @@ def sep_tax(fasta_file, tax_file):
         c_out.write("{} {}\n{}".format(id, tax, seq))
 
     return comb_file
+
+
+def get_v_loop():
+    """Returns list of all integers between 100-50, used as sequence identity
+    for clustering. 100, 99, ..., 90, 85, ..., 50.
+    """
+    a_loop = [str(i) for i in range(100, 90-1, -1)]
+    b_loop = [str(a) for a in range(85, 50-5, -5)]
+    v_loop = a_loop + b_loop
+
+    return v_loop

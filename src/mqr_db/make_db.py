@@ -4,7 +4,7 @@
 import os
 from pathlib import Path
 import shutil
-from .handling import return_proj_path, check_file, return_label
+from .handling import return_proj_path, check_file, return_label, get_v_loop
 
 
 def get_deleted_clusters(path):
@@ -175,9 +175,7 @@ def make_db(qc=True):
     path = return_proj_path()
     result_path = "{}results".format(path)
     Path(result_path).mkdir(parents=True, exist_ok=True)
-    a_loop = [str(i) for i in range(100, 90-1, -1)]
-    b_loop = [str(a) for a in range(85, 50-5, -5)]
-    v_loop = a_loop + b_loop
+    v_loop = get_v_loop()
 
     if qc:
         find_bad_hits()
