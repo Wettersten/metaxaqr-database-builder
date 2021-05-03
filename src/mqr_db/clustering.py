@@ -15,7 +15,7 @@ def cluster_vs(database, float_id, loop=False):
     dir_path = proj_path + str_id
     uc_file = dir_path + '/uc'
     centroids_file = dir_path + '/centroids'
-    log_file = dir_path + '/log.txt'
+    log_file = dir_path + '/vs_log.txt'
     cluster_file = dir_path + '/clusters/cluster_'
 
     #: if using already sorted database

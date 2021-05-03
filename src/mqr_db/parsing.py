@@ -66,11 +66,12 @@ def create_parser():
                         metavar='',
                         help="""Path to MetaxaQR database, used by --addseq""")
 
-    parser.add_argument('--ds', dest='opt_ds', type=str,
-                        metavar='',
-                        help="""{FILENAME} FASTA database for stats""")
+    #: deprecated
+    # parser.add_argument('--ds', dest='opt_ds', type=str,
+    #                    metavar='',
+    #                    help="""{FILENAME} FASTA database for stats""")
 
-    parser.add_argument('--quiet', dest='log_quiet',
+    parser.add_argument('--quiet', dest='opt_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")
 

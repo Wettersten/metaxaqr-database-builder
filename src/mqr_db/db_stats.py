@@ -1,4 +1,4 @@
-"""Methods related to evaluating database quality
+"""Methods related to evaluating database quality - deprecated
 """
 
 import os

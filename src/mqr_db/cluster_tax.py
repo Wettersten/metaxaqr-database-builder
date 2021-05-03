@@ -922,7 +922,10 @@ def check_input_rem(input):
             valid = False
         if len(curr_range) > 1:
             dig2 = curr_range[1]
-            if int(curr_range[0]) > int(curr_range[1]) or not dig2.isdigit():
+            if dig2.isdigit():
+                if int(curr_range[0]) > int(curr_range[1]):
+                    valid = False
+            else:
                 valid = False
 
     return valid
@@ -1191,53 +1194,50 @@ def prompt_remove(input, my_cluster):
     is attained using the trimmed cluster.
     """
     cluster = my_cluster.get_taxeslist()
-    valid_input = check_input_rem(input.split(" ")[1:])
     algo_run = True
 
-    if valid_input:
-        remove_loop = True
-        entries = input.split(" ")[1:]
-        removed_ids = []
-        kept_ids = [i for i in range(1, len(cluster) + 1)]
-        for entry in entries:
-            if '-' in entry:
-                for i in range(
-                    int(entry.split("-")[0]),
-                    int(entry.split("-")[1])+1
-                ):
+    remove_loop = True
+    entries = input.split(" ")[1:]
+    removed_ids = []
+    kept_ids = [i for i in range(1, len(cluster) + 1)]
+    for entry in entries:
+        if '-' in entry:
+            for i in range(
+                int(entry.split("-")[0]),
+                int(entry.split("-")[1])+1
+            ):
+                if i in kept_ids:
                     removed_ids.append(i)
-            else:
+        else:
+            if int(entry) in kept_ids:
                 removed_ids.append(int(entry))
 
-        for id in removed_ids:
-            kept_ids.remove(id)
+    for id in removed_ids:
+        kept_ids.remove(id)
 
-        new_cluster = []
-        for i in range(len(cluster)):
-            if i+1 not in removed_ids:
-                new_cluster.append(cluster[i])
+    new_cluster = []
+    for i in range(len(cluster)):
+        if i+1 not in removed_ids:
+            new_cluster.append(cluster[i])
 
-        _, temp_repr_tax = repr_taxonomy(new_cluster, algo_run)
+    _, temp_repr_tax = repr_taxonomy(new_cluster, algo_run)
 
-        removed_ids_str = ''
-        kept_ids_str = ''
+    removed_ids_str = ''
+    kept_ids_str = ''
 
-        for id in removed_ids:
-            removed_ids_str += str(id) + ", "
-        print('\nRemoving entries: ' + removed_ids_str[:-2])
+    for id in removed_ids:
+        removed_ids_str += str(id) + ", "
+    print('\nRemoving entries: ' + removed_ids_str[:-2])
 
-        for id in kept_ids:
-            kept_ids_str += str(id) + ", "
-        print('Keeping entries: ' + kept_ids_str[:-2])
+    for id in kept_ids:
+        kept_ids_str += str(id) + ", "
+    print('Keeping entries: ' + kept_ids_str[:-2])
 
-        new_repr_tax, input_loop = confirm_prompt(
-            temp_repr_tax,
-            my_cluster.get_reprtax()
-            )
-        my_cluster.change_reprtax(new_repr_tax)
-
-    else:
-        print("Invalid input")
+    new_repr_tax, input_loop = confirm_prompt(
+        temp_repr_tax,
+        my_cluster.get_reprtax()
+        )
+    my_cluster.change_reprtax(new_repr_tax)
 
     return input_loop
 
@@ -1403,6 +1403,8 @@ def manual_correction(my_cluster, rem_header):
                 input_loop = prompt_remove(curr_inp, my_cluster)
                 if not input_loop:
                     rem_flag_update(rem_header, flags)
+            else:
+                print("Invalid output")
 
         else:
             print("Invalid choice")
@@ -1463,14 +1465,8 @@ def valid_input(input):
     elif option == 'remove' or option == 'r':
         #: remove 1
         #: remove 1-3
-        if len(inp_cmd) == 1:
-            inp_cmd = inp_cmd[0]
-            if inp_cmd[0].isdigit():
-                valid = True
-            elif '-' in inp_cmd:
-                inp_split = inp_cmd.split('-')
-                if inp_split[0].isdigit() and inp_split[1].isdigit():
-                    valid = True
+        #: remove 1 3-5
+        valid = check_input_rem(inp_cmd)
 
     return valid
 
