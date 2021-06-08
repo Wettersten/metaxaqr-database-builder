@@ -437,7 +437,7 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 0.2"
+    return "Version: 1.0.0"
 
 
 def print_license():

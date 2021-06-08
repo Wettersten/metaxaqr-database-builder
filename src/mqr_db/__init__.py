@@ -22,8 +22,6 @@ from .handling import format_file
 from .handling import sep_tax
 from .handling import get_v_loop
 
-# from .db_stats import db_dupestats
-
 from .make_db import make_db
 
 from .add_entries import add_entries

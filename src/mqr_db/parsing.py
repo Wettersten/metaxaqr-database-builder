@@ -66,11 +66,6 @@ def create_parser():
                         metavar='',
                         help="""Path to MetaxaQR database, used by --addseq""")
 
-    #: deprecated
-    # parser.add_argument('--ds', dest='opt_ds', type=str,
-    #                    metavar='',
-    #                    help="""{FILENAME} FASTA database for stats""")
-
     parser.add_argument('--quiet', dest='opt_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")
@@ -78,11 +73,6 @@ def create_parser():
     parser.add_argument('--license', dest='opt_license',
                         action='store_true', default=False,
                         help="""Displays the license""")
-
-    # todo - remove before release
-    parser.add_argument('--dev', dest='opt_dev',
-                        action='store_false', default=True,
-                        help="""Removes error handling""")
 
     parser.add_argument('--version', action='version',
                         version='{} - {}'.format(seq_name, seq_version))

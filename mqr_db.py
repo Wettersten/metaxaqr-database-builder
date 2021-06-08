@@ -15,8 +15,7 @@ if __name__ == "__main__":
     args = return_args(parser)
 
     #: looks for any errors in the args provided
-    if not args.opt_dev:  # todo - remove before release
-        error_check(args)
+    error_check(args)
 
     #: runs the main loop of meta_clustering
     main_mqrdb(args)

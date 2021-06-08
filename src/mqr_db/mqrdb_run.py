@@ -11,7 +11,6 @@ from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop
-# from .db_stats import db_dupestats
 from .make_db import make_db
 from .add_entries import add_entries
 
@@ -45,12 +44,10 @@ def main_mqrdb(args):
             db = sep_tax(db, args.opt_taxfile)
 
         #: formatting if another format is used in the database
-        #: TODO add logging?
         if args.opt_format:
             db = format_file(db, args.opt_format)
 
         #: filtering the database using Metaxa
-        #: TODO add the filtering method here + logging
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -100,11 +97,6 @@ def main_mqrdb(args):
         if args.opt_keep:
             clean_full = False
         cleanup(all=clean_full)
-
-    #: deprecated
-    #: running duplicate stats method
-    # if args.opt_ds:
-    #    db_dupestats(args.opt_ds)
 
     #: running the add new sequences method
     if args.opt_addseq:
