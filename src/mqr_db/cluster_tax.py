@@ -226,9 +226,10 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
         new_tax = ''
         not_found = False
 
-        if "Chloroplast" in tax_split:
+        #: checks for mito/chloro, but not native entries (like NCBI)
+        if "Chloroplast" in tax_split[1:]:
             chlr_mito = 'Chloroplast'
-        elif "Mitochondria" in tax_split:
+        elif "Mitochondria" in tax_split[1:]:
             chlr_mito = 'Mitochondria'
 
         if len(sp_split) > 2:
@@ -374,9 +375,11 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                     )
 
                                 #: adding chloro/mito taxonomies
+                                #: avoiding native entries (like NCBI)
+                                cm_line = curr_tax.split(";")[1:]
                                 if (
-                                    "Chloroplast" in curr_line.split(";")
-                                    or "Mitochondria" in curr_line.split(";")
+                                    "Chloroplast" in cm_line
+                                    or "Mitochondria" in cm_line
                                 ):
                                     cm_dict[tax_nr] = curr_tax
                                 #: checking tax and replacing/removing for rest
