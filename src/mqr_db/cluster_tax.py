@@ -237,52 +237,57 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
         else:
             str_info = ''
 
-        #: find in tax_db (species name)
-        if species in tax_dict:
-            temp_tax = tax_dict[species]
-            split = temp_tax.split(";")[1:-1]
-            split.append(species)
-            tax = ";".join(split)
-            found_tax = ";".join(tax.split(";")[:-1])
-
-        #: find in tax_db (genus)
-        elif (
-            genus in tax_dict
-            and genus != 'Eukaryota'
+        #: Removes chloro/mito check for native entries (like NCBI)
+        if (
+            "Chloroplast" not in tax_split[0]
+            and "Mitochondria" not in tax_split[0]
         ):
-            temp_tax = tax_dict[genus]
-            split = temp_tax.split(";")[1:-1]
-            split.append(species)
-            tax = ";".join(split)
-            found_tax = ";".join(tax.split(";")[:-1])
+            #: find in tax_db (species name)
+            if species in tax_dict:
+                temp_tax = tax_dict[species]
+                split = temp_tax.split(";")[1:-1]
+                split.append(species)
+                tax = ";".join(split)
+                found_tax = ";".join(tax.split(";")[:-1])
 
-        #: if not in either
-        if not tax:
-            if int(str_id) == 100:
-                if found_tax:
-                    tax = "{};{}".format(found_tax, species)
+            #: find in tax_db (genus)
+            elif (
+                genus in tax_dict
+                and genus != 'Eukaryota'
+            ):
+                temp_tax = tax_dict[genus]
+                split = temp_tax.split(";")[1:-1]
+                split.append(species)
+                tax = ";".join(split)
+                found_tax = ";".join(tax.split(";")[:-1])
+
+            #: if not in either
+            if not tax:
+                if int(str_id) == 100:
+                    if found_tax:
+                        tax = "{};{}".format(found_tax, species)
+                    else:
+                        tax = "undefined taxonomy;{}".format(species)
+                        not_found = True
                 else:
                     tax = "undefined taxonomy;{}".format(species)
-                    not_found = True
+
+            #: creating new tax_line
+            #: if there are any strain/variation information for species
+            if str_info:
+                new_tax = "{cm};{tx} {st}".format(
+                    cm=chlr_mito,
+                    tx=tax,
+                    st=str_info
+                )
+
             else:
-                tax = "undefined taxonomy;{}".format(species)
+                new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
 
-        #: creating new tax_line
-        #: if there are any strain/variation information for species
-        if str_info:
-            new_tax = "{cm};{tx} {st}".format(
-                cm=chlr_mito,
-                tx=tax,
-                st=str_info
-            )
-
-        else:
-            new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
-
-        if not_found:
-            undef_taxes[nr_tax] = new_tax
-        else:
-            found_taxes[nr_tax] = new_tax
+            if not_found:
+                undef_taxes[nr_tax] = new_tax
+            else:
+                found_taxes[nr_tax] = new_tax
 
     #: if any taxonomies considered undef before found a taxonomy to use
     if undef_taxes:
