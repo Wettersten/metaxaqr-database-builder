@@ -74,8 +74,8 @@ def create_final_repr(str_id, run_label, cent_loop=False):
 
                     #: fixes chloro/mito taxonomies
                     if (
-                        "Chloroplast" in repr_tax.split(";")
-                        or "Mitochondria" in repr_tax.split(";")
+                        "Chloroplast" in repr_tax.split(";")[1:]
+                        or "Mitochondria" in repr_tax.split(";")[1:]
                     ):
                         #: check to prevent index errors
                         if len(repr_tax.split(";")) > 2:

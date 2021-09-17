@@ -381,15 +381,20 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
 
                                 #: adding chloro/mito taxonomies
                                 #: avoiding native entries (like NCBI)
-                                cm_line = curr_tax.split(";")[1:]
+                                cm_line = curr_tax.split(";")
                                 if (
-                                    "Chloroplast" in cm_line
-                                    or "Mitochondria" in cm_line
+                                    "Chloroplast" in cm_line[1:]
+                                    or "Mitochondria" in cm_line[1:]
                                 ):
                                     cm_dict[tax_nr] = curr_tax
                                 #: checking tax and replacing/removing for rest
                                 elif qc:
-                                    if curr_genus in tax_db:
+                                    if (
+                                        "Chloroplast" in cm_line[0]
+                                        or "Mitochondria" in cm_line[0]
+                                    ):
+                                        pass
+                                    elif curr_genus in tax_db:
                                         curr_species = curr_tax.split(";")[-1]
                                         curr_tax_entry = ";".join(
                                             curr_tax.split(";")[:-1]
