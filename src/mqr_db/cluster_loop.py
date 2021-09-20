@@ -74,6 +74,11 @@ def create_final_repr(str_id, run_label, cent_loop=False):
 
                     #: fixes chloro/mito taxonomies
                     if (
+                        "Chloroplast" in repr_tax.split(";")[0]
+                        or "Mitochondria" in repr_tax.split(";")[0]
+                    ):
+                        pass
+                    elif (
                         "Chloroplast" in repr_tax.split(";")[1:]
                         or "Mitochondria" in repr_tax.split(";")[1:]
                     ):
@@ -81,7 +86,8 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                         if len(repr_tax.split(";")) > 2:
                             temp_dict = {0: repr_tax}
                             temp_ft = find_taxonomy(temp_dict, tax_db, str_id)
-                            repr_tax = temp_ft[0]
+                            if temp_ft:
+                                repr_tax = temp_ft[0]
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
