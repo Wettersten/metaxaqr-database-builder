@@ -56,20 +56,21 @@ def main_mqrdb(args):
             gene_marker = str(args.opt_gene_marker).lower()
             gene_marker_file = f"{init_path}/gene_marker"
             with open(gene_marker_file, 'w') as gm_f:
-                gm_f.write(str(args.opt_gene_marker))
+                gm_f.write(gene_marker)
 
         #: gets quality checking options and saving to file to use in -m
         if args.opt_qc:
-            if "s" in str(args.opt_qc).lower():
+            qc_opts = str(args.opt_qc).lower()
+            if "s" in qc_opts:
                 qc_sequence_quality = True
-            if "l" in str(args.opt_qc).lower():
+            if "l" in qc_opts:
                 qc_limited_clusters = True
-            if "t" in str(args.opt_qc).lower():
+            if "t" in qc_opts:
                 qc_taxonomy_quality = True
 
             qc_opts_file = f"{init_path}/qc_opts"
             with open(qc_opts_file, 'w') as qc_f:
-                qc_f.write(str(args.opt_qc))
+                qc_f.write(qc_opts)
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -80,7 +81,7 @@ def main_mqrdb(args):
         create_cluster_tax(
                            str_id,
                            run_label,
-                           qc_taxonomy_quality
+                           qc_taxonomy_quality,
                            qc_sequence_quality,
                            gene_marker=gene_marker
                            )

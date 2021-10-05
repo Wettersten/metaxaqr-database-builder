@@ -41,10 +41,11 @@ def create_parser():
 
     parser.add_argument('--qc', dest='opt_qc', type=str,
                         metavar='',
-                        help="""Quality check options, can be combined [slt]:
-    s: (s)equence quality - Removes entries not passing length/region check
-    l: (l)ow quantity cluster - Removes clusters with no related clusters
-    t: (t)axonomy quality - Remove entries with differing taxonomies""")
+                        help="""Quality check options, several can be used at
+ the same time [slt].
+    [s]: (s)equence quality - Removes entries not passing length/region check.
+    [l]: (l)ow quantity cluster - Removes clusters with no related clusters.
+    [t]: (t)axonomy quality - Remove entries with differing taxonomies.""")
 
     parser.add_argument('--gene_marker', dest='opt_gene_marker', type=str,
                         metavar='',
