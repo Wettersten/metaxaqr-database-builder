@@ -38,6 +38,18 @@ def return_label():
     return label
 
 
+def return_qc_opts():
+    """Gets the quality check options for the run from initial -p command.
+    """
+    qc_opts = ''
+    qc_opts_file = "{}init/qc_opts"
+    if check_file(qc_opts_file):
+        with open(qc_opts_file, 'r') as f:
+            qc_opts = f.read()
+
+    return qc_opts
+
+
 def tax_list_to_str(tlist):
     """Changes a split list of taxonomies back to a string.
     """
@@ -78,14 +90,14 @@ def check_args(args):
 
     if (
         args.opt_keep and not args.opt_makedb
-        or args.opt_qc and not args.opt_makedb
     ):
-        error_msg = "ERROR: --keep and --qc only works with -m/--makedb"
+        error_msg = "ERROR: --keep only works with -m/--makedb"
 
     if (
         args.opt_label and not args.opt_prepare
+        or args.opt_qc and not args.opt_prepare
     ):
-        error_msg = "ERROR: --label only works with -p/--prepare"
+        error_msg = "ERROR: --label and --qc only works with -p/--prepare"
 
     if (
         args.opt_format and not args.opt_prepare

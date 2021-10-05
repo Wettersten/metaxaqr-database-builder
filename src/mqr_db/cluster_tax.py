@@ -307,7 +307,14 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
     return new_taxes
 
 
-def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
+def create_cluster_tax(
+                       str_id,
+                       run_label,
+                       qc_taxonomy_quality,
+                       qc_sequence_quality,
+                       loop=False,
+                       gene_marker=""
+                       ):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
@@ -318,7 +325,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
     cluster_dir = run_path + "/clusters"
     tax_db = ''
     deleted_entries_file = removed_path + "/deleted_entries_100"
-    if not loop and qc:
+    if not loop and qc_taxonomy_quality:
         tax_db = read_taxdb()
 
     with open(tax_clusters_file, 'w') as clust_out, \
@@ -369,10 +376,10 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
                                 clust_out.write("{}\n".format(curr_id))
                             else:
                                 #: sequence quality check
-                                if sequence:
+                                if qc_sequence_quality and sequence:
                                     if not sequence_quality_check(
                                                                   sequence,
-                                                                  'SSU'
+                                                                  gene_marker
                                     ):
                                         deleted_entries[tax_nr-1] = curr_line
                                     sequence = ""
@@ -398,7 +405,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
                                 ):
                                     cm_dict[tax_nr] = curr_tax
                                 #: checking tax and replacing/removing for rest
-                                elif qc:
+                                elif qc_taxonomy_quality:
                                     if (
                                         "Chloroplast" in cm_line[0]
                                         or "Mitochondria" in cm_line[0]
@@ -429,10 +436,10 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
                             sequence += lines.rstrip()
 
                     #: checks last entry
-                    if sequence and not loop:
+                    if qc_sequence_quality and sequence and not loop:
                         if not sequence_quality_check(
                                                       sequence,
-                                                      g_marker
+                                                      gene_marker
                         ):
                             deleted_entries[tax_nr-1] = curr_line
 

@@ -24,7 +24,13 @@ def clean_singleton(repr_tax):
     return repr_tax
 
 
-def create_final_repr(str_id, run_label, cent_loop=False):
+def create_final_repr(
+                      str_id,
+                      run_label,
+                      sequence_quality_check,
+                      gene_marker,
+                      cent_loop=False
+                      ):
     """Creates the final_repr file, includes the cluster label, centroid entry
     label and the representative taxonomy for every centroid. Cent_loop is used
     when the method is called from the cluster_loop method at identities below
@@ -103,10 +109,15 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                                 repr_tax = temp_ft[0]
 
                     #: checks sequence quality
-                    if not sequence_quality_check(sequence, 'SSU'):
-                        excluded = True
-                        with open(removed_cluster_file, 'a') as rcf:
-                            rcf.write(f"MQR_{run_label}_{str_id}_{cluster}")
+                    if qc_sequence_quality:
+                        if not sequence_quality_check(sequence, gene_marker):
+                            excluded = True
+                            with open(removed_cluster_file, 'a') as rcf:
+                                rcf.write("MQR_{}_{}_{}".format(
+                                                                run_label,
+                                                                str_id,
+                                                                cluster
+                                ))
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
@@ -255,7 +266,13 @@ def loop_repr_corr(str_id, run_label):
     100.
     """
     #: create_cluser_tax
-    create_cluster_tax(str_id, run_label, loop=True)
+    create_cluster_tax(
+                       str_id,
+                       run_label,
+                       qc_taxonomy_quality=False,
+                       qc_sequence_quality=False
+                       loop=True
+                       )
 
     #: repr_and_flag
     repr_and_flag(str_id)
@@ -270,7 +287,7 @@ def loop_repr_corr(str_id, run_label):
     os.rename(repr_cluster_file, repr_corr_file)
 
 
-def cluster_loop(str_id, run_label):
+def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
@@ -294,7 +311,13 @@ def cluster_loop(str_id, run_label):
             tree_loop = True
 
     #: creating final_repr and final_cent files for clustering
-    create_final_repr(str_id, run_label, cent_loop)
+    create_final_repr(
+                      str_id,
+                      run_label,
+                      sequence_quality_check,
+                      gene_marker,
+                      cent_loop
+                      )
     create_final_cent(str_id, cent_loop)
 
     if cent_loop:
