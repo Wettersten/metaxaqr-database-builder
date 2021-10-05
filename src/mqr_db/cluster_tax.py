@@ -429,7 +429,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True, g_marker="SSU"):
                             sequence += lines.rstrip()
 
                     #: checks last entry
-                    if sequence:
+                    if sequence and not loop:
                         if not sequence_quality_check(
                                                       sequence,
                                                       g_marker
