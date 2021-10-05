@@ -137,7 +137,7 @@ def main_mqrdb(args):
 
             logging("finalize_loop_start", id=id, quiet=quiet)
             cluster_loop(
-                         str_id,
+                         id,
                          run_label,
                          qc_sequence_quality,
                          gene_marker
