@@ -270,7 +270,7 @@ def loop_repr_corr(str_id, run_label):
                        str_id,
                        run_label,
                        qc_taxonomy_quality=False,
-                       qc_sequence_quality=False
+                       qc_sequence_quality=False,
                        loop=True
                        )
 

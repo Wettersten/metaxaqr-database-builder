@@ -92,24 +92,38 @@ def check_args(args):
         args.opt_keep and not args.opt_makedb
     ):
         error_msg = "ERROR: --keep only works with -m/--makedb"
+        quit(error_msg)
 
     if (
         args.opt_label and not args.opt_prepare
         or args.opt_qc and not args.opt_prepare
+        or args.opt_gene_marker and not args.opt_prepare
     ):
-        error_msg = "ERROR: --label and --qc only works with -p/--prepare"
+        error_msg = """ERROR: --label, --qc and --gene_marker only works with
+ -p/--prepare"""
+        quit(error_msg)
+
+    if (
+        args.opt_gene_marker and not args.opt_qc
+        or args.opt_qc and not args.opt_gene_marker
+    ):
+        error_msg = """ERROR: --label, --qc and --gene_marker only works with
+ -p/--prepare"""
+        quit(error_msg)
 
     if (
         args.opt_format and not args.opt_prepare
         or args.opt_format and not args.opt_addseq
     ):
-        error_msg = """ERROR: --format only works with -m/--makedb or
+        error_msg = """ERROR: --format only works with -p/--prepare or
 -a/--addseq"""
+        quit(error_msg)
 
     if (
         args.opt_db and not args.opt_addseq
     ):
         error_msg = "ERROR: --db only works with -a/--addseq"
+        quit(error_msg)
 
 
 def check_dir(path):
@@ -625,7 +639,7 @@ def sequence_region_check(sequence, genetic_marker):
     ref_seq_end = ""
     pass_checks = False
 
-    if genetic_marker == "SSU":
+    if genetic_marker == "ssu":
         #: >X80721.1 E.coli rrnA gene
         ref_seq_start = """GTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGT
 CGAACGGTAACAGGAAGAAGCTTGCTTCTTTGCTGACGAGTGGCGGAC"""
@@ -645,7 +659,7 @@ def sequence_length_check(sequence, genetic_marker):
     cutoff_min = 0
     cutoff_max = 99999
 
-    if genetic_marker == "SSU":
+    if genetic_marker == "ssu":
         cutoff_min = 1000
         cutoff_max = 3000
 
