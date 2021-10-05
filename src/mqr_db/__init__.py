@@ -21,7 +21,9 @@ from .handling import print_license
 from .handling import format_file
 from .handling import sep_tax
 from .handling import get_v_loop
+from .handling import sequence_quality_check
 
 from .make_db import make_db
+from .make_db import get_deleted_clusters
 
 from .add_entries import add_entries

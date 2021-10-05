@@ -6,7 +6,8 @@ file to continue with next iteration.
 from .cluster_tax import repr_and_flag, create_cluster_tax
 from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
-from .handling import return_proj_path
+from .handling import return_proj_path, sequence_quality_check
+from .make_db import get_deleted_clusters
 
 import os
 from shutil import rmtree
@@ -34,7 +35,9 @@ def create_final_repr(str_id, run_label, cent_loop=False):
     final_repr_file = run_path + '/final_repr'
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
+    removed_cluster_file = return_proj_path() + '/removed/deleted_clusters_100'
     repr_dict = {}
+    removed_list = []
     tax_db = read_taxdb()
 
     #: reads repr_correction file into memory
@@ -43,14 +46,18 @@ def create_final_repr(str_id, run_label, cent_loop=False):
             curr_line = line.rstrip().split("\t")
             repr_dict[curr_line[0]] = curr_line[1]
 
+    if str_id == "100":
+        removed_list = get_deleted_clusters(dels_only=True)
+
     with open(final_repr_file, 'w') as repr_out, \
          open(uc_file, 'r') as read_uc:
 
         for line in read_uc:
             curr_line = line.rstrip().split("\t")
 
-            if curr_line[0] == "C":
+            if curr_line[0] == "C" and curr_line[1] not in removed_list:
                 excluded = False
+                cluster = str(curr_line[1])
                 if cent_loop:
                     cluster_label = "MQR_{}_{}_{}".format(
                         run_label,
@@ -63,7 +70,7 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                     cluster_label = "MQR_{}_{}_{}".format(
                         run_label,
                         str_id,
-                        str(curr_line[1]))
+                        cluster)
                     centroid_label = ">{}".format(curr_line[8].split(" ")[0])
                     singleton_repr = " ".join(curr_line[8].split(" ")[1:])
                 entries = int(curr_line[2])
@@ -71,6 +78,12 @@ def create_final_repr(str_id, run_label, cent_loop=False):
 
                 if entries == 1:
                     repr_tax = clean_singleton(singleton_repr)
+                    cluster_file = cluster_dir + "/cluster_" + cluster
+                    sequence = ""
+                    with open(cluster_file, 'r') as cfile:
+                        cfile.readline()  # skips header
+                        for tmp in cfile:
+                            sequence += tmp.rstrip()
 
                     #: fixes chloro/mito taxonomies
                     if (
@@ -88,6 +101,12 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                             temp_ft = find_taxonomy(temp_dict, tax_db, str_id)
                             if temp_ft:
                                 repr_tax = temp_ft[0]
+
+                    #: checks sequence quality
+                    if not sequence_quality_check(sequence, 'SSU'):
+                        excluded = True
+                        with open(removed_cluster_file, 'a') as rcf:
+                            rcf.write(f"MQR_{run_label}_{str_id}_{cluster}")
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:

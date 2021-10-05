@@ -7,11 +7,13 @@ import shutil
 from .handling import return_proj_path, check_file, return_label, get_v_loop
 
 
-def get_deleted_clusters(path):
+def get_deleted_clusters(dels_only=False):
     excluded_clusters = []
-    bad_hits = Path("{}removed/bad_hits".format(path))
-    del_clusters = Path("{}removed/deleted_clusters_100".format(path))
+    path = return_proj_path()
+    bad_hits = Path(f"{path}removed/bad_hits")
+    del_clusters = Path(f"{path}removed/deleted_clusters_100")
     excluded_clusters = []
+    removed_list = []
 
     if check_file(bad_hits):
         with open(bad_hits, 'r') as f:
@@ -24,8 +26,14 @@ def get_deleted_clusters(path):
             for label in f:
                 if label.rstrip() not in excluded_clusters:
                     excluded_clusters.append(label.rstrip())
+                if dels_only:
+                    deleted_cluster = label.rstrip().split("_")[-1]
+                    removed_list.append(deleted_cluster)
 
-    return excluded_clusters
+    if dels_only:
+        return removed_list
+    else:
+        return excluded_clusters
 
 
 def get_centroids(path, result_path, qc, run_label):
@@ -35,7 +43,7 @@ def get_centroids(path, result_path, qc, run_label):
     to_cent = Path("{}/{}_final_centroids".format(result_path, run_label))
 
     if qc:
-        excluded_clusters = get_deleted_clusters(path)
+        excluded_clusters = get_deleted_clusters()
 
         first_line = True
         header = ''
@@ -70,7 +78,7 @@ def get_label_tree(path, result_path, v_loop, qc, run_label):
     """
     excluded_clusters = []
     if qc:
-        excluded_clusters = get_deleted_clusters(path)
+        excluded_clusters = get_deleted_clusters()
     label_file = "{}50/label_tree".format(path)
     final_label = "{}/{}_final_label_tree".format(result_path, run_label)
 

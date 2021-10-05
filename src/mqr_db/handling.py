@@ -571,3 +571,73 @@ def get_v_loop():
     v_loop = a_loop + b_loop
 
     return v_loop
+
+
+def sequence_quality_check(sequence, genetic_marker):
+    pass_checks = True
+
+    sl = sequence_length_check(sequence, genetic_marker)
+
+    """ Region check too strict to use outside E. coli, it is also very
+    inefficient in its implementation making it unsustainable in use with
+    large databases. Disabled for now
+    """
+    # sr = sequence_region_check(sequence, genetic_marker)
+    sr = True
+
+    if not sl or not sr:
+        pass_checks = False
+
+    return pass_checks
+
+
+def genetic_region_found(sequence, ref_seq):
+    k = len(ref_seq)
+    kmers = [sequence[i:i+k] for i in range(0, len(sequence)-k+1)]
+    found = False
+
+    for kmer in kmers:
+        errors = 0
+        for i in range(k):
+            if ref_seq[i] != kmer[i]:
+                errors += 1
+        if float((k-errors)/k) >= 0.7:
+            found = True
+            break
+    return found
+
+
+def sequence_region_check(sequence, genetic_marker):
+    seq = sequence.lower().replace('t', 'u')
+    ref_seq_start = ""
+    ref_seq_end = ""
+    pass_checks = False
+
+    if genetic_marker == "SSU":
+        #: >X80721.1 E.coli rrnA gene
+        ref_seq_start = """GTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGT
+CGAACGGTAACAGGAAGAAGCTTGCTTCTTTGCTGACGAGTGGCGGAC"""
+        ref_seq_end = """AGAATGCCACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCA
+TGGGAGTGGGTTGCAAAAGAAGTAGGTAGCTTAACTTCGGGAGGGC"""
+
+    cs = genetic_region_found(seq, ref_seq_start.lower().replace('t', 'u'))
+    if cs:
+        ce = genetic_region_found(seq, ref_seq_end.lower().replace('t', 'u'))
+        if ce:
+            pass_checks = True
+
+    return pass_checks
+
+
+def sequence_length_check(sequence, genetic_marker):
+    cutoff_min = 0
+    cutoff_max = 99999
+
+    if genetic_marker == "SSU":
+        cutoff_min = 1000
+        cutoff_max = 3000
+
+    if len(sequence) < cutoff_min or len(sequence) > cutoff_max:
+        return False
+    else:
+        return True
