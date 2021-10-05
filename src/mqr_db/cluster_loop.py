@@ -27,7 +27,7 @@ def clean_singleton(repr_tax):
 def create_final_repr(
                       str_id,
                       run_label,
-                      sequence_quality_check,
+                      qc_sequence_quality,
                       gene_marker,
                       cent_loop=False
                       ):

@@ -95,6 +95,7 @@ def main_mqrdb(args):
         str_id = '100'
         run_label = return_label()
         exclude_all = False
+        path = return_proj_path()
         if args.opt_exclude_all:
             exclude_all = True
 
@@ -138,7 +139,7 @@ def main_mqrdb(args):
             cluster_loop(
                          str_id,
                          run_label,
-                         sequence_quality_check,
+                         qc_sequence_quality,
                          gene_marker
                         )
             logging("finalize_loop_end", id=id, quiet=quiet)
