@@ -83,6 +83,7 @@ def check_args(args):
         and not args.opt_makedb
         and not args.opt_addseq
         and not args.opt_license
+        and not args.opt_version_history
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
@@ -463,7 +464,17 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.0"
+    return "Version: 1.0.1"
+
+
+def print_updates():
+    """Prints the update history.
+    """
+    upd_history = """Version: Notes
+V1.0.0: Initial release.
+V1.0.1: Added support for the sequence quality option, separating QC option into 3 modes (Sequence, Taxonomy, Low clusters)
+"""
+    print(upd_history)
 
 
 def print_license():
@@ -600,6 +611,9 @@ def get_v_loop():
 
 
 def sequence_quality_check(sequence, genetic_marker):
+    """Used to quality check input sequences. Using genetic markers to
+    determine min or max length of sequence to accept.
+    """
     pass_checks = True
 
     sl = sequence_length_check(sequence, genetic_marker)
@@ -618,6 +632,9 @@ def sequence_quality_check(sequence, genetic_marker):
 
 
 def genetic_region_found(sequence, ref_seq):
+    """Loops through sequence to determine if reference sequence is found (with
+    sequence similarity, default 70% bases needs to be found).
+    """
     k = len(ref_seq)
     kmers = [sequence[i:i+k] for i in range(0, len(sequence)-k+1)]
     found = False
@@ -634,6 +651,8 @@ def genetic_region_found(sequence, ref_seq):
 
 
 def sequence_region_check(sequence, genetic_marker):
+    """Main region sequence method, including the reference sequences used
+    """
     seq = sequence.lower().replace('t', 'u')
     ref_seq_start = ""
     ref_seq_end = ""
@@ -656,6 +675,9 @@ TGGGAGTGGGTTGCAAAAGAAGTAGGTAGCTTAACTTCGGGAGGGC"""
 
 
 def sequence_length_check(sequence, genetic_marker):
+    """Does the min and max length checks, if sequence shorter or longer than
+    allowed it returns False
+    """
     cutoff_min = 0
     cutoff_max = 99999
 

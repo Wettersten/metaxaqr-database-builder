@@ -11,6 +11,7 @@ from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
+from .handling import print_updates
 from .make_db import make_db
 from .add_entries import add_entries
 
@@ -170,3 +171,7 @@ def main_mqrdb(args):
     #: returns the license for MetaxaQR Database Builder
     if args.opt_license:
         print_license()
+
+    #: prints the version history
+    if args.opt_version_history:
+        print_updates()

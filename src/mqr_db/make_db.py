@@ -8,6 +8,9 @@ from .handling import return_proj_path, check_file, return_label, get_v_loop
 
 
 def get_deleted_clusters(dels_only=False):
+    """Returns list of all excluded clusters (excluded from qc s/l/t) if
+    dels_only then returns only those deleted by the sequence quality check
+    """
     excluded_clusters = []
     path = return_proj_path()
     bad_hits = Path(f"{path}removed/bad_hits")

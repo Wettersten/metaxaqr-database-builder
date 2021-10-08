@@ -83,6 +83,10 @@ def create_parser():
                         action='store_true', default=False,
                         help="""Displays the license""")
 
+    parser.add_argument('--version_history', dest='opt_version_history',
+                        action='store_true', default=False,
+                        help="""Displays the version history""")
+
     parser.add_argument('--version', action='version',
                         version='{} - {}'.format(seq_name, seq_version))
     return parser
