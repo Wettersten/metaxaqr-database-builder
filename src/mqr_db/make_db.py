@@ -7,11 +7,16 @@ import shutil
 from .handling import return_proj_path, check_file, return_label, get_v_loop
 
 
-def get_deleted_clusters(path):
+def get_deleted_clusters(dels_only=False):
+    """Returns list of all excluded clusters (excluded from qc s/l/t) if
+    dels_only then returns only those deleted by the sequence quality check
+    """
     excluded_clusters = []
-    bad_hits = Path("{}removed/bad_hits".format(path))
-    del_clusters = Path("{}removed/deleted_clusters_100".format(path))
+    path = return_proj_path()
+    bad_hits = Path(f"{path}removed/bad_hits")
+    del_clusters = Path(f"{path}removed/deleted_clusters_100")
     excluded_clusters = []
+    removed_list = []
 
     if check_file(bad_hits):
         with open(bad_hits, 'r') as f:
@@ -24,8 +29,14 @@ def get_deleted_clusters(path):
             for label in f:
                 if label.rstrip() not in excluded_clusters:
                     excluded_clusters.append(label.rstrip())
+                if dels_only:
+                    deleted_cluster = label.rstrip().split("_")[-1]
+                    removed_list.append(deleted_cluster)
 
-    return excluded_clusters
+    if dels_only:
+        return removed_list
+    else:
+        return excluded_clusters
 
 
 def get_centroids(path, result_path, qc, run_label):
@@ -35,7 +46,7 @@ def get_centroids(path, result_path, qc, run_label):
     to_cent = Path("{}/{}_final_centroids".format(result_path, run_label))
 
     if qc:
-        excluded_clusters = get_deleted_clusters(path)
+        excluded_clusters = get_deleted_clusters()
 
         first_line = True
         header = ''
@@ -62,15 +73,20 @@ def get_centroids(path, result_path, qc, run_label):
         shutil.copy(my_cent, to_cent)
 
 
-def get_label_tree(path, result_path, v_loop, qc, run_label):
+def get_label_tree(
+                   path,
+                   result_path,
+                   v_loop,
+                   qc_low_clusters,
+                   run_label):
     """Takes the label tree created at 50% seqence identity and converts it
     into a dictionary format where the mqr_100 (100% seq id) label is key and
     the values are all the labels of the lower sequence identities, in
     descending order.
     """
     excluded_clusters = []
-    if qc:
-        excluded_clusters = get_deleted_clusters(path)
+    if qc_low_clusters:
+        excluded_clusters = get_deleted_clusters()
     label_file = "{}50/label_tree".format(path)
     final_label = "{}/{}_final_label_tree".format(result_path, run_label)
 
@@ -96,7 +112,7 @@ def get_label_tree(path, result_path, v_loop, qc, run_label):
                             label_out = "{}\t".format(dl["curr_100"])
                         else:
                             label_out += "{} ".format(dl[key])
-                    if qc:
+                    if qc_low_clusters:
                         if label_out.split("\t")[0] not in excluded_clusters:
                             wf.write("{}\n".format(label_out[:-1]))
                     else:
@@ -164,7 +180,7 @@ def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
                         out.write("{}\n".format(hit))
 
 
-def make_db(qc=True):
+def make_db(qc_limited_clusters, qc_taxonomy_quality):
     """Creates the output datasets used by MetaxaQR. A centroid file which
     contains all entries clustered at 100% sequence identity, a representative
     taxonomy file containing all representative taxonomies at all sequence
@@ -176,8 +192,9 @@ def make_db(qc=True):
     result_path = "{}results".format(path)
     Path(result_path).mkdir(parents=True, exist_ok=True)
     v_loop = get_v_loop()
+    qc = qc_limited_clusters or qc_taxonomy_quality
 
-    if qc:
+    if qc_limited_clusters:
         find_bad_hits()
     get_centroids(path, result_path, qc, run_label)
     get_label_tree(path, result_path, v_loop, qc, run_label)

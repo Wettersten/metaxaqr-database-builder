@@ -38,6 +38,18 @@ def return_label():
     return label
 
 
+def return_qc_opts():
+    """Gets the quality check options for the run from initial -p command.
+    """
+    qc_opts = ''
+    qc_opts_file = "{}init/qc_opts"
+    if check_file(qc_opts_file):
+        with open(qc_opts_file, 'r') as f:
+            qc_opts = f.read()
+
+    return qc_opts
+
+
 def tax_list_to_str(tlist):
     """Changes a split list of taxonomies back to a string.
     """
@@ -71,6 +83,7 @@ def check_args(args):
         and not args.opt_makedb
         and not args.opt_addseq
         and not args.opt_license
+        and not args.opt_version_history
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
@@ -78,26 +91,40 @@ def check_args(args):
 
     if (
         args.opt_keep and not args.opt_makedb
-        or args.opt_qc and not args.opt_makedb
     ):
-        error_msg = "ERROR: --keep and --qc only works with -m/--makedb"
+        error_msg = "ERROR: --keep only works with -m/--makedb"
+        quit(error_msg)
 
     if (
         args.opt_label and not args.opt_prepare
+        or args.opt_qc and not args.opt_prepare
+        or args.opt_gene_marker and not args.opt_prepare
     ):
-        error_msg = "ERROR: --label only works with -p/--prepare"
+        error_msg = """ERROR: --label, --qc and --gene_marker only works with
+ -p/--prepare"""
+        quit(error_msg)
+
+    if (
+        args.opt_gene_marker and not args.opt_qc
+        or args.opt_qc and not args.opt_gene_marker
+    ):
+        error_msg = """ERROR: --label, --qc and --gene_marker only works with
+ -p/--prepare"""
+        quit(error_msg)
 
     if (
         args.opt_format and not args.opt_prepare
         or args.opt_format and not args.opt_addseq
     ):
-        error_msg = """ERROR: --format only works with -m/--makedb or
+        error_msg = """ERROR: --format only works with -p/--prepare or
 -a/--addseq"""
+        quit(error_msg)
 
     if (
         args.opt_db and not args.opt_addseq
     ):
         error_msg = "ERROR: --db only works with -a/--addseq"
+        quit(error_msg)
 
 
 def check_dir(path):
@@ -437,7 +464,17 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.0"
+    return "Version: 1.0.1"
+
+
+def print_updates():
+    """Prints the update history.
+    """
+    upd_history = """Version: Notes
+V1.0.0: Initial release.
+V1.0.1: Added support for the sequence quality option, separating QC option into 3 modes (Sequence, Taxonomy, Low clusters)
+"""
+    print(upd_history)
 
 
 def print_license():
@@ -571,3 +608,84 @@ def get_v_loop():
     v_loop = a_loop + b_loop
 
     return v_loop
+
+
+def sequence_quality_check(sequence, genetic_marker):
+    """Used to quality check input sequences. Using genetic markers to
+    determine min or max length of sequence to accept.
+    """
+    pass_checks = True
+
+    sl = sequence_length_check(sequence, genetic_marker)
+
+    """ Region check too strict to use outside E. coli, it is also very
+    inefficient in its implementation making it unsustainable in use with
+    large databases. Disabled for now
+    """
+    # sr = sequence_region_check(sequence, genetic_marker)
+    sr = True
+
+    if not sl or not sr:
+        pass_checks = False
+
+    return pass_checks
+
+
+def genetic_region_found(sequence, ref_seq):
+    """Loops through sequence to determine if reference sequence is found (with
+    sequence similarity, default 70% bases needs to be found).
+    """
+    k = len(ref_seq)
+    kmers = [sequence[i:i+k] for i in range(0, len(sequence)-k+1)]
+    found = False
+
+    for kmer in kmers:
+        errors = 0
+        for i in range(k):
+            if ref_seq[i] != kmer[i]:
+                errors += 1
+        if float((k-errors)/k) >= 0.7:
+            found = True
+            break
+    return found
+
+
+def sequence_region_check(sequence, genetic_marker):
+    """Main region sequence method, including the reference sequences used
+    """
+    seq = sequence.lower().replace('t', 'u')
+    ref_seq_start = ""
+    ref_seq_end = ""
+    pass_checks = False
+
+    if genetic_marker == "ssu":
+        #: >X80721.1 E.coli rrnA gene
+        ref_seq_start = """GTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGT
+CGAACGGTAACAGGAAGAAGCTTGCTTCTTTGCTGACGAGTGGCGGAC"""
+        ref_seq_end = """AGAATGCCACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCA
+TGGGAGTGGGTTGCAAAAGAAGTAGGTAGCTTAACTTCGGGAGGGC"""
+
+    cs = genetic_region_found(seq, ref_seq_start.lower().replace('t', 'u'))
+    if cs:
+        ce = genetic_region_found(seq, ref_seq_end.lower().replace('t', 'u'))
+        if ce:
+            pass_checks = True
+
+    return pass_checks
+
+
+def sequence_length_check(sequence, genetic_marker):
+    """Does the min and max length checks, if sequence shorter or longer than
+    allowed it returns False
+    """
+    cutoff_min = 0
+    cutoff_max = 99999
+
+    if genetic_marker == "ssu":
+        cutoff_min = 1000
+        cutoff_max = 3000
+
+    if len(sequence) < cutoff_min or len(sequence) > cutoff_max:
+        return False
+    else:
+        return True

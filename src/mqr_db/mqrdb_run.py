@@ -10,7 +10,8 @@ from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
-from .handling import cleanup, format_file, sep_tax, get_v_loop
+from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
+from .handling import print_updates
 from .make_db import make_db
 from .add_entries import add_entries
 
@@ -19,6 +20,9 @@ def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
     quiet = args.opt_quiet
+    qc_sequence_quality = False
+    qc_limited_clusters = False
+    qc_taxonomy_quality = False
 
     #: running start command, clustering at 100% identity
     if args.opt_prepare:
@@ -47,7 +51,27 @@ def main_mqrdb(args):
         if args.opt_format:
             db = format_file(db, args.opt_format)
 
-        #: filtering the database using Metaxa
+        #: gene marker used for sequence quality checks
+        gene_marker = ""
+        if args.opt_gene_marker:
+            gene_marker = str(args.opt_gene_marker).lower()
+            gene_marker_file = f"{init_path}/gene_marker"
+            with open(gene_marker_file, 'w') as gm_f:
+                gm_f.write(gene_marker)
+
+        #: gets quality checking options and saving to file to use in -m
+        if args.opt_qc:
+            qc_opts = str(args.opt_qc).lower()
+            if "s" in qc_opts:
+                qc_sequence_quality = True
+            if "l" in qc_opts:
+                qc_limited_clusters = True
+            if "t" in qc_opts:
+                qc_taxonomy_quality = True
+
+            qc_opts_file = f"{init_path}/qc_opts"
+            with open(qc_opts_file, 'w') as qc_f:
+                qc_f.write(qc_opts)
 
         logging("clustering_start", quiet=quiet)
         cluster_vs(db, float_id)
@@ -55,7 +79,13 @@ def main_mqrdb(args):
 
         logging("clustering_tax_start", quiet=quiet)
         create_taxdb()
-        create_cluster_tax(str_id, run_label, qc=args.opt_qc)
+        create_cluster_tax(
+                           str_id,
+                           run_label,
+                           qc_taxonomy_quality,
+                           qc_sequence_quality,
+                           gene_marker=gene_marker
+                           )
         repr_and_flag(str_id)
         logging("clustering_tax_end", quiet=quiet)
 
@@ -66,8 +96,32 @@ def main_mqrdb(args):
         str_id = '100'
         run_label = return_label()
         exclude_all = False
+        path = return_proj_path()
         if args.opt_exclude_all:
             exclude_all = True
+
+        #: initializing quality check options from -p
+        qc_sequence_quality = False
+        qc_limited_clusters = False
+        qc_taxonomy_quality = False
+        init_path = "{}init".format(path)
+        qc_opts_file = f"{init_path}/qc_opts"
+        if check_file(qc_opts_file):
+            with open(qc_opts_file, 'r') as qc_f:
+                qc_opts = qc_f.read()
+                if "s" in qc_opts:
+                    qc_sequence_quality = True
+                if "l" in qc_opts:
+                    qc_limited_clusters = True
+                if "t" in qc_opts:
+                    qc_taxonomy_quality = True
+
+        #: initializing gene marker used for sequence quality check
+        gene_marker = ""
+        gene_marker_file = f"{init_path}/gene_marker"
+        if check_file(gene_marker_file):
+            with open(gene_marker_file, 'r') as gm_f:
+                gene_marker = gm_f.read()
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
@@ -83,14 +137,19 @@ def main_mqrdb(args):
         for id in v_loop:
 
             logging("finalize_loop_start", id=id, quiet=quiet)
-            cluster_loop(id, run_label)
+            cluster_loop(
+                         id,
+                         run_label,
+                         qc_sequence_quality,
+                         gene_marker
+                        )
             logging("finalize_loop_end", id=id, quiet=quiet)
 
         logging("finalize_end", quiet=quiet)
 
         #: creating the database
         logging("make db_start", quiet=quiet)
-        make_db(qc=args.opt_qc)
+        make_db(qc_limited_clusters, qc_taxonomy_quality)
         logging("make db_end", quiet=quiet)
 
         clean_full = True
@@ -112,3 +171,7 @@ def main_mqrdb(args):
     #: returns the license for MetaxaQR Database Builder
     if args.opt_license:
         print_license()
+
+    #: prints the version history
+    if args.opt_version_history:
+        print_updates()

@@ -39,14 +39,23 @@ def create_parser():
     parser.add_argument('--taxfile', dest='opt_taxfile', type=str,
                         metavar='', help="Taxonomy file")
 
+    parser.add_argument('--qc', dest='opt_qc', type=str,
+                        metavar='',
+                        help="""Quality check options, several can be used at
+ the same time [slt].
+    [s]: (s)equence quality - Removes entries not passing length/region check.
+    [l]: (l)ow quantity cluster - Removes clusters with no related clusters.
+    [t]: (t)axonomy quality - Remove entries with differing taxonomies.""")
+
+    parser.add_argument('--gene_marker', dest='opt_gene_marker', type=str,
+                        metavar='',
+                        help="""Gene marker used for quality sequence checks,
+ e.g. SSU""")
+
     parser.add_argument('-m', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files""")
-
-    parser.add_argument('--qc', dest='opt_qc',
-                        action='store_false', default=True,
-                        help="""Turns off quality check steps""")
 
     parser.add_argument('--keep', dest='opt_keep',
                         action='store_true', default=False,
@@ -73,6 +82,10 @@ def create_parser():
     parser.add_argument('--license', dest='opt_license',
                         action='store_true', default=False,
                         help="""Displays the license""")
+
+    parser.add_argument('--version_history', dest='opt_version_history',
+                        action='store_true', default=False,
+                        help="""Displays the version history""")
 
     parser.add_argument('--version', action='version',
                         version='{} - {}'.format(seq_name, seq_version))
