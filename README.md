@@ -1,6 +1,6 @@
 # User's Guide: Manual for MetaxaQR Database Builder
 
-This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.0, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
+This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.1, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
 
 MetaxaQR Database Builder automatically curates a database of genetic markers, such as 16S/18S small subunit rRNA gene, in FASTA format and outputs a dataset useable by MetaxaQR for taxonomic classification of metagenomic data.
 
@@ -14,7 +14,8 @@ MetaxaQR Database Builder automatically curates a database of genetic markers, s
 4. Documentation: 'prepare'
 5. Documentation: 'makedb'
 6. Documentation: 'addseq'
-7. License information
+7. Version history
+8. License information
 
 
 
@@ -198,7 +199,14 @@ The MetaxaQR database files are created using intermediary files, all representa
 
 
 
-## 7. License information
+## 7. Version history
+
+V1.0.0: Initial release.
+v1.0.1: Added support for the sequence quality check option, filtering sequence either too small or too long to match the chosen genetic marker. Also split the QC option into 3 separate modules: Sequence quality check, taxonomy quality check and low quantity cluster check, can be used separately or in combination with others.
+
+
+
+## 8. License information
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
