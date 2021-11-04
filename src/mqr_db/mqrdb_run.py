@@ -164,7 +164,7 @@ def main_mqrdb(args):
         label_file = f"{run_label}_results/{run_label}_final_label_tree"  # todo make less hard-coded
         mode = args.opt_makehmms
         logging("make hmms_start", quiet=quiet)
-        make_hmm(
+        make_hmms(
                  mode,
                  seq_id=str(args.opt_con_seq_id),
                  label_file=label_file,

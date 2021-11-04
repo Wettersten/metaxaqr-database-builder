@@ -127,30 +127,13 @@ def check_args(args):
         error_msg = "ERROR: --db only works with -a/--addseq"
         quit(error_msg)
 
-    if (
-        args.opt_con_len and not args.opt_makehmms
-        or args.opt_look_ahead and not args.opt_makehmms
-        or args.opt_con_cutoff and not args.opt_makehmms
-        or args.opt_max_gaps and not args.opt_makehmms
-        or args.opt_con_seq_id and not args.opt_makehmms
-        or args.opt_con_seq_db and not args.opt_makehmms
-    ):
-        error_msg = """ERROR: --conservation_cutoff, --conservation_length,
-        --look_ahead, --max_gaps, --seq_id and --seq_db only works using
-        -mh/--make_hmms"""
-        quit(error_msg)
-
     if args.opt_makehmms:
         if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
             error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
             choose from conserved, divergent or hybrid."""
 
-    if args.opt_con_seq_file:
-        if args.opt_makehmms != "conserved":
-            error_msg = """ERROR: sequence database only required when
-            conserved mode is used in -mh/--make_hmms"""
-            quit(error_msg)
-        if not check_file(args.opt_con_seq_file):
+    if args.opt_makehmms == "conserved":
+        if not check_file(args.opt_con_seq_db):
             error_msg = "ERROR: incorrect sequence database provided"
             quit(error_msg)
 

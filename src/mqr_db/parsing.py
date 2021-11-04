@@ -73,34 +73,34 @@ def create_parser():
                         """)
 
     parser.add_argument('--conservation_length', dest='opt_con_len', type=int,
-                        metavar='', default=20
+                        metavar='', default=20,
                         help="""Minimum length required for a conserved region
                         used to make HMMs (default=20)""")
 
     parser.add_argument('--look_ahead', dest='opt_look_ahead', type=int,
-                        metavar='', default=4
+                        metavar='', default=4,
                         help="""Number of bases/amino acids to look ahead when
                         creating the conserved region, ignoring small sections
                         of non-conserved nucleotides/amino acids
                         (default=4)""")
 
     parser.add_argument('--conservation_cutoff', dest='opt_con_cutoff',
-                        type=float, metavar='', default=0.6
+                        type=float, metavar='', default=0.6,
                         help="""Consensus cutoff point for nucleotides/amino
                         acids in the alignment, between 0-1 (default=0.6)""")
 
     parser.add_argument('--max_gaps', dest='opt_max_gaps',
-                        type=int, metavar='', default=5
+                        type=int, metavar='', default=5,
                         help="""Maximum number of gaps allowed in a conserved
                         region (default=5)""")
 
     parser.add_argument('--conservation_seq_id', dest='opt_con_seq_id',
-                        type=str, metavar='', default="50"
+                        type=str, metavar='', default="50",
                         help="""Sequence id used to create the HMMs from
                         (default=50)""")
 
     parser.add_argument('--conservation_seq_db', dest='opt_con_seq_db',
-                        type=str, metavar=''
+                        type=str, metavar='',
                         help="""Database to create HMMs from, when using the
                         hybrid mode.""")
 
