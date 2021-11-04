@@ -131,6 +131,7 @@ def check_args(args):
         if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
             error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
             choose from conserved, divergent or hybrid."""
+            quit(error_msg)
 
     if args.opt_makehmms == "conserved":
         if not check_file(args.opt_con_seq_db):
