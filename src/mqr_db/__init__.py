@@ -28,4 +28,6 @@ from .handling import print_updates
 from .make_db import make_db
 from .make_db import get_deleted_clusters
 
+from .make_hmms import make_hmms
+
 from .add_entries import add_entries

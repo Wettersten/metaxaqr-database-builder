@@ -14,6 +14,7 @@ from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
 from .handling import print_updates
 from .make_db import make_db
 from .add_entries import add_entries
+from .make_hmms import make_hmms
 
 
 def main_mqrdb(args):
@@ -94,7 +95,7 @@ def main_mqrdb(args):
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
         str_id = '100'
-        run_label = return_label()
+        run_label = return_label()  # todo: add so mqr can input label/path
         exclude_all = False
         path = return_proj_path()
         if args.opt_exclude_all:
@@ -156,6 +157,21 @@ def main_mqrdb(args):
         if args.opt_keep:
             clean_full = False
         cleanup(all=clean_full)
+
+    #: running the make HMMs method
+    if args.opt_makehmms:
+        run_label = return_label()  # todo: add so mqr can input label/path
+        label_file = f"{run_label}_results/{run_label}_final_label_tree"  # todo make less hard-coded
+        mode = args.opt_makehmms
+        logging("make hmms_start", quiet=quiet)
+        make_hmm(
+                 mode,
+                 seq_id=str(args.opt_con_seq_id),
+                 label_file=label_file,
+                 seq_db=args.opt_con_seq_db,
+                 cpu=args.opt_cpu
+                 )
+        logging("make hmms_end", quiet=quiet)
 
     #: running the add new sequences method
     if args.opt_addseq:

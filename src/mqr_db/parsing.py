@@ -21,7 +21,7 @@ def create_parser():
         genetic markers.""",
         epilog='Examples: ')
 
-    parser.add_argument('-p', '--prepare', dest='opt_prepare', type=str,
+    parser.add_argument('-p', '-prepare', dest='opt_prepare', type=str,
                         metavar='',
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
@@ -52,7 +52,7 @@ def create_parser():
                         help="""Gene marker used for quality sequence checks,
  e.g. SSU""")
 
-    parser.add_argument('-m', '--makedb', dest='opt_makedb',
+    parser.add_argument('-md', '--makedb', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files""")
@@ -66,6 +66,44 @@ def create_parser():
                         help="""Skips the manual review step by excluding all
  flagged clusters""")
 
+    parser.add_argument('-mh', '--makehmms', dest='opt_makehmms', type=str,
+                        metavar='',
+                        help="""Creates HMMs from the MetaxaQR Database using
+                        3 different modes (divergent, conserved, hybrid)
+                        """)
+
+    parser.add_argument('--conservation_length', dest='opt_con_len', type=int,
+                        metavar='', default=20
+                        help="""Minimum length required for a conserved region
+                        used to make HMMs (default=20)""")
+
+    parser.add_argument('--look_ahead', dest='opt_look_ahead', type=int,
+                        metavar='', default=4
+                        help="""Number of bases/amino acids to look ahead when
+                        creating the conserved region, ignoring small sections
+                        of non-conserved nucleotides/amino acids
+                        (default=4)""")
+
+    parser.add_argument('--conservation_cutoff', dest='opt_con_cutoff',
+                        type=float, metavar='', default=0.6
+                        help="""Consensus cutoff point for nucleotides/amino
+                        acids in the alignment, between 0-1 (default=0.6)""")
+
+    parser.add_argument('--max_gaps', dest='opt_max_gaps',
+                        type=int, metavar='', default=5
+                        help="""Maximum number of gaps allowed in a conserved
+                        region (default=5)""")
+
+    parser.add_argument('--conservation_seq_id', dest='opt_con_seq_id',
+                        type=str, metavar='', default="50"
+                        help="""Sequence id used to create the HMMs from
+                        (default=50)""")
+
+    parser.add_argument('--conservation_seq_db', dest='opt_con_seq_db',
+                        type=str, metavar=''
+                        help="""Database to create HMMs from, when using the
+                        hybrid mode.""")
+
     parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds
@@ -78,6 +116,9 @@ def create_parser():
     parser.add_argument('--quiet', dest='opt_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")
+
+    parser.add_argument('--cpu', dest='opt_cpu', type=int, default=4,
+                        help="""Threads used (default=4)""")
 
     parser.add_argument('--license', dest='opt_license',
                         action='store_true', default=False,

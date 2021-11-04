@@ -84,6 +84,7 @@ def check_args(args):
         and not args.opt_addseq
         and not args.opt_license
         and not args.opt_version_history
+        and not args.opt_makehmms
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
@@ -125,6 +126,33 @@ def check_args(args):
     ):
         error_msg = "ERROR: --db only works with -a/--addseq"
         quit(error_msg)
+
+    if (
+        args.opt_con_len and not args.opt_makehmms
+        or args.opt_look_ahead and not args.opt_makehmms
+        or args.opt_con_cutoff and not args.opt_makehmms
+        or args.opt_max_gaps and not args.opt_makehmms
+        or args.opt_con_seq_id and not args.opt_makehmms
+        or args.opt_con_seq_db and not args.opt_makehmms
+    ):
+        error_msg = """ERROR: --conservation_cutoff, --conservation_length,
+        --look_ahead, --max_gaps, --seq_id and --seq_db only works using
+        -mh/--make_hmms"""
+        quit(error_msg)
+
+    if args.opt_makehmms:
+        if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
+            error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
+            choose from conserved, divergent or hybrid."""
+
+    if args.opt_con_seq_file:
+        if args.opt_makehmms != "conserved":
+            error_msg = """ERROR: sequence database only required when
+            conserved mode is used in -mh/--make_hmms"""
+            quit(error_msg)
+        if not check_file(args.opt_con_seq_file):
+            error_msg = "ERROR: incorrect sequence database provided"
+            quit(error_msg)
 
 
 def check_dir(path):
@@ -378,6 +406,19 @@ finished.".format(id=str(int(id)-5))
                 st="New entries have been added to the MetaxaQR database!"
             ))
 
+        elif option == "make hmms_start":
+            print("{he}\n{ln}\n{dt} : {st}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Creating MetaxaQR HMMs..."
+            ))
+        elif option == "make hmms_end":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="MetaxaQR HMMs have been created!"
+            ))
+
 
 def get_dateinfo():
     date = datetime.today()
@@ -464,15 +505,17 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.1"
+    return "Version: 1.0.2"
 
 
 def print_updates():
     """Prints the update history.
     """
     upd_history = """Version: Notes
-V1.0.0: Initial release.
-V1.0.1: Added support for the sequence quality option, separating QC option into 3 modes (Sequence, Taxonomy, Low clusters)
+V1.0.0: Initial release.\n
+V1.0.1: Added support for the sequence quality option,
+separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
+V1.0.2: Initial support for the Make HMMs module.\n
 """
     print(upd_history)
 
