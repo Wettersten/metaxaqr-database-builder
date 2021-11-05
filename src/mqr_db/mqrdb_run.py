@@ -153,10 +153,8 @@ def main_mqrdb(args):
         make_db(qc_limited_clusters, qc_taxonomy_quality)
         logging("make db_end", quiet=quiet)
 
-        clean_full = True
-        if args.opt_keep:
-            clean_full = False
-        cleanup(all=clean_full)
+        #: cleans up intermediate files after process
+        cleanup("md", args.opt_keep)
 
     #: running the make HMMs method
     if args.opt_makehmms:
@@ -172,6 +170,9 @@ def main_mqrdb(args):
                  cpu=args.opt_cpu
                  )
         logging("make hmms_end", quiet=quiet)
+
+        #: cleans up intermediate files after process
+        cleanup("mh", args.opt_keep)
 
     #: running the add new sequences method
     if args.opt_addseq:

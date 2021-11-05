@@ -175,30 +175,41 @@ def check_installation(args):
             quit(error_msg)
 
 
-def cleanup(all=True):
+def cleanup(mode, keep):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """
     run_label = return_label()
     mqr_path = return_proj_path()
-    src_res = "{}results/".format(return_proj_path())
-    src_rem = "{}removed/".format(return_proj_path())
-    dest = "{}/{}_results/".format(os.getcwd(), run_label)
-    Path(dest).mkdir(parents=True, exist_ok=True)
+    #: used after make_db
+    if mode == "md":
+        src_res = "{}results/".format(return_proj_path())
+        src_rem = "{}removed/".format(return_proj_path())
+        dest = "{}/{}_results/".format(os.getcwd(), run_label)
+        Path(dest).mkdir(parents=True, exist_ok=True)
 
-    files_res = os.listdir(src_res)
-    files_rem = os.listdir(src_rem)
+        files_res = os.listdir(src_res)
+        files_rem = os.listdir(src_rem)
 
-    for f in files_res:
-        shutil.move(src_res + f, dest)
-    for f in files_rem:
-        shutil.move(src_rem + f, dest)
+        for f in files_res:
+            shutil.move(src_res + f, dest)
+        for f in files_rem:
+            shutil.move(src_rem + f, dest)
 
-    shutil.rmtree(src_res)
-    shutil.rmtree(src_rem)
+        shutil.rmtree(src_res)
+        shutil.rmtree(src_rem)
 
-    if all:
-        shutil.rmtree(mqr_path)
+        if not keep:
+            v_loop = get_v_loop()
+            v_loop.remove("100")
+            files_to_remove = [f"{mqr_path}{v}/" for v in v_loop]
+            for file in files_to_remove:
+                shutil.rmtree(file)
+
+    #: used after make_hmms
+    elif mode == "mh":
+        if not keep:
+            shutil.rmtree(mqr_path)
 
 
 def check_prereqs(args):
@@ -405,6 +416,8 @@ finished.".format(id=str(int(id)-5))
 
 
 def get_dateinfo():
+    """Returns date and time
+    """
     date = datetime.today()
     weekday = date.strftime('%a')
     month = date.strftime('%b')
@@ -422,6 +435,8 @@ def get_dateinfo():
 
 
 def get_header(option):
+    """Header used for logging
+    """
     header = ""
     version = get_version()
     bytext = "by Sebastian Wettersten, University of Gothenburg."
