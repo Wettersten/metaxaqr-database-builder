@@ -69,7 +69,6 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    check_installation(args)
     check_args(args)
     check_prereqs(args)
 
@@ -165,6 +164,10 @@ def check_installation(args):
     ):
         reqs = ['vsearch']
         preqs = []
+    elif (
+        args.opt_makehmms
+    ):
+        reqs = ['mafft', 'hmmbuild', 'hmmpress']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)

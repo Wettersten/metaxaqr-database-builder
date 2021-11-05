@@ -24,6 +24,7 @@ from .handling import get_v_loop
 from .handling import sequence_quality_check
 from .handling import return_qc_opts
 from .handling import print_updates
+from .handling import check_installation
 
 from .make_db import make_db
 from .make_db import get_deleted_clusters
