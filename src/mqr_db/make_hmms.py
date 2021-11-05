@@ -4,7 +4,7 @@ import os  # todo can remove later
 import subprocess
 from pathlib import Path
 from collections import Counter
-from .handling import return_proj_path
+from .handling import return_proj_path, return_label
 
 
 def make_hmms(
@@ -23,7 +23,8 @@ def make_hmms(
     then HMMER to make the HMMs.
     """
     create_align_structure()
-    hmm_dir = f"{return_proj_path()}HMMs/"
+    run_label = return_label()
+    hmm_dir = f"{run_label}_results/HMMs/"
     cluster_dir = f"{return_proj_path()}100/clusters/"
     align_dir = f"{return_proj_path()}alignment/"
 
@@ -335,7 +336,8 @@ def create_align_structure():
     """
     #: makes return_proj_path/hmm/ & alignment
     align_dir = f"{return_proj_path()}alignment/"
-    hmm_dir = f"{return_proj_path()}HMMs/"
+    run_label = return_label()
+    hmm_dir = f"{run_label}_results/HMMs/"
     Path(align_dir).mkdir(parents=True, exist_ok=True)
     Path(hmm_dir).mkdir(parents=True, exist_ok=True)
 
