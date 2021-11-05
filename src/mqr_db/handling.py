@@ -135,9 +135,13 @@ def check_args(args):
             quit(error_msg)
 
     if args.opt_makehmms == "conserved":
-        if not check_file(args.opt_con_seq_db):
-            error_msg = "ERROR: incorrect sequence database provided"
+        if not args.opt_con_seq_db:
+            error_msg = "ERROR: missing sequence database"
             quit(error_msg)
+        else:
+            if not check_file(args.opt_con_seq_db):
+                error_msg = "ERROR: incorrect sequence database provided"
+                quit(error_msg)
 
 
 def check_dir(path):
