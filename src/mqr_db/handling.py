@@ -92,8 +92,10 @@ def check_args(args):
 
     if (
         args.opt_keep and not args.opt_makedb
+        and args.opt_keep and not args.opt_makehmms
     ):
-        error_msg = "ERROR: --keep only works with -m/--makedb"
+        error_msg = """ERROR: --keep only works with -md/--makedb or
+-mh/--makehmms"""
         quit(error_msg)
 
     if (
