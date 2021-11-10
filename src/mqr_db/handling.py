@@ -69,7 +69,6 @@ def error_check(args):
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
     """
-    check_installation(args)
     check_args(args)
     check_prereqs(args)
 
@@ -84,6 +83,7 @@ def check_args(args):
         and not args.opt_addseq
         and not args.opt_license
         and not args.opt_version_history
+        and not args.opt_makehmms
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
@@ -91,8 +91,10 @@ def check_args(args):
 
     if (
         args.opt_keep and not args.opt_makedb
+        and args.opt_keep and not args.opt_makehmms
     ):
-        error_msg = "ERROR: --keep only works with -m/--makedb"
+        error_msg = """ERROR: --keep only works with -md/--makedb or
+-mh/--makehmms"""
         quit(error_msg)
 
     if (
@@ -126,6 +128,21 @@ def check_args(args):
         error_msg = "ERROR: --db only works with -a/--addseq"
         quit(error_msg)
 
+    if args.opt_makehmms:
+        if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
+            error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
+            choose from conserved, divergent or hybrid."""
+            quit(error_msg)
+
+    if args.opt_makehmms == "conserved":
+        if not args.opt_con_seq_db:
+            error_msg = "ERROR: missing sequence database"
+            quit(error_msg)
+        else:
+            if not check_file(args.opt_con_seq_db):
+                error_msg = "ERROR: incorrect sequence database provided"
+                quit(error_msg)
+
 
 def check_dir(path):
     """Checks if the directory/path exists, returning True/False
@@ -151,6 +168,10 @@ def check_installation(args):
     ):
         reqs = ['vsearch']
         preqs = []
+    elif (
+        args.opt_makehmms
+    ):
+        reqs = ['mafft', 'hmmbuild', 'hmmpress']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
@@ -163,30 +184,41 @@ def check_installation(args):
             quit(error_msg)
 
 
-def cleanup(all=True):
+def cleanup(mode, keep):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """
     run_label = return_label()
     mqr_path = return_proj_path()
-    src_res = "{}results/".format(return_proj_path())
-    src_rem = "{}removed/".format(return_proj_path())
-    dest = "{}/{}_results/".format(os.getcwd(), run_label)
-    Path(dest).mkdir(parents=True, exist_ok=True)
+    #: used after make_db
+    if mode == "md":
+        src_res = "{}results/".format(return_proj_path())
+        src_rem = "{}removed/".format(return_proj_path())
+        dest = "{}/{}_results/".format(os.getcwd(), run_label)
+        Path(dest).mkdir(parents=True, exist_ok=True)
 
-    files_res = os.listdir(src_res)
-    files_rem = os.listdir(src_rem)
+        files_res = os.listdir(src_res)
+        files_rem = os.listdir(src_rem)
 
-    for f in files_res:
-        shutil.move(src_res + f, dest)
-    for f in files_rem:
-        shutil.move(src_rem + f, dest)
+        for f in files_res:
+            shutil.move(src_res + f, dest)
+        for f in files_rem:
+            shutil.move(src_rem + f, dest)
 
-    shutil.rmtree(src_res)
-    shutil.rmtree(src_rem)
+        shutil.rmtree(src_res)
+        shutil.rmtree(src_rem)
 
-    if all:
-        shutil.rmtree(mqr_path)
+        if not keep:
+            v_loop = get_v_loop()
+            v_loop.remove("100")
+            files_to_remove = [f"{mqr_path}{v}/" for v in v_loop]
+            for file in files_to_remove:
+                shutil.rmtree(file)
+
+    #: used after make_hmms
+    elif mode == "mh":
+        if not keep:
+            shutil.rmtree(mqr_path)
 
 
 def check_prereqs(args):
@@ -378,8 +410,23 @@ finished.".format(id=str(int(id)-5))
                 st="New entries have been added to the MetaxaQR database!"
             ))
 
+        elif option == "make hmms_start":
+            print("{he}\n{ln}\n{dt} : {st}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
+                dt=get_dateinfo(),
+                st="Creating MetaxaQR HMMs..."
+            ))
+        elif option == "make hmms_end":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="MetaxaQR HMMs have been created!"
+            ))
+
 
 def get_dateinfo():
+    """Returns date and time
+    """
     date = datetime.today()
     weekday = date.strftime('%a')
     month = date.strftime('%b')
@@ -397,6 +444,8 @@ def get_dateinfo():
 
 
 def get_header(option):
+    """Header used for logging
+    """
     header = ""
     version = get_version()
     bytext = "by Sebastian Wettersten, University of Gothenburg."
@@ -464,15 +513,17 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.1"
+    return "Version: 1.0.2"
 
 
 def print_updates():
     """Prints the update history.
     """
     upd_history = """Version: Notes
-V1.0.0: Initial release.
-V1.0.1: Added support for the sequence quality option, separating QC option into 3 modes (Sequence, Taxonomy, Low clusters)
+V1.0.0: Initial release.\n
+V1.0.1: Added support for the sequence quality option,
+separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
+V1.0.2: Initial support for the Make HMMs module.\n
 """
     print(upd_history)
 

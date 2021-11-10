@@ -11,9 +11,10 @@ from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
-from .handling import print_updates
+from .handling import print_updates, check_installation
 from .make_db import make_db
 from .add_entries import add_entries
+from .make_hmms import make_hmms
 
 
 def main_mqrdb(args):
@@ -26,6 +27,7 @@ def main_mqrdb(args):
 
     #: running start command, clustering at 100% identity
     if args.opt_prepare:
+        check_installation(args)
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
@@ -93,8 +95,9 @@ def main_mqrdb(args):
 
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
+        check_installation(args)
         str_id = '100'
-        run_label = return_label()
+        run_label = return_label()  # todo: add so mqr can input label/path
         exclude_all = False
         path = return_proj_path()
         if args.opt_exclude_all:
@@ -152,10 +155,27 @@ def main_mqrdb(args):
         make_db(qc_limited_clusters, qc_taxonomy_quality)
         logging("make db_end", quiet=quiet)
 
-        clean_full = True
-        if args.opt_keep:
-            clean_full = False
-        cleanup(all=clean_full)
+        #: cleans up intermediate files after process
+        cleanup("md", args.opt_keep)
+
+    #: running the make HMMs method
+    if args.opt_makehmms:
+        check_installation(args)
+        run_label = return_label()  # todo: add so mqr can input label/path
+        label_file = f"{run_label}_results/{run_label}_final_label_tree"  # todo make less hard-coded
+        mode = args.opt_makehmms
+        logging("make hmms_start", quiet=quiet)
+        make_hmms(
+                 mode,
+                 seq_id=str(args.opt_con_seq_id),
+                 label_file=label_file,
+                 seq_db=args.opt_con_seq_db,
+                 cpu=args.opt_cpu
+                 )
+        logging("make hmms_end", quiet=quiet)
+
+        #: cleans up intermediate files after process
+        cleanup("mh", args.opt_keep)
 
     #: running the add new sequences method
     if args.opt_addseq:
