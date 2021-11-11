@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 from .handling import return_proj_path, check_file, return_label, get_v_loop
+from .handling import return_removed_path
 
 
 def get_deleted_clusters(dels_only=False):
@@ -12,9 +13,9 @@ def get_deleted_clusters(dels_only=False):
     dels_only then returns only those deleted by the sequence quality check
     """
     excluded_clusters = []
-    path = return_proj_path()
-    bad_hits = Path(f"{path}removed/bad_hits")
-    del_clusters = Path(f"{path}removed/deleted_clusters_100")
+    removed = return_removed_path()
+    bad_hits = Path(f"{removed}bad_hits")
+    del_clusters = Path(f"{removed}deleted_clusters_100")
     excluded_clusters = []
     removed_list = []
 
@@ -43,7 +44,7 @@ def get_centroids(path, result_path, qc, run_label):
     """Copies the 'final_centroids' file from mqr_db/100/ to db result path
     """
     my_cent = Path("{}100/final_centroids".format(path))
-    to_cent = Path("{}/{}_final_centroids".format(result_path, run_label))
+    to_cent = Path("{}mqr.fasta".format(result_path))
 
     if qc:
         excluded_clusters = get_deleted_clusters()
@@ -88,7 +89,7 @@ def get_label_tree(
     if qc_low_clusters:
         excluded_clusters = get_deleted_clusters()
     label_file = "{}50/label_tree".format(path)
-    final_label = "{}/{}_final_label_tree".format(result_path, run_label)
+    final_label = "{}mqr.tree".format(result_path)
 
     dl = {}
     for v in v_loop:
@@ -124,7 +125,7 @@ def get_repr(path, result_path, v_loop, run_label):
     files in the runs from 50-100% sequence identity. Every line is the label,
     entry id, and representative taxonomy, seperated by tabs.
     """
-    final_repr = "{}/{}_final_repr".format(result_path, run_label)
+    final_repr = "{}mqr.repr".format(result_path)
 
     with open(final_repr, 'w') as f:
         for id in v_loop:
@@ -136,17 +137,17 @@ def get_repr(path, result_path, v_loop, run_label):
                         f.write(line)
 
 
-def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
+def find_bad_hits(run_label, cutoff_point=5, str_id='70', depth=False):
     """Looks at the tree_label file output in (str_id)% sequence identity run,
     if any entries at this point are matched with fewer than (cuttoff_point)
     other entries these are all added to /removed/bad_hits to be filtered out
     in creation of the databas. Entries not finding more than 5 matches at 70%
     sequence identity in a large database are fairly dubious.
     """
-    run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    run_path = return_proj_path(run_label) + str_id
+    removed_path = return_removed_path()
     label_file = "{}/label_tree".format(run_path)
-    bad_hits = "{}/bad_hits".format(removed_path)
+    bad_hits = "{}bad_hits".format(removed_path)
     hit_label = "_100_"
 
     with open(label_file, 'r') as tree, \
@@ -180,22 +181,20 @@ def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
                         out.write("{}\n".format(hit))
 
 
-def make_db(qc_limited_clusters, qc_taxonomy_quality):
+def make_db(run_label, qc_limited_clusters, qc_taxonomy_quality):
     """Creates the output datasets used by MetaxaQR. A centroid file which
     contains all entries clustered at 100% sequence identity, a representative
     taxonomy file containing all representative taxonomies at all sequence
     identity levels and finally a file containing the tree structure of all
     labels at all sequence identity levels.
     """
-    run_label = return_label()
-    path = return_proj_path()
-    result_path = "{}results".format(path)
-    Path(result_path).mkdir(parents=True, exist_ok=True)
+    path = return_proj_path(run_label)
+    result_path = f"{Path(path).parent}/"
     v_loop = get_v_loop()
     qc = qc_limited_clusters or qc_taxonomy_quality
 
     if qc_limited_clusters:
-        find_bad_hits()
+        find_bad_hits(run_label)
     get_centroids(path, result_path, qc, run_label)
     get_label_tree(path, result_path, v_loop, qc, run_label)
     get_repr(path, result_path, v_loop, run_label)

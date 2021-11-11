@@ -3,6 +3,7 @@ flags, manual review and correction and all related functions.
 """
 
 from .handling import return_proj_path, tax_list_to_str, sequence_quality_check
+from .handling import return_removed_path
 import os
 import subprocess
 from collections import Counter
@@ -319,12 +320,12 @@ def create_cluster_tax(
     followed by the label + taxonomy of all hits in the cluster.
     """
     run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    removed_path = return_removed_path()
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
-    deleted_entries_file = removed_path + "/deleted_entries_100"
+    deleted_entries_file = removed_path + "deleted_entries_100"
     if not loop and qc_taxonomy_quality:
         tax_db = read_taxdb()
 
@@ -468,7 +469,7 @@ def create_cluster_tax(
                                 )
                                 clust_out.write("{}\n".format(curr_id))
                     elif not loop and len(deleted_entries) == len(out_dict):
-                        exc_clusters = removed_path + "/deleted_clusters_100"
+                        exc_clusters = removed_path + "deleted_clusters_100"
                         with open(exc_clusters, 'a+') as f:
                             f.write("MQR_{}_{}_{}\n".format(
                                                          run_label,
@@ -1011,8 +1012,8 @@ def cluster_exclude(my_cluster):
     """Excludes clusters in the manual review, saved to a excluded cluster
     file.
     """
-    removed_path = return_proj_path() + 'removed'
-    exclusions_file = removed_path + '/flag_exclusions'
+    removed_path = return_removed_path()
+    exclusions_file = removed_path + 'flag_exclusions'
 
     with open(exclusions_file, 'a+') as exclusions:
 
@@ -1341,8 +1342,8 @@ def manual_correction(my_cluster, rem_header):
     review = ''
     str_id = my_cluster.get_strid()
     run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
-    flag_exclusions_file = removed_path + '/flag_exclusions'
+    removed_path = return_removed_path()
+    flag_exclusions_file = removed_path + 'flag_exclusions'
     orig_header = flag_header(str_id)
 
     def_prompt = prompt_print(my_cluster)
@@ -1521,10 +1522,10 @@ def flag_correction(str_id, exclude_all=False):
     excluded_flags = []
 
     run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    removed_path = return_removed_path()
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
-    flag_exclusions_file = removed_path + '/flag_exclusions'
+    flag_exclusions_file = removed_path + 'flag_exclusions'
 
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)

@@ -11,7 +11,7 @@ from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
-from .handling import print_updates, check_installation
+from .handling import print_updates, check_installation, error_check
 from .make_db import make_db
 from .add_entries import add_entries
 from .make_hmms import make_hmms
@@ -21,30 +21,33 @@ def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
     quiet = args.opt_quiet
-    qc_sequence_quality = False
-    qc_limited_clusters = False
-    qc_taxonomy_quality = False
 
     #: running start command, clustering at 100% identity
     if args.opt_prepare:
+        error_check(args)
         check_installation(args)
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
-        run_label = ''
+        run_label = "tmp"
         db = args.opt_prepare
-        path = return_proj_path()
-
-        removed_path = "{}removed".format(path)
-        init_path = "{}init".format(path)
-        Path(removed_path).mkdir(parents=True, exist_ok=True)
-        Path(init_path).mkdir(parents=True, exist_ok=True)
+        qc_sequence_quality = False
+        qc_taxonomy_quality = False
 
         if args.opt_label:
             run_label = args.opt_label
-            label_file = "{}/label".format(init_path)
-            with open(label_file, 'w') as f:
-                f.write(run_label)
+
+        tmp_dir = f"{os.getcwd()}/tmp"
+        removed_path = f"{tmp_dir}/removed/"
+        init_path = f"{tmp_dir}/init/"
+        proj_path = return_proj_path(run_label)
+        Path(removed_path).mkdir(parents=True, exist_ok=True)
+        Path(init_path).mkdir(parents=True, exist_ok=True)
+        Path(proj_path).mkdir(parents=True, exist_ok=True)
+
+        label_file = f"{init_path}label"
+        with open(label_file, 'w') as f:
+            f.write(run_label)
 
         if args.opt_taxfile:
             db = sep_tax(db, args.opt_taxfile)
@@ -53,30 +56,20 @@ def main_mqrdb(args):
         if args.opt_format:
             db = format_file(db, args.opt_format)
 
-        #: gene marker used for sequence quality checks
-        gene_marker = ""
-        if args.opt_gene_marker:
-            gene_marker = str(args.opt_gene_marker).lower()
-            gene_marker_file = f"{init_path}/gene_marker"
-            with open(gene_marker_file, 'w') as gm_f:
-                gm_f.write(gene_marker)
-
-        #: gets quality checking options and saving to file to use in -m
+        #: gets quality checking options
         if args.opt_qc:
             qc_opts = str(args.opt_qc).lower()
             if "s" in qc_opts:
                 qc_sequence_quality = True
-            if "l" in qc_opts:
-                qc_limited_clusters = True
             if "t" in qc_opts:
                 qc_taxonomy_quality = True
 
-            qc_opts_file = f"{init_path}/qc_opts"
-            with open(qc_opts_file, 'w') as qc_f:
-                qc_f.write(qc_opts)
+        gene_marker = ""
+        if args.opt_gene_marker:
+            gene_marker = str(args.opt_gene_marker).lower()
 
         logging("clustering_start", quiet=quiet)
-        cluster_vs(db, float_id)
+        cluster_vs(db, float_id, run_label)
         logging("clustering_seq_end", quiet=quiet)
 
         logging("clustering_tax_start", quiet=quiet)
@@ -95,36 +88,29 @@ def main_mqrdb(args):
 
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
+        error_check(args)
         check_installation(args)
         str_id = '100'
-        run_label = return_label()  # todo: add so mqr can input label/path
+        run_label = ''
+        if args.opt_label:
+            run_label = args.opt_label
+        else:
+            run_label = return_label()
         exclude_all = False
-        path = return_proj_path()
+        path = return_proj_path(run_label)
         if args.opt_exclude_all:
             exclude_all = True
 
-        #: initializing quality check options from -p
-        qc_sequence_quality = False
+        #: initializing quality check options
         qc_limited_clusters = False
-        qc_taxonomy_quality = False
-        init_path = "{}init".format(path)
-        qc_opts_file = f"{init_path}/qc_opts"
-        if check_file(qc_opts_file):
-            with open(qc_opts_file, 'r') as qc_f:
-                qc_opts = qc_f.read()
-                if "s" in qc_opts:
-                    qc_sequence_quality = True
-                if "l" in qc_opts:
-                    qc_limited_clusters = True
-                if "t" in qc_opts:
-                    qc_taxonomy_quality = True
+        gene_marker = ""  # TODO remove - replace if not needed
+        qc_sequence_quality = False  # TODO remove - check in /removed instead
+        qc_taxonomy_quality = False  # TODO remove - check in /removed instead
 
-        #: initializing gene marker used for sequence quality check
-        gene_marker = ""
-        gene_marker_file = f"{init_path}/gene_marker"
-        if check_file(gene_marker_file):
-            with open(gene_marker_file, 'r') as gm_f:
-                gene_marker = gm_f.read()
+        if args.opt_qc:
+            qc_opts = str(args.opt_qc).lower()
+            if "l" in qc_opts:
+                qc_limited_clusters = True
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
@@ -152,30 +138,37 @@ def main_mqrdb(args):
 
         #: creating the database
         logging("make db_start", quiet=quiet)
-        make_db(qc_limited_clusters, qc_taxonomy_quality)
+        make_db(run_label, qc_limited_clusters, qc_taxonomy_quality)
         logging("make db_end", quiet=quiet)
 
         #: cleans up intermediate files after process
-        cleanup("md", args.opt_keep)
+        cleanup("md", args.opt_keep, run_label)
 
     #: running the make HMMs method
     if args.opt_makehmms:
+        error_check(args)
         check_installation(args)
-        run_label = return_label()  # todo: add so mqr can input label/path
-        label_file = f"{run_label}_results/{run_label}_final_label_tree"  # todo make less hard-coded
+        run_label = ''
+        if args.opt_label:
+            run_label = args.opt_label
+        else:
+            run_label = return_label()
+        tree_file = f"{return_proj_path(run_label)}mqr.tree"
         mode = args.opt_makehmms
         logging("make hmms_start", quiet=quiet)
         make_hmms(
                  mode,
+                 tree_file,
+                 run_label,
                  seq_id=str(args.opt_con_seq_id),
-                 label_file=label_file,
+                 label_file=tree_file,
                  seq_db=args.opt_con_seq_db,
                  cpu=args.opt_cpu
                  )
         logging("make hmms_end", quiet=quiet)
 
         #: cleans up intermediate files after process
-        cleanup("mh", args.opt_keep)
+        cleanup("mh", args.opt_keep, run_label)
 
     #: running the add new sequences method
     if args.opt_addseq:

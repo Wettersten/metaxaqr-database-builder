@@ -14,8 +14,5 @@ if __name__ == "__main__":
     parser = create_parser()
     args = return_args(parser)
 
-    #: looks for any errors in the args provided
-    error_check(args)
-
     #: runs the main loop of meta_clustering
     main_mqrdb(args)

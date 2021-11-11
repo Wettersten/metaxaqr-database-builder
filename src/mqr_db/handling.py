@@ -10,27 +10,45 @@ from pathlib import Path
 import shutil
 
 
-def create_dir_structure(str_id):
+def create_dir_structure(str_id, run_label):
     """Creates the directory structure used by clustering and subsequent
     handling of clusters. Cluster files in mqr_db/identity/clusters/
     """
-    cluster_dir = return_proj_path() + str_id + '/clusters/'
+    cluster_dir = return_proj_path(run_label) + str_id + '/clusters/'
     Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
-def return_proj_path():
+def return_proj_path(label=''):
     """Returns the path to project dir.
     """
-    proj_path = "{}/mqr_db/".format(os.getcwd())
+    run_label = ''
+    if label:
+        run_label = label
+    else:
+        run_label = return_label()
+
+    curr_dir = os.getcwd()
+    proj_path = f"{curr_dir}/metaxaQR_db/{run_label}/mqr_db/"
 
     return proj_path
+
+
+def return_removed_path():
+    """Returns the path to the removed directory.
+    """
+    path = f"{os.getcwd()}/tmp/removed/"
+
+    return path
 
 
 def return_label():
     """Gets the label specified for the run.
     """
     label = ''
-    label_file = "{}init/label".format(return_proj_path())
+
+    curr_dir = os.getcwd()
+    label_file = f"{curr_dir}/tmp/init/label"
+
     if check_file(label_file):
         with open(label_file, 'r') as f:
             label = f.read()
@@ -64,7 +82,7 @@ def float_to_str_id(identity):
 
 
 def error_check(args):
-    """Main error checking method, ran when executing main script first after
+    """Main error checking method, ran when executing any module first after
     the parser, checks that all arguments are valid, all required programs are
     installed and that any files needed exist or paths not already created.
     Quits with error messages if anything is invalid.
@@ -77,6 +95,7 @@ def check_args(args):
     """Checks that the use of args are correct, at least one main argument is
     used, the input file and output paths are valid.
     """
+    #: check if ano module is entered
     if (
         not args.opt_prepare
         and not args.opt_makedb
@@ -89,6 +108,7 @@ def check_args(args):
         error_msg = "ERROR: No option chosen"
         quit(error_msg)
 
+    #: check if --keep is used outside -md/-mh
     if (
         args.opt_keep and not args.opt_makedb
         and args.opt_keep and not args.opt_makehmms
@@ -97,23 +117,38 @@ def check_args(args):
 -mh/--makehmms"""
         quit(error_msg)
 
+    #: --label check
     if (
         args.opt_label and not args.opt_prepare
-        or args.opt_qc and not args.opt_prepare
-        or args.opt_gene_marker and not args.opt_prepare
+        or args.opt_label and not args.opt_makedb
+        or args.opt_label and not args.opt_makehmms
+        or args.opt_label and not args.opt_addseq
     ):
-        error_msg = """ERROR: --label, --qc and --gene_marker only works with
- -p/--prepare"""
+        error_msg = """ERROR: --label only works with -p, -md, -mh and -a"""
         quit(error_msg)
 
+    #: --qc check
+    if args.opt_qc:
+        if (
+            's' in args.opt_qc and not args.opt_prepare
+            or 't' in args.opt_qc and not args.opt_prepare
+        ):
+            error_msg = """--qc modes s and t only works with -p"""
+            quit(error_msg)
+        elif (
+              'l' in args.opt_qc and not args.opt_makedb
+        ):
+            error_msg = """--qc mode l only works with -md"""
+            quit(error_msg)
+
+    #: --gene_marker check
     if (
         args.opt_gene_marker and not args.opt_qc
-        or args.opt_qc and not args.opt_gene_marker
     ):
-        error_msg = """ERROR: --label, --qc and --gene_marker only works with
- -p/--prepare"""
+        error_msg = """ERROR: --gene_marker only works with --qc"""
         quit(error_msg)
 
+    #: --format check
     if (
         args.opt_format and not args.opt_prepare
         or args.opt_format and not args.opt_addseq
@@ -122,18 +157,21 @@ def check_args(args):
 -a/--addseq"""
         quit(error_msg)
 
+    #: --db check
     if (
         args.opt_db and not args.opt_addseq
     ):
         error_msg = "ERROR: --db only works with -a/--addseq"
         quit(error_msg)
 
+    #: make sure correct modes are entered in make_hmm
     if args.opt_makehmms:
         if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
             error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
             choose from conserved, divergent or hybrid."""
             quit(error_msg)
 
+    #: conserved mode check for make_hmms - need database.fasta
     if args.opt_makehmms == "conserved":
         if not args.opt_con_seq_db:
             error_msg = "ERROR: missing sequence database"
@@ -184,28 +222,15 @@ def check_installation(args):
             quit(error_msg)
 
 
-def cleanup(mode, keep):
+def cleanup(mode, keep, run_label):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """
     run_label = return_label()
-    mqr_path = return_proj_path()
+    mqr_path = return_proj_path(run_label)
     #: used after make_db
     if mode == "md":
-        src_res = "{}results/".format(return_proj_path())
-        src_rem = "{}removed/".format(return_proj_path())
-        dest = "{}/{}_results/".format(os.getcwd(), run_label)
-        Path(dest).mkdir(parents=True, exist_ok=True)
-
-        files_res = os.listdir(src_res)
-        files_rem = os.listdir(src_rem)
-
-        for f in files_res:
-            shutil.move(src_res + f, dest)
-        for f in files_rem:
-            shutil.move(src_rem + f, dest)
-
-        shutil.rmtree(src_res)
+        src_rem = f"{return_removed_path()}"
         shutil.rmtree(src_rem)
 
         if not keep:
@@ -218,7 +243,9 @@ def cleanup(mode, keep):
     #: used after make_hmms
     elif mode == "mh":
         if not keep:
+            tmp_path = f"{os.getcwd()}/tmp/"
             shutil.rmtree(mqr_path)
+            shutil.rmtree(tmp_path)
 
 
 def check_prereqs(args):
@@ -463,7 +490,7 @@ def get_header(option):
         )
 
     elif option == "clustering":
-        htext = "MetaxaQR_DB Clustering -- Clusters a database using" \
+        htext = "MetaxaQR_DBB Clustering -- Clusters a database using" \
                 " VSEARCH"
         header = "{}\n{}\n{}".format(
             htext,
@@ -472,7 +499,7 @@ def get_header(option):
         )
 
     elif option == "manual review":
-        htext = "MetaxaQR_DB Manual Review -- Manual review of clusters" \
+        htext = "MetaxaQR_DBB Manual Review -- Manual review of clusters" \
                 " flagged during taxonomic processing"
         header = "{}\n{}\n{}".format(
             htext,
@@ -481,7 +508,7 @@ def get_header(option):
         )
 
     elif option == "finalize":
-        htext = "MetaxaQR_DB Finalize -- Preparation of final output files" \
+        htext = "MetaxaQR_DBB Finalize -- Preparation of final output files" \
                 " and clustering down to 50% sequence identity."
         header = "{}\n{}\n{}".format(
             htext,
@@ -490,7 +517,7 @@ def get_header(option):
         )
 
     elif option == "make db":
-        htext = "MetaxaQR_DB Make DB -- Creates the MetaxaQR database from" \
+        htext = "MetaxaQR_DBB Make DB -- Creates the MetaxaQR database from" \
             " the output of 'Finalize'."
         header = "{}\n{}\n{}".format(
             htext,
@@ -499,7 +526,7 @@ def get_header(option):
         )
 
     elif option == "add entries":
-        htext = "MetaxaQR_DB Add Entries -- Adds new entries from a FASTA" \
+        htext = "MetaxaQR_DBB Add Entries -- Adds new entries from a FASTA" \
             " file to a finished MetaxaQR database."
         header = "{}\n{}\n{}".format(
             htext,
@@ -513,7 +540,7 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.2"
+    return "Version: 1.0.3"
 
 
 def print_updates():
@@ -524,6 +551,7 @@ V1.0.0: Initial release.\n
 V1.0.1: Added support for the sequence quality option,
 separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
 V1.0.2: Initial support for the Make HMMs module.\n
+v1.0.3: Adjustments to allow for integration into MetaxaQR
 """
     print(upd_history)
 

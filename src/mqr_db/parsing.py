@@ -42,7 +42,7 @@ def create_parser():
     parser.add_argument('--qc', dest='opt_qc', type=str,
                         metavar='',
                         help="""Quality check options, several can be used at
- the same time [slt].
+ the same time [slt], s&t works in -p, l works in -md.
     [s]: (s)equence quality - Removes entries not passing length/region check.
     [l]: (l)ow quantity cluster - Removes clusters with no related clusters.
     [t]: (t)axonomy quality - Remove entries with differing taxonomies.""")
