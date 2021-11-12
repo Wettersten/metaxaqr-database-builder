@@ -153,7 +153,7 @@ def main_mqrdb(args):
             run_label = args.opt_label
         else:
             run_label = return_label()
-        tree_file = f"{return_proj_path(run_label)}mqr.tree"
+        tree_file = f"{Path(return_proj_path(run_label)).parent}/mqr.tree"
         mode = args.opt_makehmms
         logging("make hmms_start", quiet=quiet)
         make_hmms(
@@ -161,7 +161,6 @@ def main_mqrdb(args):
                  tree_file,
                  run_label,
                  seq_id=str(args.opt_con_seq_id),
-                 label_file=tree_file,
                  seq_db=args.opt_con_seq_db,
                  cpu=args.opt_cpu
                  )

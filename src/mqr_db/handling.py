@@ -120,11 +120,11 @@ def check_args(args):
     #: --label check
     if (
         args.opt_label and not args.opt_prepare
-        or args.opt_label and not args.opt_makedb
-        or args.opt_label and not args.opt_makehmms
-        or args.opt_label and not args.opt_addseq
+        and args.opt_label and not args.opt_makedb
+        and args.opt_label and not args.opt_makehmms
+        and args.opt_label and not args.opt_addseq
     ):
-        error_msg = """ERROR: --label only works with -p, -md, -mh and -a"""
+        error_msg = """ERROR: --label only works with -p, -md, -mh or -a"""
         quit(error_msg)
 
     #: --qc check
@@ -551,7 +551,7 @@ V1.0.0: Initial release.\n
 V1.0.1: Added support for the sequence quality option,
 separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
 V1.0.2: Initial support for the Make HMMs module.\n
-v1.0.3: Adjustments to allow for integration into MetaxaQR
+v1.0.3: Adjustments to allow for integration into MetaxaQR.\n
 """
     print(upd_history)
 

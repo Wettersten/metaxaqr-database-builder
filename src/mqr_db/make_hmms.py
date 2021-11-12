@@ -23,7 +23,7 @@ def make_hmms(
     then HMMER to make the HMMs.
     """
     create_align_structure(run_label)
-    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs"
+    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs/"
     cluster_dir = f"{return_proj_path(run_label)}100/clusters/"
     align_dir = f"{return_proj_path(run_label)}alignment/"
 
@@ -335,7 +335,7 @@ def create_align_structure(run_label):
     """
     #: makes return_proj_path/hmm/ & alignment
     align_dir = f"{return_proj_path(run_label)}alignment/"
-    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs"
+    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs/"
     Path(align_dir).mkdir(parents=True, exist_ok=True)
     Path(hmm_dir).mkdir(parents=True, exist_ok=True)
 

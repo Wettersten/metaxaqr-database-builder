@@ -329,4 +329,9 @@ def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, float(next_ident/100), loop=False)
+        cluster_vs(
+                   final_cent_file,
+                   float(next_ident/100),
+                   run_label,
+                   loop=False
+                   )
