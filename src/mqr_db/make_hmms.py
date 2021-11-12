@@ -1,6 +1,5 @@
 """Make HMM module, makes hidden markov models from a MetaxaQR database.
 """
-import os  # todo can remove later
 import subprocess
 from pathlib import Path
 from collections import Counter
@@ -9,8 +8,9 @@ from .handling import return_proj_path, return_label
 
 def make_hmms(
     mode,
+    tree_file,
+    run_label,
     seq_id="50",
-    label_file="",
     seq_db="",
     cpu="4",
     conservation_cutoff=0.6,
@@ -22,11 +22,10 @@ def make_hmms(
     modes - divergent, hybrid and conserved. Uses MAFFT to align the sequences
     then HMMER to make the HMMs.
     """
-    create_align_structure()
-    run_label = return_label()
-    hmm_dir = f"{run_label}_results/HMMs/"
-    cluster_dir = f"{return_proj_path()}100/clusters/"
-    align_dir = f"{return_proj_path()}alignment/"
+    create_align_structure(run_label)
+    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs/"
+    cluster_dir = f"{return_proj_path(run_label)}100/clusters/"
+    align_dir = f"{return_proj_path(run_label)}alignment/"
 
     #: divergent mode
     if mode.lower() == "divergent":
@@ -35,7 +34,7 @@ def make_hmms(
         #: get all clusters
         tmp_ids = make_cluster_seq_file(
             seq_id,
-            label_file,
+            tree_file,
             cluster_dir,
             align_dir
             )
@@ -73,7 +72,7 @@ def make_hmms(
 
         tmp_ids = make_cluster_seq_file(
             seq_id,
-            label_file,
+            tree_file,
             cluster_dir,
             align_dir
             )
@@ -270,7 +269,7 @@ def format_cluster_ids(cluster_ids):
     return formatted_ids
 
 
-def make_cluster_seq_file(seq_id, label_file, cluster_dir, align_dir):
+def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
     """Creates the cluster file, containing all sequences from all 100 sequence
     identity clusters
     """
@@ -285,7 +284,7 @@ def make_cluster_seq_file(seq_id, label_file, cluster_dir, align_dir):
         elif int(seq_id) > 50:
             seq_id_pos = -1 - round((int(seq_id)-50)/5)
 
-    with open(label_file, 'r') as r:
+    with open(tree_file, 'r') as r:
         for line in r:
             curr_line = line.rstrip().split("\t")
             curr_cluster = curr_line[1].split(" ")[seq_id_pos].split("_")[-1]
@@ -331,13 +330,12 @@ def make_cluster_seq_file(seq_id, label_file, cluster_dir, align_dir):
     return out_ids
 
 
-def create_align_structure():
+def create_align_structure(run_label):
     """Creates the output directories
     """
     #: makes return_proj_path/hmm/ & alignment
-    align_dir = f"{return_proj_path()}alignment/"
-    run_label = return_label()
-    hmm_dir = f"{run_label}_results/HMMs/"
+    align_dir = f"{return_proj_path(run_label)}alignment/"
+    hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs/"
     Path(align_dir).mkdir(parents=True, exist_ok=True)
     Path(hmm_dir).mkdir(parents=True, exist_ok=True)
 

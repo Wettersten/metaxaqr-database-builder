@@ -7,6 +7,7 @@ from .cluster_tax import repr_and_flag, create_cluster_tax
 from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
 from .handling import return_proj_path, sequence_quality_check
+from .handling import return_removed_path
 from .make_db import get_deleted_clusters
 
 import os
@@ -41,7 +42,7 @@ def create_final_repr(
     final_repr_file = run_path + '/final_repr'
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
-    removed_cluster_file = return_proj_path() + '/removed/deleted_clusters_100'
+    removed_cluster_file = return_removed_path() + 'deleted_clusters_100'
     repr_dict = {}
     removed_list = []
     tax_db = read_taxdb()
@@ -328,4 +329,9 @@ def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, float(next_ident/100), loop=False)
+        cluster_vs(
+                   final_cent_file,
+                   float(next_ident/100),
+                   run_label,
+                   loop=False
+                   )

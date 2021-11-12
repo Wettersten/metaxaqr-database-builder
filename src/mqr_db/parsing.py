@@ -42,7 +42,7 @@ def create_parser():
     parser.add_argument('--qc', dest='opt_qc', type=str,
                         metavar='',
                         help="""Quality check options, several can be used at
- the same time [slt].
+ the same time [slt], s&t works in -p, l works in -md.
     [s]: (s)equence quality - Removes entries not passing length/region check.
     [l]: (l)ow quantity cluster - Removes clusters with no related clusters.
     [t]: (t)axonomy quality - Remove entries with differing taxonomies.""")
@@ -108,10 +108,6 @@ def create_parser():
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds
                         to a finished database""")
-
-    parser.add_argument('--db', dest='opt_db', type=str,
-                        metavar='',
-                        help="""Path to MetaxaQR database, used by --addseq""")
 
     parser.add_argument('--quiet', dest='opt_quiet',
                         action='store_true', default=False,
