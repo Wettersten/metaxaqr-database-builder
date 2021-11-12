@@ -76,7 +76,7 @@ def add_entries(entries_file, run_label):
                               entry,
                               new_entries[entry],
                               new_label,
-                              final_centroids_tmp
+                              final_centroids_tmp,
                               run_label
                             )
                 add_repr(
