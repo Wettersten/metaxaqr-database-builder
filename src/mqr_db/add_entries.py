@@ -7,29 +7,31 @@ database. The database is backed up in '_old' files.
 import subprocess
 import math
 import shutil
-from .handling import return_label
+from pathlib import Path
+from .handling import return_proj_path
 
 
-def add_entries(entries_file, db_path):
+def add_entries(entries_file, run_label):
     """Main function that takes input fasta file + MQR db, uses vsearch and
     finally writes the new entries to the finished databases
     """
 
     #: file indexing
+    db_path = f"{Path(return_proj_path(run_label)).parent}"
     if db_path[-1] == "/":
         db_path = db_path[:-1]
 
-    final_centroids_file = "{}/final_centroids".format(db_path)
-    final_centroids_tmp = "{}/final_centroids.tmp".format(db_path)
-    final_centroids_old = "{}/final_centroids.old".format(db_path)
+    final_centroids_file = "{}/mqr.fasta".format(db_path)
+    final_centroids_tmp = "{}/mqr.fasta.tmp".format(db_path)
+    final_centroids_old = "{}/mqr.fasta.old".format(db_path)
 
-    final_label_tree_file = "{}/final_label_tree".format(db_path)
-    final_label_tree_tmp = "{}/final_label_tree.tmp".format(db_path)
-    final_label_tree_old = "{}/final_label_tree.old".format(db_path)
+    final_label_tree_file = "{}/mqr.tree".format(db_path)
+    final_label_tree_tmp = "{}/mqr.tree.tmp".format(db_path)
+    final_label_tree_old = "{}/mqr.tree.old".format(db_path)
 
-    final_repr_file = "{}/final_repr".format(db_path)
-    final_repr_tmp = "{}/final_repr.tmp".format(db_path)
-    final_repr_old = "{}/final_repr.old".format(db_path)
+    final_repr_file = "{}/mqr.repr".format(db_path)
+    final_repr_tmp = "{}/mqr.repr.tmp".format(db_path)
+    final_repr_old = "{}/mqr.repr.old".format(db_path)
 
     #: creating temporary files and backing up the database
     shutil.copy(final_centroids_file, final_centroids_tmp)
@@ -41,7 +43,7 @@ def add_entries(entries_file, db_path):
 
     #: handles vsearch searching
     vs_out = "{}/vs_out.txt".format(db_path)
-    v_search(entries_file, final_centroids_file, db_path, vs_out)
+    v_search(entries_file, final_centroids_file, vs_out)
     vs_dict = read_vsout(vs_out)
 
     #: reads in the entries file and get start number for new label
@@ -63,7 +65,8 @@ def add_entries(entries_file, db_path):
                 new_labeltree = make_labeltree(
                                                new_label,
                                                old_labeltree,
-                                               entry_perc
+                                               entry_perc,
+                                               run_label
                                             )
                 add_labeltree(
                               new_labeltree,
@@ -74,13 +77,15 @@ def add_entries(entries_file, db_path):
                               new_entries[entry],
                               new_label,
                               final_centroids_tmp
+                              run_label
                             )
                 add_repr(
                         new_label,
                         new_entries[entry].split("\t")[0],
                         entry_id,
                         entry_perc,
-                        final_repr_tmp
+                        final_repr_tmp,
+                        run_label
                 )
 
                 new_label = str(int(new_label)+1)
@@ -91,7 +96,7 @@ def add_entries(entries_file, db_path):
     shutil.move(final_repr_tmp, final_repr_file)
 
 
-def v_search(entries_file, centroids_file, db_path, vs_out):
+def v_search(entries_file, centroids_file, vs_out):
     """Uses vsearch Searching function to compare the new entries with the
     finished centroid database, finding hits with percentage identity
     """
@@ -226,10 +231,9 @@ def get_labeltree(label, labeltree_file):
     return labeltree[label]
 
 
-def make_labeltree(new_label, label_tree, perc):
+def make_labeltree(new_label, label_tree, perc, run_label):
     """Creates a new label tree
     """
-    run_label = return_label()
     tmp_labeltree = ""
     new_labeltree = ""
     for lt in label_tree.split(" "):
@@ -252,10 +256,9 @@ def make_labeltree(new_label, label_tree, perc):
     return new_labeltree
 
 
-def add_centroids(entry, entry_info, label, file):
+def add_centroids(entry, entry_info, label, file, run_label):
     """Appends the label, tax, seq id and sequence to the centroids database
     """
-    label = return_label()
     with open(file, 'a') as f:
         header = ("{}\tMQR_{}_100_{}\t{}".format(
                                             entry,
@@ -268,10 +271,9 @@ def add_centroids(entry, entry_info, label, file):
         f.write("{}\n".format(sequence))
 
 
-def add_repr(label, tax, id, perc, repr_file):
+def add_repr(label, tax, id, perc, repr_file, run_label):
     """Appends new label(s) and tax(es) to the repr database
     """
-    run_label = return_label()
     with open(repr_file, 'a') as f:
         for i in range(100, int(perc), -1):
             f.write("MQR_{}_{}_{}\t{}\t{}\n".format(

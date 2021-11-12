@@ -191,6 +191,11 @@ def make_db(run_label, qc_limited_clusters, qc_taxonomy_quality):
     path = return_proj_path(run_label)
     result_path = f"{Path(path).parent}/"
     v_loop = get_v_loop()
+    removed_path = return_removed_path()
+    rem_files = os.listdir(removed_path)
+    qc_taxonomy_quality = False
+    if rem_files:
+        qc_taxonomy_quality = True
     qc = qc_limited_clusters or qc_taxonomy_quality
 
     if qc_limited_clusters:

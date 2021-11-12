@@ -171,13 +171,16 @@ def main_mqrdb(args):
 
     #: running the add new sequences method
     if args.opt_addseq:
+        run_label = ''
+        if args.opt_label:
+            run_label = args.opt_label
         db = args.opt_addseq
 
         if args.opt_format:
             db = format_file(db, args.opt_format)
 
         logging("add entries_start", quiet=quiet)
-        add_entries(db, args.opt_db)
+        add_entries(db, run_label)
         logging("add entries_end", quiet=quiet)
 
     #: returns the license for MetaxaQR Database Builder

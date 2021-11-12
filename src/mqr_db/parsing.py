@@ -109,10 +109,6 @@ def create_parser():
                         help="""Reads FASTA format file of new entries and adds
                         to a finished database""")
 
-    parser.add_argument('--db', dest='opt_db', type=str,
-                        metavar='',
-                        help="""Path to MetaxaQR database, used by --addseq""")
-
     parser.add_argument('--quiet', dest='opt_quiet',
                         action='store_true', default=False,
                         help="""No status print out""")

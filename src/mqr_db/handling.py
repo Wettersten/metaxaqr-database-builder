@@ -127,6 +127,10 @@ def check_args(args):
         error_msg = """ERROR: --label only works with -p, -md, -mh or -a"""
         quit(error_msg)
 
+    if args.opt_addseq and not args.opt_label:
+        error_msg = """ERROR: -a requires --label"""
+        quit(error_msg)
+
     #: --qc check
     if args.opt_qc:
         if (
@@ -151,17 +155,10 @@ def check_args(args):
     #: --format check
     if (
         args.opt_format and not args.opt_prepare
-        or args.opt_format and not args.opt_addseq
+        and args.opt_format and not args.opt_addseq
     ):
         error_msg = """ERROR: --format only works with -p/--prepare or
 -a/--addseq"""
-        quit(error_msg)
-
-    #: --db check
-    if (
-        args.opt_db and not args.opt_addseq
-    ):
-        error_msg = "ERROR: --db only works with -a/--addseq"
         quit(error_msg)
 
     #: make sure correct modes are entered in make_hmm
@@ -169,6 +166,18 @@ def check_args(args):
         if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
             error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
             choose from conserved, divergent or hybrid."""
+            quit(error_msg)
+
+    #: check if incorrect label (outside prepare)
+    if args.opt_label and not args.opt_prepare:
+        db_path = f"{os.getcwd()}/metaxaQR_db"
+        if check_dir(db_path):
+            labels = os.listdir(db_path)
+            if args.opt_label not in labels:
+                error_msg = """ERROR: incorrect --label name."""
+                quit(error_msg)
+        else:
+            error_msg = """ERROR: no available databases for --label."""
             quit(error_msg)
 
     #: conserved mode check for make_hmms - need database.fasta
