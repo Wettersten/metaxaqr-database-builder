@@ -52,7 +52,17 @@ def create_parser():
                         help="""Gene marker used for quality sequence checks,
  e.g. SSU""")
 
-    parser.add_argument('-md', '--makedb', dest='opt_makedb',
+    parser.add_argument('-m', '-make' dest='opt_make',
+                        action='store_true', default=False,
+                        help="""Starts the manual review followed creation of
+                        the output MetaxaQR database files and HMMs""")
+
+    parser.add_argument('--mode', dest='opt_mode', type=str,
+                        metavar='',
+                        help="""HMM creation mode {divergent, conserved,
+                        hybrid}""")
+
+    parser.add_argument('-m_d', '--make_db', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files""")
@@ -66,11 +76,9 @@ def create_parser():
                         help="""Skips the manual review step by excluding all
  flagged clusters""")
 
-    parser.add_argument('-mh', '--makehmms', dest='opt_makehmms', type=str,
-                        metavar='',
-                        help="""Creates HMMs from the MetaxaQR Database using
-                        3 different modes (divergent, conserved, hybrid)
-                        """)
+    parser.add_argument('-m_h', '--make_hmms', dest='opt_makehmms',
+                        action='store_true', default=False,
+                        help="""Creates HMMs from a MetaxaQR Database""")
 
     parser.add_argument('--conservation_length', dest='opt_con_len', type=int,
                         metavar='', default=20,

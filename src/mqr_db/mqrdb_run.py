@@ -86,6 +86,82 @@ def main_mqrdb(args):
 
         logging("clustering_end", quiet=quiet)
 
+    #: running make - creating both MQR database + HMMs
+    if args.opt_make:
+        #: making the database
+        error_check(args)
+        check_installation(args)
+        str_id = '100'
+        run_label = ''
+        if args.opt_label:
+            run_label = args.opt_label
+        else:
+            run_label = return_label()
+        exclude_all = False
+        path = return_proj_path(run_label)
+        if args.opt_exclude_all:
+            exclude_all = True
+
+        #: initializing quality check options
+        qc_limited_clusters = False
+        gene_marker = ""  # TODO remove - replace if not needed
+        qc_sequence_quality = False  # TODO remove - check in /removed instead
+        qc_taxonomy_quality = False  # TODO remove - check in /removed instead
+
+        if args.opt_qc:
+            qc_opts = str(args.opt_qc).lower()
+            if "l" in qc_opts:
+                qc_limited_clusters = True
+
+        #: manual review of flag file and creation of corrected repr file
+        logging("manual review_start", quiet=quiet)
+        flag_correction(str_id, exclude_all)
+        logging("manual review_end", quiet=quiet)
+
+        #: finalizing files and further clustering
+        #: loop down from 100 to 50, clustering using the centroid files
+        v_loop = get_v_loop()
+
+        logging("finalize_start", quiet=quiet)
+
+        for id in v_loop:
+
+            logging("finalize_loop_start", id=id, quiet=quiet)
+            cluster_loop(
+                         id,
+                         run_label,
+                         qc_sequence_quality,
+                         gene_marker
+                        )
+            logging("finalize_loop_end", id=id, quiet=quiet)
+
+        logging("finalize_end", quiet=quiet)
+
+        #: creating the database
+        logging("make db_start", quiet=quiet)
+        make_db(run_label, qc_limited_clusters, qc_taxonomy_quality)
+        logging("make db_end", quiet=quiet)
+
+        #: cleans up intermediate files after process
+        cleanup("md", args.opt_keep, run_label)
+
+        #: making HMMs
+        tree_file = f"{Path(return_proj_path(run_label)).parent}/mqr.tree"
+        mode = args.opt_mode
+        logging("make hmms_start", quiet=quiet)
+        make_hmms(
+                 mode,
+                 tree_file,
+                 run_label,
+                 seq_id=str(args.opt_con_seq_id),
+                 seq_db=args.opt_con_seq_db,
+                 cpu=args.opt_cpu
+                 )
+        logging("make hmms_end", quiet=quiet)
+
+        #: cleans up intermediate files after process
+        cleanup("mh", args.opt_keep, run_label)
+
     #: running creation of the MetaxaQR database
     if args.opt_makedb:
         error_check(args)
@@ -154,7 +230,7 @@ def main_mqrdb(args):
         else:
             run_label = return_label()
         tree_file = f"{Path(return_proj_path(run_label)).parent}/mqr.tree"
-        mode = args.opt_makehmms
+        mode = args.opt_mode
         logging("make hmms_start", quiet=quiet)
         make_hmms(
                  mode,

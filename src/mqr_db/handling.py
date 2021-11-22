@@ -95,7 +95,7 @@ def check_args(args):
     """Checks that the use of args are correct, at least one main argument is
     used, the input file and output paths are valid.
     """
-    #: check if ano module is entered
+    #: check if no module is entered
     if (
         not args.opt_prepare
         and not args.opt_makedb
@@ -103,18 +103,19 @@ def check_args(args):
         and not args.opt_license
         and not args.opt_version_history
         and not args.opt_makehmms
+        and not args.opt_make
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
         quit(error_msg)
 
-    #: check if --keep is used outside -md/-mh
+    #: check if --keep is used outside -md/-mh/-m
     if (
         args.opt_keep and not args.opt_makedb
         and args.opt_keep and not args.opt_makehmms
+        and args.opt_keep and not args.opt_make
     ):
-        error_msg = """ERROR: --keep only works with -md/--makedb or
--mh/--makehmms"""
+        error_msg = """ERROR: --keep only works with -m, -md, -mh"""
         quit(error_msg)
 
     #: --label check
@@ -123,8 +124,9 @@ def check_args(args):
         and args.opt_label and not args.opt_makedb
         and args.opt_label and not args.opt_makehmms
         and args.opt_label and not args.opt_addseq
+        and args.opt_label and not args.opt_make
     ):
-        error_msg = """ERROR: --label only works with -p, -md, -mh or -a"""
+        error_msg = """ERROR: --label only works with -p, -m, -md, -mh or -a"""
         quit(error_msg)
 
     if args.opt_addseq and not args.opt_label:
@@ -141,8 +143,9 @@ def check_args(args):
             quit(error_msg)
         elif (
               'l' in args.opt_qc and not args.opt_makedb
+              and 'l' in args.opt_qc and not args.opt_make
         ):
-            error_msg = """--qc mode l only works with -md"""
+            error_msg = """--qc mode l only works with -m, -md"""
             quit(error_msg)
 
     #: --gene_marker check
@@ -161,12 +164,26 @@ def check_args(args):
 -a/--addseq"""
         quit(error_msg)
 
-    #: make sure correct modes are entered in make_hmm
-    if args.opt_makehmms:
-        if args.opt_makehmms not in ["conserved", "divergent", "hybrid"]:
+    #: HMMs error checks
+    if args.opt_makehmms or args.opt_make:
+        if not args.opt_mode:
+            error_msg = """ERROR: -m, -mh requires --mode to be chosen."""
+            quit(error_msg)
+
+        elif args.opt_mode not in ["conserved", "divergent", "hybrid"]:
             error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
             choose from conserved, divergent or hybrid."""
             quit(error_msg)
+
+        #: conserved mode check for make_hmms - need database.fasta
+        if args.opt_mode == "conserved":
+            if not args.opt_con_seq_db:
+                error_msg = "ERROR: missing sequence FASTA file"
+                quit(error_msg)
+            else:
+                if not check_file(args.opt_con_seq_db):
+                    error_msg = "ERROR: missing sequence FASTA file"
+                    quit(error_msg)
 
     #: check if incorrect label (outside prepare)
     if args.opt_label and not args.opt_prepare:
@@ -179,16 +196,6 @@ def check_args(args):
         else:
             error_msg = """ERROR: no available databases for --label."""
             quit(error_msg)
-
-    #: conserved mode check for make_hmms - need database.fasta
-    if args.opt_makehmms == "conserved":
-        if not args.opt_con_seq_db:
-            error_msg = "ERROR: missing sequence database"
-            quit(error_msg)
-        else:
-            if not check_file(args.opt_con_seq_db):
-                error_msg = "ERROR: incorrect sequence database provided"
-                quit(error_msg)
 
 
 def check_dir(path):
