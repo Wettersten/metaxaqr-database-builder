@@ -109,13 +109,13 @@ def check_args(args):
         error_msg = "ERROR: No option chosen"
         quit(error_msg)
 
-    #: check if --keep is used outside -md/-mh/-m
+    #: check if --keep is used outside -m_d/-m_h/-m
     if (
         args.opt_keep and not args.opt_makedb
         and args.opt_keep and not args.opt_makehmms
         and args.opt_keep and not args.opt_make
     ):
-        error_msg = """ERROR: --keep only works with -m, -md, -mh"""
+        error_msg = """ERROR: --keep only works with -m, -m_d, -m_h"""
         quit(error_msg)
 
     #: --label check
@@ -126,7 +126,8 @@ def check_args(args):
         and args.opt_label and not args.opt_addseq
         and args.opt_label and not args.opt_make
     ):
-        error_msg = """ERROR: --label only works with -p, -m, -md, -mh or -a"""
+        error_msg = """ERROR: --label only works with -p, -m, -m_d, -m_h or
+        -a"""
         quit(error_msg)
 
     if args.opt_addseq and not args.opt_label:
@@ -145,7 +146,7 @@ def check_args(args):
               'l' in args.opt_qc and not args.opt_makedb
               and 'l' in args.opt_qc and not args.opt_make
         ):
-            error_msg = """--qc mode l only works with -m, -md"""
+            error_msg = """--qc mode l only works with -m, -m_d"""
             quit(error_msg)
 
     #: --gene_marker check
@@ -167,12 +168,12 @@ def check_args(args):
     #: HMMs error checks
     if args.opt_makehmms or args.opt_make:
         if not args.opt_mode:
-            error_msg = """ERROR: -m, -mh requires --mode to be chosen."""
+            error_msg = """ERROR: -m, -m_h requires --mode to be chosen."""
             quit(error_msg)
 
         elif args.opt_mode not in ["conserved", "divergent", "hybrid"]:
-            error_msg = """ERROR: incorrect mode chosen for -mh/--make_hmms,
-            choose from conserved, divergent or hybrid."""
+            error_msg = """ERROR: incorrect mode chosen for -m_h, choose from
+            conserved, divergent or hybrid."""
             quit(error_msg)
 
         #: conserved mode check for make_hmms - need database.fasta

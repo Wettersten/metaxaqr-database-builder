@@ -21,7 +21,7 @@ def create_parser():
         genetic markers.""",
         epilog='Examples: ')
 
-    parser.add_argument('-p', '-prepare', dest='opt_prepare', type=str,
+    parser.add_argument('-p', dest='opt_prepare', type=str,
                         metavar='',
                         help="""Clustering of input database at 100%% identity
                         and preparation of files for manual review""")
@@ -52,7 +52,7 @@ def create_parser():
                         help="""Gene marker used for quality sequence checks,
  e.g. SSU""")
 
-    parser.add_argument('-m', '-make' dest='opt_make',
+    parser.add_argument('-m', dest='opt_make',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files and HMMs""")
@@ -62,7 +62,7 @@ def create_parser():
                         help="""HMM creation mode {divergent, conserved,
                         hybrid}""")
 
-    parser.add_argument('-m_d', '--make_db', dest='opt_makedb',
+    parser.add_argument('-m_d', dest='opt_makedb',
                         action='store_true', default=False,
                         help="""Starts the manual review followed creation of
                         the output MetaxaQR database files""")
@@ -76,7 +76,7 @@ def create_parser():
                         help="""Skips the manual review step by excluding all
  flagged clusters""")
 
-    parser.add_argument('-m_h', '--make_hmms', dest='opt_makehmms',
+    parser.add_argument('-m_h', dest='opt_makehmms',
                         action='store_true', default=False,
                         help="""Creates HMMs from a MetaxaQR Database""")
 
@@ -112,7 +112,7 @@ def create_parser():
                         help="""Database to create HMMs from, when using the
                         hybrid mode.""")
 
-    parser.add_argument('-a', '--addseq', dest='opt_addseq', type=str,
+    parser.add_argument('-a', dest='opt_addseq', type=str,
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds
                         to a finished database""")
