@@ -261,7 +261,13 @@ def format_cluster_ids(cluster_ids):
     """Used to rename the HMM files in alphabetical order
     """
     alph = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-            "N", "O", "P", "Q", "R", "S", "T", "U" "V", "W", "X", "Y", "Z"]
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+
+    if len(cluster_ids) > 26 and len(cluster_ids) <= 676:
+        alph = [f"{i}{j}" for i in alph for j in alph]
+    elif len(cluster_ids) > 676:
+        alph = [f"{i}{j}{k}" for i in alph for j in alph for k in alph]
+
     formatted_ids = {}
     for i in range(len(cluster_ids)):
         formatted_ids[cluster_ids[i]] = alph[i]
@@ -293,7 +299,7 @@ def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
             if curr_cluster in id_clusters:
                 id_clusters[curr_cluster] += f" cluster_{curr_100_cluster}"
             else:
-                id_clusters[curr_cluster] = curr_100_cluster
+                id_clusters[curr_cluster] = f" cluster_{curr_100_cluster}"
 
     #: makes the sequence file from a cluster
     #: uses id_cluster to loop, writing one file per 50 cluster
@@ -477,10 +483,30 @@ def get_conserved_regions(
     cr_files = {}
     for i in range(len(conserved_regions)):
         id = i + 1
-        if id < 10:
-            id = str(f"0{id}")
-        else:
-            id = str(id)
+        #: formats id to fit 01, 023, 0231 etc
+        if len(conserved_regions) < 100:
+            if id < 10:
+                id = f"0{id}"
+            else:
+                id = str(id)
+
+        elif len(conserved_regions) < 1000:
+            if id < 10:
+                id = f"00{id}"
+            elif id < 100:
+                id = f"0{id}"
+            else:
+                id = str(id)
+
+        elif len(conserved_regions) < 10000:
+            if id < 10:
+                id = f"000{id}"
+            elif id < 100:
+                id = f"00{id}"
+            elif id < 1000:
+                id = f"0{id}"
+            else:
+                id = str(id)
         cr_file = f"{file}.{id}"
         cr_files[id] = cr_file
         start, end = conserved_regions[i]

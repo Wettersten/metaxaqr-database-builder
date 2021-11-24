@@ -146,7 +146,7 @@ def check_args(args):
               'l' in args.opt_qc and not args.opt_makedb
               and 'l' in args.opt_qc and not args.opt_make
         ):
-            error_msg = """--qc mode l only works with -m, -m_d"""
+            error_msg = """--qc mode l only works with -m or -m_d"""
             quit(error_msg)
 
     #: --gene_marker check
@@ -161,14 +161,21 @@ def check_args(args):
         args.opt_format and not args.opt_prepare
         and args.opt_format and not args.opt_addseq
     ):
-        error_msg = """ERROR: --format only works with -p/--prepare or
--a/--addseq"""
+        error_msg = """ERROR: --format only works with -p or -a"""
+        quit(error_msg)
+
+    #: --mode check
+    if (
+        args.opt_mode and not args.opt_make
+        and args.opt_mode and not args.opt_makehmms
+    ):
+        error_msg = """ERROR: --mode only works with -m or -m_h"""
         quit(error_msg)
 
     #: HMMs error checks
     if args.opt_makehmms or args.opt_make:
         if not args.opt_mode:
-            error_msg = """ERROR: -m, -m_h requires --mode to be chosen."""
+            error_msg = """ERROR: -m and -m_h requires --mode to be chosen."""
             quit(error_msg)
 
         elif args.opt_mode not in ["conserved", "divergent", "hybrid"]:

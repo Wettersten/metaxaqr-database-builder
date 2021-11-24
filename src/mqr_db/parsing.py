@@ -34,7 +34,7 @@ def create_parser():
     parser.add_argument('--format', dest='opt_format', type=str,
                         metavar='',
                         help="""Format used in the input database, supported
- formats: {ibol, unite""")
+ formats: {ibol, unite}""")
 
     parser.add_argument('--taxfile', dest='opt_taxfile', type=str,
                         metavar='', help="Taxonomy file")
