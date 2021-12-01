@@ -29,135 +29,215 @@ def make_hmms(
 
     #: divergent mode
     if mode.lower() == "divergent":
-        tmp_ids = []
 
         #: get all clusters
-        tmp_ids = make_cluster_seq_file(
+        orig_ids = make_cluster_seq_files(
             seq_id,
             tree_file,
             cluster_dir,
             align_dir
             )
 
-        cluster_ids = format_cluster_ids(tmp_ids)
+        hmm_files = {}
+        origin_runs = {}
 
-        for id in cluster_ids:
-            format_id = cluster_ids[id]
-            file = f"{align_dir}cluster_{id}"
+        for id in orig_ids:
+            for origin in orig_ids[id]:
+                file = f"{align_dir}cluster_{id}_{origin}"
 
-            #: align the sequences
-            a_file = run_mafft(file, cpu)
+                #: align the sequences
+                a_file = run_mafft(file, cpu)
 
-            #: split the alignment in two
-            head, tail = split_alignment(a_file)
-            split_files = {"01": head, "02": tail}
+                #: split the alignment in two
+                head, tail = split_alignment(a_file)
 
-            #: make the HMM files
-            hmm_files = []
-            for split_id in split_files:
-                h_file = run_hmmer_build(
-                    split_files[split_id],
-                    format_id,
-                    split_id,
-                    align_dir,
-                    cpu
-                    )
-                hmm_files.append(h_file)
+                #: order the HMMs created numerically
+                if origin not in origin_runs:
+                    origin_runs[origin] = 0
+                else:
+                    origin_runs[origin] += 1
 
-            run_hmmer_press(hmm_files, format_id, hmm_dir)
+                h_id = ""
+                tmp_h_id = 1+(2*origin_runs[origin])
+                if tmp_h_id < 10:
+                    h_id = f"0{str(tmp_h_id)}"
+                else:
+                    h_id = str(tmp_h_id)
+
+                t_id = ""
+                tmp_t_id = 2+(2*origin_runs[origin])
+                if tmp_t_id < 10:
+                    t_id = f"0{str(tmp_t_id)}"
+                else:
+                    t_id = str(tmp_t_id)
+
+                split_files = {h_id: head, t_id: tail}
+
+                #: make the HMM files
+                for split_id in split_files:
+                    h_file = run_hmmer_build(
+                        split_files[split_id],
+                        origin,
+                        split_id,
+                        align_dir,
+                        cpu
+                        )
+                    if origin not in hmm_files:
+                        hmm_files[origin] = [h_file]
+                    else:
+                        hmm_files[origin].append(h_file)
+
+        for origin in hmm_files:
+            orig_files = hmm_files[origin]
+            run_hmmer_press(orig_files, origin, hmm_dir)
+
+        create_hmm_names(origin_runs, hmm_dir, mode.lower())
 
     #: hybrid mode
     elif mode.lower() == "hybrid":
-        tmp_ids = []
 
-        tmp_ids = make_cluster_seq_file(
+        #: get all clusters
+        orig_ids = make_cluster_seq_files(
             seq_id,
             tree_file,
             cluster_dir,
             align_dir
             )
 
-        cluster_ids = format_cluster_ids(tmp_ids)
+        hmm_files = {}
+        origin_runs = {}
 
-        for id in cluster_ids:
-            format_id = cluster_ids[id]
-            file = f"{align_dir}cluster_{id}"
+        for id in orig_ids:
+            for origin in orig_ids[id]:
+                file = f"{align_dir}cluster_{id}_{origin}"
 
-            #: aligns the file
-            a_file = run_mafft(file, cpu)
+                #: aligns the file
+                a_file = run_mafft(file, cpu)
 
-            #: trims the aligned file
-            t_file = trim_alignment(a_file)
+                #: trims the aligned file
+                t_file = trim_alignment(a_file)
 
-            #: aligns the trimmed file
-            a_file = run_mafft(t_file, cpu)
+                #: aligns the trimmed file
+                a_file = run_mafft(t_file, cpu)
 
-            #: gets all conserved regions
-            conserved_regions = get_conserved_regions(
-                a_file,
-                conservation_cutoff,
-                look_ahead,
-                min_length,
-                max_gaps
-            )
-
-            hmm_files = []
-            for conserved_id in conserved_regions:
-                #: alignes the conserved region
-                a_file = run_mafft(conserved_regions[conserved_id], cpu)
-
-                #: makes hmm file from the conserved region
-                h_file = run_hmmer_build(
+                #: gets all conserved regions
+                conserved_regions = get_conserved_regions(
                     a_file,
-                    format_id,
-                    conserved_id,
-                    align_dir,
-                    cpu
-                    )
-                hmm_files.append(h_file)
+                    conservation_cutoff,
+                    look_ahead,
+                    min_length,
+                    max_gaps
+                )
 
-            #: builds full hmm files from the hmmbuilder files
-            run_hmmer_press(hmm_files, format_id, hmm_dir)
+                for conserved_id in conserved_regions:
+                    #: alignes the conserved region
+                    a_file = run_mafft(conserved_regions[conserved_id], cpu)
+
+                    #: order the HMMs created numerically
+                    if origin not in origin_runs:
+                        origin_runs[origin] = 0
+                    else:
+                        origin_runs[origin] += 1
+                    c_id = ""
+                    tmp_c_id = 1+origin_runs[origin]
+                    if tmp_c_id < 10:
+                        c_id = f"000{str(tmp_c_id)}"
+                    elif tmp_c_id < 100:
+                        c_id = f"00{str(tmp_c_id)}"
+                    elif tmp_c_id < 1000:
+                        c_id = f"0{str(tmp_c_id)}"
+                    else:
+                        c_id = str(tmp_c_id)
+
+                    #: makes hmm file from the conserved region
+                    h_file = run_hmmer_build(
+                        a_file,
+                        origin,
+                        c_id,
+                        align_dir,
+                        cpu
+                        )
+                    if origin not in hmm_files:
+                        hmm_files[origin] = [h_file]
+                    else:
+                        hmm_files[origin].append(h_file)
+
+        #: builds full hmm files from the hmmbuilder files
+        for origin in hmm_files:
+            orig_files = hmm_files[origin]
+            run_hmmer_press(orig_files, origin, hmm_dir)
+
+        create_hmm_names(origin_runs, hmm_dir, mode.lower())
 
     #: conserved mode
     elif mode.lower() == "conserved":
-        format_id = "A"
+        con_id = "0"
 
-        #: aligns the file
-        a_file = run_mafft(seq_db, cpu, align_dir=align_dir)
+        orig_ids = make_conserved_seq_files(seq_db, con_id, align_dir)
+        hmm_files = {}
+        origin_runs = {}
 
-        #: trims the aligned file
-        t_file = trim_alignment(a_file)
+        for id in orig_ids:
+            for origin in orig_ids[id]:
+                file = f"{align_dir}cluster_{id}_{origin}"
 
-        #: aligns the trimmed file
-        a_file = run_mafft(t_file, cpu)
+                #: aligns the file
+                a_file = run_mafft(file, cpu, align_dir=align_dir)
 
-        #: gets all conserved regions
-        conserved_regions = get_conserved_regions(
-            a_file,
-            conservation_cutoff,
-            look_ahead,
-            min_length,
-            max_gaps
-        )
+                #: trims the aligned file
+                t_file = trim_alignment(a_file)
 
-        hmm_files = []
-        for conserved_id in conserved_regions:
-            #: alignes the conserved region
-            a_file = run_mafft(conserved_regions[conserved_id], cpu)
+                #: aligns the trimmed file
+                a_file = run_mafft(t_file, cpu)
 
-            #: makes hmm file from the conserved region
-            h_file = run_hmmer_build(
-                a_file,
-                format_id,
-                conserved_id,
-                align_dir,
-                cpu
+                #: gets all conserved regions
+                conserved_regions = get_conserved_regions(
+                    a_file,
+                    conservation_cutoff,
+                    look_ahead,
+                    min_length,
+                    max_gaps
                 )
-            hmm_files.append(h_file)
+
+                for conserved_id in conserved_regions:
+                    #: alignes the conserved region
+                    a_file = run_mafft(conserved_regions[conserved_id], cpu)
+
+                    #: order the HMMs created numerically
+                    if origin not in origin_runs:
+                        origin_runs[origin] = 0
+                    else:
+                        origin_runs[origin] += 1
+                    c_id = ""
+                    tmp_c_id = 1+origin_runs[origin]
+                    if tmp_c_id < 10:
+                        c_id = f"000{str(tmp_c_id)}"
+                    elif tmp_c_id < 100:
+                        c_id = f"00{str(tmp_c_id)}"
+                    elif tmp_c_id < 1000:
+                        c_id = f"0{str(tmp_c_id)}"
+                    else:
+                        c_id = str(tmp_c_id)
+
+                    #: makes hmm file from the conserved region
+                    h_file = run_hmmer_build(
+                        a_file,
+                        origin,
+                        c_id,
+                        align_dir,
+                        cpu
+                        )
+                    if origin not in hmm_files:
+                        hmm_files[origin] = [h_file]
+                    else:
+                        hmm_files[origin].append(h_file)
 
         #: builds full hmm files from the hmmbuilder files
-        run_hmmer_press(hmm_files, format_id, hmm_dir)
+        for origin in hmm_files:
+            orig_files = hmm_files[origin]
+            run_hmmer_press(orig_files, origin, hmm_dir)
+
+        create_hmm_names(origin_runs, hmm_dir, mode.lower())
 
 
 def run_hmmer_build(file, cluster_id, hmm_id, align_dir, cpu):
@@ -257,27 +337,87 @@ def split_alignment(align_file):
     return align_head, align_tail
 
 
-def format_cluster_ids(cluster_ids):
-    """Used to rename the HMM files in alphabetical order
+def format_origin(input_origin):
+    """Used to rename format origins
     """
-    alph = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    origins = {
+        "A": ["archaea"],
+        "B": ["bacteria"],
+        "C": ["chloroplast"],
+        "E": ["eukaryota", "straminipila", "metazoa", "viridiplantae"],
+        "M": ["mitochondria"],
+        }
 
-    if len(cluster_ids) > 26 and len(cluster_ids) <= 676:
-        alph = [f"{i}{j}" for i in alph for j in alph]
-    elif len(cluster_ids) > 676:
-        alph = [f"{i}{j}{k}" for i in alph for j in alph for k in alph]
+    formatted_origin = ""
+    found = False
 
-    formatted_ids = {}
-    for i in range(len(cluster_ids)):
-        formatted_ids[cluster_ids[i]] = alph[i]
+    for origin in origins:
+        if input_origin.lower() in origins[origin]:
+            found = True
+            formatted_origin = origin
+    if not found:
+        formatted_origin = "U"  # unidentified
 
-    return formatted_ids
+    return formatted_origin
 
 
-def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
-    """Creates the cluster file, containing all sequences from all 100 sequence
-    identity clusters
+def make_conserved_seq_files(seq_db, id, align_dir):
+    origins = []
+    id_dict = {}
+    out_dict = {}
+    with open(seq_db, 'r') as f:
+        curr_seq = ""
+        acc_id = ""
+        for cluster_line in f:
+            if cluster_line[0] == ">":
+                if curr_seq:
+                    o_l = f"{acc_id}\n{curr_seq}\n"
+                    id_dict[origin].append(o_l)
+                acc_id = cluster_line.split(" ")[0]
+                curr_seq = ""
+                taxes = cluster_line.split(" ")[1].split(";")
+                if "Mitochondria" in taxes:
+                    tmp_origin = "Mitochondria"
+                elif "Chloroplast" in taxes:
+                    tmp_origin = "Chloroplast"
+                else:
+                    tmp_origin = taxes[0]
+                origin = format_origin(tmp_origin)
+
+                if origin not in id_dict:
+                    id_dict[origin] = []
+
+                if origin not in origins:
+                    origins.append(origin)
+
+            else:
+                curr_seq += cluster_line.rstrip()
+
+        o_l = f"{acc_id}\n{curr_seq}\n"
+        id_dict[origin].append(o_l)
+
+    for orig in origins:
+        out_cluster_file = f"{align_dir}cluster_{id}_{orig}"
+        with open(out_cluster_file, 'w') as h_f:
+            if len(id_dict[orig]) > 1:
+                for item in id_dict[orig]:
+                    h_f.write(item)
+            else:
+                acc_id = id_dict[orig][0].split("\n")[0]
+                tax = id_dict[orig][0].split("\n")[1]
+                dupl_entry = f"{acc_id}_dupl\n{curr_seq}\n"
+                h_f.write(id_dict[orig][0])
+                h_f.write(dupl_entry)
+
+    out_dict[id] = origins
+
+    return out_dict
+
+
+def make_cluster_seq_files(seq_id, tree_file, cluster_dir, align_dir):
+    """Creates the cluster files, containing all sequences from all 100
+    sequence identity clusters, returning dict of all ids with their respective
+    origin
     """
     #: makes dict with 100 cluster files belonging to each seq_id cluster
     #: dict with each id being one 50 id, containing all 100 ids
@@ -304,9 +444,106 @@ def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
     #: makes the sequence file from a cluster
     #: uses id_cluster to loop, writing one file per 50 cluster
     #: containing all 100 seqs
+    out_dict = {}
     for id in id_clusters:
         singleton = False
         out_cluster_file = f"{align_dir}cluster_{id}"
+        tmp_origin = ""
+        origins = []
+        id_dict = {}
+        if len(id_clusters[id].split(" ")[1:]) == 1:
+            singleton = True
+        for cluster_100_id in id_clusters[id].split(" ")[1:]:
+            cluster_file = f"{cluster_dir}{cluster_100_id}"
+            with open(cluster_file, 'r') as c_f:
+                curr_seq = ""
+                acc_id = ""
+                for cluster_line in c_f:
+                    if cluster_line[0] == ">":
+                        if curr_seq:
+                            o_l = f"{acc_id}\n{curr_seq}\n"
+                            id_dict[origin].append(o_l)
+                        acc_id = cluster_line.split(" ")[0]
+                        curr_seq = ""
+                        taxes = cluster_line.split(" ")[1].split(";")
+                        if "Mitochondria" in taxes:
+                            tmp_origin = "Mitochondria"
+                        elif "Chloroplast" in taxes:
+                            tmp_origin = "Chloroplast"
+                        else:
+                            tmp_origin = taxes[0]
+                        origin = format_origin(tmp_origin)
+
+                        if origin not in id_dict:
+                            id_dict[origin] = []
+
+                        if origin not in origins:
+                            origins.append(origin)
+
+                    else:
+                        curr_seq += cluster_line.rstrip()
+
+                o_l = f"{acc_id}\n{curr_seq}\n"
+                id_dict[origin].append(o_l)
+
+                #: MAFFT single sequence alignment protection
+                #: duplicates sequences in clusters with only 1 sequence
+                if singleton:
+                    o_l = f"{acc_id}_dupl\n{curr_seq}\n"
+                    id_dict[origin].append(o_l)
+
+    for orig in origins:
+        out_cluster_file = f"{align_dir}cluster_{id}_{orig}"
+        with open(out_cluster_file, 'w') as h_f:
+            if len(id_dict[orig]) > 1:
+                for item in id_dict[orig]:
+                    h_f.write(item)
+            else:
+                acc_id = id_dict[orig][0].split("\n")[0]
+                tax = id_dict[orig][0].split("\n")[1]
+                dupl_entry = f"{acc_id}_dupl\n{curr_seq}\n"
+                h_f.write(id_dict[orig][0])
+                h_f.write(dupl_entry)
+
+        out_dict[id] = origins
+
+    return out_dict
+
+
+def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
+    """Creates the cluster file, containing all sequences from all 100 sequence
+    identity clusters, returning dict of all ids with their respective origin
+    """
+    #: makes dict with 100 cluster files belonging to each seq_id cluster
+    #: dict with each id being one 50 id, containing all 100 ids
+    id_clusters = {}
+    curr_cluster = ""
+    seq_id_pos = -1
+    if seq_id != "50":
+        if int(seq_id) >= 90:
+            seq_id_pos = -9 - (int(seq_id)-90)
+        elif int(seq_id) > 50:
+            seq_id_pos = -1 - round((int(seq_id)-50)/5)
+
+    with open(tree_file, 'r') as r:
+        for line in r:
+            curr_line = line.rstrip().split("\t")
+            curr_cluster = curr_line[1].split(" ")[seq_id_pos].split("_")[-1]
+            curr_100_cluster = curr_line[0].split("_")[-1]
+
+            if curr_cluster in id_clusters:
+                id_clusters[curr_cluster] += f" cluster_{curr_100_cluster}"
+            else:
+                id_clusters[curr_cluster] = f" cluster_{curr_100_cluster}"
+
+    #: makes the sequence file from a cluster
+    #: uses id_cluster to loop, writing one file per 50 cluster
+    #: containing all 100 seqs
+    out_dict = {}
+    for id in id_clusters:
+        singleton = False
+        out_cluster_file = f"{align_dir}cluster_{id}"
+        origin = ""
         with open(out_cluster_file, 'w') as h_f:
             if len(id_clusters[id].split(" ")[1:]) == 1:
                 singleton = True
@@ -321,6 +558,15 @@ def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
                                 h_f.write(f"{acc_id}\n{curr_seq}\n")
                             acc_id = cluster_line.split(" ")[0]
                             curr_seq = ""
+                            if not origin:
+                                taxes = cluster_line.split(" ")[1].split(";")
+                                if "Mitochondria" in taxes:
+                                    origin = "Mitochondria"
+                                elif "Chloroplast" in taxes:
+                                    origin = "Chloroplast"
+                                else:
+                                    origin = taxes[0]
+
                         else:
                             curr_seq += cluster_line.rstrip()
                     h_f.write(f"{acc_id}\n{curr_seq}\n")
@@ -329,11 +575,9 @@ def make_cluster_seq_file(seq_id, tree_file, cluster_dir, align_dir):
                     #: duplicates sequences in clusters with only 1 sequence
                     if singleton:
                         h_f.write(f"{acc_id}_dupl\n{curr_seq}\n")
+        out_dict[id] = origin
 
-    out_ids = []
-    for id in id_clusters:
-        out_ids.append(id)
-    return out_ids
+    return out_dict
 
 
 def create_align_structure(run_label):
@@ -611,3 +855,32 @@ def remove_overlaps(conserved_dictionary):
                 conserved_regions.append([hit[0], hit[1]])
 
     return sorted(conserved_regions)
+
+
+def create_hmm_names(runs_dict, hmm_dir, mode):
+    h_file = f"{hmm_dir}hmm_names.txt"
+    orig_dict = dict(sorted(runs_dict.items()))
+    with open(h_file, 'w') as f:
+        for origin in orig_dict:
+            start_id = "01"
+            end_id = ""
+            tmp_end_id = 0
+            if mode == "divergent":
+                tmp_end_id = 2+(2*orig_dict[origin])
+            else:
+                tmp_end_id = 1+orig_dict[origin]
+
+            if tmp_end_id < 10:
+                end_id = f"000{str(tmp_end_id)}"
+            elif tmp_end_id < 100:
+                end_id = f"00{str(tmp_end_id)}"
+            elif tmp_end_id < 1000:
+                end_id = f"0{str(tmp_end_id)}"
+            else:
+                end_id = str(tmp_end_id)
+
+            start = f"{origin}{start_id}"
+            end = f"{origin}{end_id}"
+
+            f.write(f"{start}\t{start}\tstart\n")
+            f.write(f"{end}\t{end}\tend\n")

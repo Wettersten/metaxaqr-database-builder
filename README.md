@@ -1,8 +1,8 @@
 # User's Guide: Manual for MetaxaQR Database Builder
 
-This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.1, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
+This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.3, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
 
-MetaxaQR Database Builder automatically curates a database of genetic markers, such as 16S/18S small subunit rRNA gene, in FASTA format and outputs a dataset useable by MetaxaQR for taxonomic classification of metagenomic data.
+MetaxaQR Database Builder automatically curates a database of genetic markers, such as 16S/18S small subunit rRNA gene, in FASTA format and outputs a dataset, and HMMs based on the dataset, useable by MetaxaQR for taxonomic classification of metagenomic data.
 
 
 
@@ -12,7 +12,7 @@ MetaxaQR Database Builder automatically curates a database of genetic markers, s
 2. Usage and commands
 3. Output files
 4. Documentation: 'prepare'
-5. Documentation: 'makedb'
+5. Documentation: 'make'
 6. Documentation: 'addseq'
 7. Version history
 8. License information
@@ -23,7 +23,9 @@ MetaxaQR Database Builder automatically curates a database of genetic markers, s
 
 Python version 3.7, or later, (https://www.python.org/) is required to run the MetaxaQR Database Builder.
 
-Download and install VSEARCH version 2.15 or later (https://github.com/torognes/vsearch). VSEARCH is used to perform all clustering steps and is therefore required to use the MetaxaQR Database Builder.
+Download and install VSEARCH version 2.15 or later (https://github.com/torognes/vsearch). VSEARCH is used to perform all clustering steps and is therefore required to use the MetaxaQR Database Builder in both the prepare step and the creation of the database.
+
+Download and install MAFFT version xx or later (link) and HMMER version xx or later (). These are required for the creation of the HMMs that are created based for the MetaxaQR databases.
 
 Download the MetaxaQR Database Builder (https://github.com/Wettersten/metaxaqr-database-builder).
 
@@ -36,67 +38,89 @@ Testing the installation:
 
 ## 2. Usage and commands
 
-MetaxaQR Database Builder accepts databases of genetic markers in FASTA formats, either as combined files (by default) or using `--taxonomy` to direct to a separate taxonomy file. By default the SILVA FASTA format is used but the format of the input database can be specified using `--format`, which supports the following formats: UNITE, iBol. Two steps are used in order to create the output MetaxaQR files; first the preparation step where the input file(s) are clustered `python mqr_db.py -p input_file --label label_name`, followed by `python mqr_db.py -m` which starts with a manual review of all dubious clusters followed by the creation of the output dataset.  To list all the available options for MetaxaQR Database Builder, type `python mqr_db.py --help`.
+MetaxaQR Database Builder accepts databases of genetic markers in FASTA formats, either as combined files (by default) or using `--taxonomy` to direct to a separate taxonomy file. By default the SILVA FASTA format is used but the format of the input database can be specified using `--format`, which supports the following formats: UNITE, iBol. 
+
+Two steps are used in order to create the output MetaxaQR files; a preparation step where the input file(s) are clustered, followed by the make step where both the database and the HMMs are created. The database and the HMMs can also be created separately. 
+
+Preparing the input files:
+`python metaxaQR_dbb.py -p input_file --label label_name`
+Making the database & HMMs:
+`python metaxaQR_dbb.py -m --mode HMM_mode --label label_name`
+Creating only the database from the prepared input files:
+`python metaxaQR_dbb.py -m_d --label label_name`
+Creating the HMMs from the database:
+`python metaxaQR_dbb.py -m_h --mode HMM_mode --label label_name`
+
+The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list all the available options for the MetaxaQR Database Builder, type `python mqr_db.py --help`.
 
 ### Options
 
-| Option                      | Description                                                                                                     |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------|
-| -p {file}                   | Prepare - initial clustering and preparation of the input FASTA database                                        |
-| --label {name}              | Labelling of the output files, required by '-p'                                                                 |
-| --format {ibol, unite}      | Format of the input FASTA file                                                                                  |
-| --taxfile {file}            | Separate taxonomy file                                                                                          |
-| -m                          | Makedb - creates the MetaxaQR database from the prepared files, starting with manual review of flagged clusters |
-| --qc                        | Disables quality checking; works in -p and -m                                                                   |
-| --keep                      | Keeps all intermediate files                                                                                    |
-| --exclude_all_flags         | Excludes all flagged clusters, skipping manual review                                                           |
-| --a {file}                  | Addseq - adds new entries to a completed MetaxaQR database                                                      |
-| --db {path}                 | Path to completed MetaxaQR database, required by '-a'                                                           |
-| --quiet                     | Disables status output                                                                                          |
-| --license                   | Displays the license                                                                                            |
-| --version                   | Displays the current version of the software                                                                    |
-| -h                          | Displays the help message                                                                                       |
+| Option                | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| -p {file}             | Prepare - initial clustering and preparation of the input FASTA database |
+| --label {name}        | Labelling of the output files, required by '-p' and '-m'     |
+| --format {option}     | Format of the input FASTA file {ibol, unite}                 |
+| --taxfile {file}      | Separate taxonomy file                                       |
+| --qc {options}        | Enables quality checking; -p allows for {s, t}, s: sequence quality check, t: taxonomy quality check, -m allows for {l}, l: low quantity cluster check. These can be combined. |
+| --gene_marker         | Gene marker used for quality sequence checks {SSU}           |
+| -m                    | Make - creates the MetaxaQR database from the prepared files, starting with manual review of flagged clusters, and the HMMs |
+| --mode {option}       | HMM creation mode {divergent, conserved, hybrid}, required by -m and -m_h |
+| --keep                | Keeps all intermediate files                                 |
+| --exclude_all_flags   | Excludes all flagged clusters, skipping manual review        |
+| -m_d                  | Make_database - creating only the MetaxaQR database from the prepared files |
+| -m_h                  | Makes HMMs - using finished MetaxaQR database                |
+| --conservation_length | Minimum length for a conserved region {default=20}           |
+| --look_ahead          | Look ahead bases/amino acids when creating a conserved region {default=4} |
+| --conservation_cutoff | Consensus cutoff point for alignment, between 0-1 {default=0.6} |
+| --max_gaps            | Maximum number of gaps allowed in a conserved region {default=5} |
+| --conservation_seq_id | Sequence id used to create the HMMs from {default=50}        |
+| --conservation_seq_db | Database to create HMMs from, when using the conserved mode  |
+| --a {file}            | Addseq - adds new entries to a completed MetaxaQR database   |
+| --quiet               | Disables status output                                       |
+| --license             | Displays the license                                         |
+| --version             | Displays the current version of the software                 |
+| -h                    | Displays the help message                                    |
 
 
 ### Example usage
 
-| Command                                       | Description                                                             |
-|-----------------------------------------------|-------------------------------------------------------------------------|
-| mqr_db.py -p database --label SSU             | Preparation step, using 'SSU' as a label                                |
-| mqr_db.py -m --keep                           | Makes the MetaxaQR database, keeping all intermediate files             |
-| mqr_db.py -a new_entries --db metaxaQR_db/    | Adds entries from new entry database to a finished MetaxaQR database    |
+| Command                                                    | Description                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------------ |
+| python metaxaQR_dbb.py -p database --label SSU             | Preparation step, using 'SSU' as a label                     |
+| python metaxaQR_dbb.py -m --mode hybrid --keep --label SSU | Makes the MetaxaQR database and HMMs, keeping all intermediate files |
+| python metaxaQR_dbb.py -a new_entries --label SSU          | Adds entries from new entry database to a finished MetaxaQR database |
 
 
 
 ## 3. Output files
 
-Output files are creating in the 'label_results' directory, for example 'SSU_results' if 'SSU' was used in `--label`. The default MetaxaQR database structure that is created by the MetaxaQR Database Builder consists of  the 'final_centroids', 'final_label_tree' and 'final_repr' files. Quality checks are on by default, and any entries or clusters removed in this process is recorded in the 'bad_hits', 'deleted_clusters_100',  'deleted_entries_100' and 'flag_exclusions' files.  
+Output databases are created in the 'metaxa_db' the  directory, creating a sub-directory named after the label used, for example 'metaxa_db/SSU/' if 'SSU' was used in `--label`. The default MetaxaQR database structure that is created by the MetaxaQR Database Builder consists of  the 'mqr.fasta', 'mqr.tree' and 'mqr.repr' files within the directory, as well as a folder named 'HMMs' containing all HMMs. Quality checks are off by default, any entries or clusters removed in by the quality checks are recorded in the 'bad_hits', 'deleted_clusters_100',  'deleted_entries_100' and 'flag_exclusions' files.  
 
 ### MetaxaQR Database files
 
-The structure of the database allows for the use of matching new unknown sequence entries against the database and retrieving predicted taxonomy for the entries. This is done by matching them against the reference 'final_centroid' file, if a new entry matches a cluster here at, for example, 94% identity, the matching cluster labels relation to other clusters is found in the 'final_label_tree' file, using the 94% cluster label here allows for the retrieval of its representative taxonomy from the 'final_repr' file.
+The structure of the database allows for the use of matching new unknown sequence entries against the database and retrieving predicted taxonomy for the entries. This is done by matching them against the reference 'mqr.fasta' file, if a new entry matches a cluster here at, for example, 94% identity, the matching cluster labels relation to other clusters is found in the 'mqr.tree' file, using the 94% cluster label here allows for the retrieval of its representative taxonomy from the 'mqr.repr' file.
 
-#### final_centroids
+#### mqr.fasta
 
-This FASTA file contains all clusters found during the 100% sequence identity clustering, excluding those removed during the manual review step. The header for each entry is tab-delimited consisting of accession number, the cluster label and the taxonomy. All non-singleton clusters, those consisting of more than one entries, display the representative taxonomy created either during the taxonomy processing step or altered during the manual review. The sequence for the entry follows the header in normal FASTA fashion.
+This FASTA file contains all clusters found during the 100% sequence identity clustering, excluding those removed during the manual review step. The header for each entry is tab-delimited consisting of accession number, the database name, the cluster label and the taxonomy. All non-singleton clusters, those consisting of more than one entries, display the representative taxonomy created either during the taxonomy processing step or altered during the manual review. The sequence for the entry follows the header in normal FASTA fashion.
 
->\>BD359736.3.2150	MQR_100_0	Eukaryota;SAR;Alveolata;Apicomplexa;Aconoidasida;Haemosporoidia;Plasmodium;Plasmodium malariae
+>\>BD359736.3.2150	MQR_db_100_0	Eukaryota;SAR;Alveolata;Apicomplexa;Aconoidasida;Haemosporoidia;Plasmodium;Plasmodium malariae
 
-#### final_label_tree
+#### mqr.tree
 
 This file is an index of each cluster at 100% sequence identity, showing what clusters these fall within when clustered at all other sequence identities, in descending order. Each line start with the 100% label followed by a tab then the descending labels separated by spaces. This allows for retrieval of what cluster a specific cluster belongs to at lower sequence identity.
 
-> MQR_100_185	MQR_99_185 MQR_98_185 MQR_97_185 MQR_96_185 MQR_95_185 MQR_94_185 MQR_93_185 MQR_92_185 MQR_91_185 MQR_90_185 MQR_85_185 MQR_80_185 MQR_75_185 MQR_70_185 MQR_65_185 MQR_60_185 MQR_55_185 MQR_50_4
+> MQR_db_100_185	MQR_db_99_185 MQR_db_98_185 MQR_db_97_185 MQR_db_96_185 MQR_db_95_185 MQR_db_94_185 MQR_db_93_185 MQR_db_92_185 MQR_db_91_185 MQR_db_90_185 MQR_db_85_185 MQR_db_80_185 MQR_db_75_185 MQR_db_70_185 MQR_db_65_185 MQR_db_60_185 MQR_db_55_185 MQR_db_50_4
 
-#### final_repr
+#### mqr.repr
 
 This tab-delimited file is used as a reference index in order to retrieve the representative taxonomy from a cluster label. Each line is one cluster and these include the cluster label, the accession number of the centroid entry and the representative taxonomy,  starting with the clusters from the 100% sequence identity followed by descending order down to 50% sequence identity. All clusters from all sequence identities are included.
 
-> MQR_100_0	>AF106036.1.3725	Eukaryota;Discoba;Discicristata;Euglenozoa;Euglenida;Aphagea;Distigma proteus
+> MQR_db_100_0	>AF106036.1.3725	Eukaryota;Discoba;Discicristata;Euglenozoa;Euglenida;Aphagea;Distigma proteus
 
 ### Quality Check files
 
-Certain quality checks can be disabled using `--qc`. If done using `-p` the 'deleted_entries_100' and 'deleted_clusters_100' files are affected, for `-m` the 'bad_hits' file is affected, while the files may still be created during the process they are not used in the creation of the MetaxaQR Database. For a detailed explanation refer to the documentation for these two steps. Entries that are excluded in the manual review step are recorded in the 'flag_exclusion' file.
+Certain quality checks can be enabled using `--qc`. If done using `-p` the 'deleted_entries_100' and 'deleted_clusters_100' files are affected, for `-m` the 'bad_hits' file is affected, while the files may still be created during the process they are not used in the creation of the MetaxaQR Database. For a detailed explanation refer to the documentation for these two steps. Entries that are excluded in the manual review step are recorded in the 'flag_exclusion' file.
 
 #### bad_hits
 
@@ -126,7 +150,7 @@ Contains all clusters that are excluded in the manual review step, either manual
 
 
 
-## 4. Documentation: '-p', '--prepare'
+## 4. Documentation: prepare: '-p'
 
 'Prepare' creates initial directory structure, if any `--format` options are chosen the database is formatted before usage, clustering of the database at 100% sequence identity is done using VSEARCH, a tax_db file is created. Followed by taxonomic processing of all clusters created and warning flags applied to clusters that match any flagging conditions. All files are then prepared to for manual review and further clustering done in `-m`.
 
@@ -159,15 +183,21 @@ Flagging is only performed during the taxonomy processing step after the cluster
 
 ### Quality checks
 
-In order to prevent the inclusion of entries with dubious taxonomy into the final database a filtering step exists, which can be turned off using `--qc`, where any entry with a taxonomy that differs too much from the "correct" taxonomy for that species is excluded from the database processing. In order to determine the "correct" taxonomy for species a 'tax_db' file of reference taxonomies is created, which contains all unique taxonomy entries from the input database containing species level information. The species rank is stripped to only contain the genus then all taxonomies with the same genus are compared in order to determine the "correct" taxonomy for that genus. This is decided by matching the following criteria: if possible the genus should be the last taxonomic rank before the species level information and the entry should have the greatest amount of taxonomic ranks.
+In order to prevent the inclusion of entries with dubious taxonomy into the final database a filtering step exists, which can be enabled using `--qc t`, where any entry with a taxonomy that differs too much from the "correct" taxonomy for that species is excluded from the database processing. In order to determine the "correct" taxonomy for species a 'tax_db' file of reference taxonomies is created, which contains all unique taxonomy entries from the input database containing species level information. The species rank is stripped to only contain the genus then all taxonomies with the same genus are compared in order to determine the "correct" taxonomy for that genus. This is decided by matching the following criteria: if possible the genus should be the last taxonomic rank before the species level information and the entry should have the greatest amount of taxonomic ranks.
 
 Comparisons of all entries, containing species level information, are made against this 'tax_db', using the genus as index, if the genus exists in the 'tax_db'. If at least 80% of the taxonomic ranks in the entry being compared matches those of the reference taxonomy the reference taxonomy will be used, but with the species level information from the compared entry. If the entry is too different from the reference it will be excluded, and saved to the 'deleted_entries_100' file.
 
+Using `--qc s` enables sequence quality checks, here any entry not meeting the criteria are removed, these criteria includes minimum and maximum sequence lengths that entries need to match.
+
+Using `--qc l` enables low cluster quantity checks. This step examines all clusters at the 70% sequence identity level and locates clusters containing less than 5 entries in total, these are removed.
+
+Both the taxonomy quality and the low cluster quantity checks are best used on large databases, as these can remove more entries than intended on smaller databases, especially those with many different entries that becomes separate clusters.
 
 
-## 5. Documentation: '-m','--makedb'
 
-'Makedb' start with a manual review of any flagged clusters, after which files are prepared for further clustering using the corrected taxonomies from the manual review. A loop of clustering followed by preparation for further clustering is then repeated, done by descending sequence identity % in steps of 1% between 100-90% and then in steps of 5% between 90-50%. After the loop is completed the MetaxaQR database files are created using the output.
+## 5. Documentation: make: '-m'
+
+'Make' start with a manual review of any flagged clusters, after which files are prepared for further clustering using the corrected taxonomies from the manual review. A loop of clustering followed by preparation for further clustering is then repeated, done by descending sequence identity % in steps of 1% between 100-90% and then in steps of 5% between 90-50%. After the loop is completed the MetaxaQR database files are created using the output. HMMs are then created using the MetaxaQR database.
 
 ### Manual review
 
@@ -189,11 +219,25 @@ After manual review is completed a loop of processing output files and then usin
 
 ### Creation of the MetaxaQR database
 
-The MetaxaQR database files are created using intermediary files, all representative taxonomy files are combined to create the 'final_repr' file. The 'final_label_tree' is created using all 100% sequence identity labels in the 'label_tree' from the 50% sequence identity cluster and finally the 'final_centroids' file is the 'final_centroid' file created during the 100% sequence identity cluster.
+The MetaxaQR database files are created using intermediary files, all representative taxonomy files are combined to create the 'mqr.repr' file. The 'mqr.tree' is created using all 100% sequence identity labels in the 'label_tree' from the 50% sequence identity cluster and finally the 'final_centroids' file is the 'mqr.fasta' file created during the 100% sequence identity cluster.
 
+### Creation of the HMMs
 
+The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode.
 
-## 6. Documentation: '-a', '--addseq'
+#### divergent
+
+The divergent mode first aligns the clusters, followed by splitting each cluster in two parts down the middle of the first sequence in the alignment. Each segment is then used to create a HMM for each cluster.
+
+#### conserved
+
+The conserved mode takes an input dataset, which is treated as one cluster, this initial cluster is first aligned, following by trimming everything outside the leftmost and rightmost edges of the first sequence in the alignment, followed by another aligning. The trimmed alignment is used to find conserved regions, each conserved region is then aligned. When all conserved regions are found and aligned they are used to create one HMM.
+
+#### hybrid
+
+The hybrid mode combines conserved and divergent: the initial clusters are first aligned, following by trimming everything outside the leftmost and rightmost edges of the first sequence in the alignment, followed by another aligning. The trimmed alignment is used to find conserved regions, each conserved region is then aligned. When all conserved regions are found and aligned they are used to create one HMM for each initial cluster.
+
+## 6. Documentation: addseq: '-a'
 
 'Addseq' adds new entries to a finished MetaxaQR database, using the VSEARCH 'search' function. This compares the sequences from the new entries against the clustered output of the MetaxaQR database at 100% sequence identity level. If a match is found the matching % is used to retrieve taxonomy information for the match at all lower sequence identities, keeping the taxonomy of the new entry for the matching % and up, all new matches are then added to the MetaxaQR database files. For example: new_entry matches old_entry at 94% identity, the taxonomy from the new_entry is used at 95-100%, the taxonomy for the old_entry at identities 50-94% is used, new labels are created for the higher identities and these are combined to update the MetaxaQR database files.
 
@@ -203,6 +247,8 @@ The MetaxaQR database files are created using intermediary files, all representa
 
 V1.0.0: Initial release.
 v1.0.1: Added support for the sequence quality check option, filtering sequence either too small or too long to match the chosen genetic marker. Also split the QC option into 3 separate modules: Sequence quality check, taxonomy quality check and low quantity cluster check, can be used separately or in combination with others.
+V1.0.2: Implementation of the make HMMs module, adding the ability to create HMMs based on the MetaxaQR databases.
+V1.0.3: Adjustments for integration into MetaxaQR, replacing the old database builder.
 
 
 

@@ -110,7 +110,7 @@ def create_parser():
     parser.add_argument('--conservation_seq_db', dest='opt_con_seq_db',
                         type=str, metavar='',
                         help="""Database to create HMMs from, when using the
-                        hybrid mode.""")
+                        conserved mode.""")
 
     parser.add_argument('-a', dest='opt_addseq', type=str,
                         metavar='',
