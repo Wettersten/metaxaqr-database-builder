@@ -447,7 +447,6 @@ def make_cluster_seq_files(seq_id, tree_file, cluster_dir, align_dir):
     out_dict = {}
     for id in id_clusters:
         singleton = False
-        out_cluster_file = f"{align_dir}cluster_{id}"
         tmp_origin = ""
         origins = []
         id_dict = {}
@@ -492,18 +491,18 @@ def make_cluster_seq_files(seq_id, tree_file, cluster_dir, align_dir):
                     o_l = f"{acc_id}_dupl\n{curr_seq}\n"
                     id_dict[origin].append(o_l)
 
-    for orig in origins:
-        out_cluster_file = f"{align_dir}cluster_{id}_{orig}"
-        with open(out_cluster_file, 'w') as h_f:
-            if len(id_dict[orig]) > 1:
-                for item in id_dict[orig]:
-                    h_f.write(item)
-            else:
-                acc_id = id_dict[orig][0].split("\n")[0]
-                tax = id_dict[orig][0].split("\n")[1]
-                dupl_entry = f"{acc_id}_dupl\n{curr_seq}\n"
-                h_f.write(id_dict[orig][0])
-                h_f.write(dupl_entry)
+        for orig in origins:
+            out_cluster_file = f"{align_dir}cluster_{id}_{orig}"
+            with open(out_cluster_file, 'w') as h_f:
+                if len(id_dict[orig]) > 1:
+                    for item in id_dict[orig]:
+                        h_f.write(item)
+                else:
+                    acc_id = id_dict[orig][0].split("\n")[0]
+                    tax = id_dict[orig][0].split("\n")[1]
+                    dupl_entry = f"{acc_id}_dupl\n{curr_seq}\n"
+                    h_f.write(id_dict[orig][0])
+                    h_f.write(dupl_entry)
 
         out_dict[id] = origins
 
@@ -862,7 +861,7 @@ def create_hmm_names(runs_dict, hmm_dir, mode):
     orig_dict = dict(sorted(runs_dict.items()))
     with open(h_file, 'w') as f:
         for origin in orig_dict:
-            start_id = "01"
+            start_id = "0001"
             end_id = ""
             tmp_end_id = 0
             if mode == "divergent":

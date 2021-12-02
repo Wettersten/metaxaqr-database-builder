@@ -267,7 +267,8 @@ def cleanup(mode, keep, run_label):
     #: used after make_hmms
     elif mode == "mh":
         tmp_path = f"{os.getcwd()}/tmp/"
-        shutil.rmtree(tmp_path)
+        if check_dir(tmp_path):
+            shutil.rmtree(tmp_path)
         if not keep:
             shutil.rmtree(mqr_path)
 
