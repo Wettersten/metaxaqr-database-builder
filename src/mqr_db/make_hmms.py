@@ -26,6 +26,8 @@ def make_hmms(
     hmm_dir = f"{Path(return_proj_path(run_label)).parent}/HMMs/"
     cluster_dir = f"{return_proj_path(run_label)}100/clusters/"
     align_dir = f"{return_proj_path(run_label)}alignment/"
+    hmm_files = {}
+    origin_runs = {}
 
     #: divergent mode
     if mode.lower() == "divergent":
@@ -37,9 +39,6 @@ def make_hmms(
             cluster_dir,
             align_dir
             )
-
-        hmm_files = {}
-        origin_runs = {}
 
         for id in orig_ids:
             for origin in orig_ids[id]:
@@ -57,20 +56,8 @@ def make_hmms(
                 else:
                     origin_runs[origin] += 1
 
-                h_id = ""
-                tmp_h_id = 1+(2*origin_runs[origin])
-                if tmp_h_id < 10:
-                    h_id = f"0{str(tmp_h_id)}"
-                else:
-                    h_id = str(tmp_h_id)
-
-                t_id = ""
-                tmp_t_id = 2+(2*origin_runs[origin])
-                if tmp_t_id < 10:
-                    t_id = f"0{str(tmp_t_id)}"
-                else:
-                    t_id = str(tmp_t_id)
-
+                h_id = f"01-cluster_{id}"
+                t_id = f"02-cluster_{id}"
                 split_files = {h_id: head, t_id: tail}
 
                 #: make the HMM files
@@ -104,9 +91,6 @@ def make_hmms(
             align_dir
             )
 
-        hmm_files = {}
-        origin_runs = {}
-
         for id in orig_ids:
             for origin in orig_ids[id]:
                 file = f"{align_dir}cluster_{id}_{origin}"
@@ -129,25 +113,19 @@ def make_hmms(
                     max_gaps
                 )
 
+                curr_runs = 0
+
                 for conserved_id in conserved_regions:
                     #: alignes the conserved region
                     a_file = run_mafft(conserved_regions[conserved_id], cpu)
 
                     #: order the HMMs created numerically
-                    if origin not in origin_runs:
-                        origin_runs[origin] = 0
-                    else:
-                        origin_runs[origin] += 1
+                    curr_runs += 1
                     c_id = ""
-                    tmp_c_id = 1+origin_runs[origin]
-                    if tmp_c_id < 10:
-                        c_id = f"000{str(tmp_c_id)}"
-                    elif tmp_c_id < 100:
-                        c_id = f"00{str(tmp_c_id)}"
-                    elif tmp_c_id < 1000:
-                        c_id = f"0{str(tmp_c_id)}"
+                    if curr_runs < 10:
+                        c_id = f"0{curr_runs}-cluster_{id}"
                     else:
-                        c_id = str(tmp_c_id)
+                        c_id = f"{curr_runs}-cluster_{id}"
 
                     #: makes hmm file from the conserved region
                     h_file = run_hmmer_build(
@@ -162,6 +140,12 @@ def make_hmms(
                     else:
                         hmm_files[origin].append(h_file)
 
+                if origin not in origin_runs:
+                    origin_runs[origin] = curr_runs
+                else:
+                    if curr_runs > origin_runs[origin]:
+                        origin_runs[origin] = curr_runs
+
         #: builds full hmm files from the hmmbuilder files
         for origin in hmm_files:
             orig_files = hmm_files[origin]
@@ -174,8 +158,6 @@ def make_hmms(
         con_id = "0"
 
         orig_ids = make_conserved_seq_files(seq_db, con_id, align_dir)
-        hmm_files = {}
-        origin_runs = {}
 
         for id in orig_ids:
             for origin in orig_ids[id]:
@@ -199,25 +181,19 @@ def make_hmms(
                     max_gaps
                 )
 
+                curr_runs = 0
+
                 for conserved_id in conserved_regions:
                     #: alignes the conserved region
                     a_file = run_mafft(conserved_regions[conserved_id], cpu)
 
                     #: order the HMMs created numerically
-                    if origin not in origin_runs:
-                        origin_runs[origin] = 0
-                    else:
-                        origin_runs[origin] += 1
+                    curr_runs += 1
                     c_id = ""
-                    tmp_c_id = 1+origin_runs[origin]
-                    if tmp_c_id < 10:
-                        c_id = f"000{str(tmp_c_id)}"
-                    elif tmp_c_id < 100:
-                        c_id = f"00{str(tmp_c_id)}"
-                    elif tmp_c_id < 1000:
-                        c_id = f"0{str(tmp_c_id)}"
+                    if curr_runs < 10:
+                        c_id = f"0{curr_runs}-cluster_{id}"
                     else:
-                        c_id = str(tmp_c_id)
+                        c_id = f"{curr_runs}-cluster_{id}"
 
                     #: makes hmm file from the conserved region
                     h_file = run_hmmer_build(
@@ -231,6 +207,12 @@ def make_hmms(
                         hmm_files[origin] = [h_file]
                     else:
                         hmm_files[origin].append(h_file)
+
+                if origin not in origin_runs:
+                    origin_runs[origin] = curr_runs
+                else:
+                    if curr_runs > origin_runs[origin]:
+                        origin_runs[origin] = curr_runs
 
         #: builds full hmm files from the hmmbuilder files
         for origin in hmm_files:
@@ -861,25 +843,32 @@ def create_hmm_names(runs_dict, hmm_dir, mode):
     orig_dict = dict(sorted(runs_dict.items()))
     with open(h_file, 'w') as f:
         for origin in orig_dict:
-            start_id = "0001"
-            end_id = ""
-            tmp_end_id = 0
             if mode == "divergent":
-                tmp_end_id = 2+(2*orig_dict[origin])
+                start = f"{origin}01"
+                end = f"{origin}02"
+                f.write(f"{start}\t{start}\tstart\n")
+                f.write(f"{end}\t{end}\tend\n")
             else:
-                tmp_end_id = 1+orig_dict[origin]
-
-            if tmp_end_id < 10:
-                end_id = f"000{str(tmp_end_id)}"
-            elif tmp_end_id < 100:
-                end_id = f"00{str(tmp_end_id)}"
-            elif tmp_end_id < 1000:
-                end_id = f"0{str(tmp_end_id)}"
-            else:
-                end_id = str(tmp_end_id)
-
-            start = f"{origin}{start_id}"
-            end = f"{origin}{end_id}"
-
-            f.write(f"{start}\t{start}\tstart\n")
-            f.write(f"{end}\t{end}\tend\n")
+                if orig_dict[origin] < 2:
+                    start = f"{origin}01"
+                    end = start
+                    f.write(f"{start}\t{start}\tstart\n")
+                    f.write(f"{end}\t{end}\tend\n")
+                elif orig_dict[origin] == 2:
+                    start = f"{origin}01"
+                    end = f"{origin}02"
+                    f.write(f"{start}\t{start}\tstart\n")
+                    f.write(f"{end}\t{end}\tend\n")
+                else:
+                    start = f"{origin}01"
+                    if orig_dict[origin] < 10:
+                        end = f"{origin}0{orig_dict[origin]}"
+                    else:
+                        end = f"{origin}{orig_dict[origin]}"
+                    f.write(f"{start}\t{start}\tstart\n")
+                    for i in range(2, orig_dict[origin]):
+                        if i < 10:
+                            f.write(f"{origin}0{i}\t{origin}0{i}\n")
+                        else:
+                            f.write(f"{origin}{i}\t{origin}{i}\n")
+                    f.write(f"{end}\t{end}\tend\n")
