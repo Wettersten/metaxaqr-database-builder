@@ -104,6 +104,7 @@ def check_args(args):
         and not args.opt_version_history
         and not args.opt_makehmms
         and not args.opt_make
+        and not args.opt_crossval
         # and not args.opt_ds
     ):
         error_msg = "ERROR: No option chosen"
@@ -125,6 +126,7 @@ def check_args(args):
         and args.opt_label and not args.opt_makehmms
         and args.opt_label and not args.opt_addseq
         and args.opt_label and not args.opt_make
+        and args.opt_label and not args.opt_crossval
     ):
         error_msg = """ERROR: --label only works with -p, -m, -m_d, -m_h or
         -a"""

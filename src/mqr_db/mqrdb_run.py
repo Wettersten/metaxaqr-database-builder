@@ -253,10 +253,8 @@ def main_mqrdb(args):
         run_label = args.opt_label
 
         # TODO ADD LOGGING
-        if args.eval_prop:
-            cross_validation(run_label, eval_prop)
-        else:
-            cross_validation(run_label)
+        # TODO ADD option for eval_prop
+        cross_validation(run_label)
 
     #: running the add new sequences method
     if args.opt_addseq:

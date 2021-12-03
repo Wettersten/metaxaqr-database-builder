@@ -110,19 +110,19 @@ def create_taxdb(run_label):
     #: runs the command
     subprocess.run(tax_cmd, shell=True)
     #: processing the raw file, creating the tax_db file
-    process_taxdb()
+    process_taxdb(run_label)
     #: removing the raw file
     os.remove(tax_db_raw_file)
     os.remove(tax_db_tmp_file)
 
 
-def process_taxdb():
+def process_taxdb(run_label):
     """Processing the tax_db_raw file, creating a database of all "correct"
     unique genus entries and their taxonomy, correct taxonomy defined as the
     one with genus as the last taxonomic category before species and the
     taxonomy with most taxonomic categories.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_db_file = run_path + '/tax_db'
@@ -188,10 +188,10 @@ def process_taxdb():
             tax_db.write(taxes[sp] + "\n")
 
 
-def read_taxdb():
+def read_taxdb(run_label):
     """Reads the taxonomy db into a dictionary.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     tax_db_file = run_path + '/tax_db'
     tax_db = {}
 
@@ -319,7 +319,7 @@ def create_cluster_tax(
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     removed_path = return_removed_path()
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
@@ -327,7 +327,7 @@ def create_cluster_tax(
     tax_db = ''
     deleted_entries_file = removed_path + "deleted_entries_100"
     if not loop and qc_taxonomy_quality:
-        tax_db = read_taxdb()
+        tax_db = read_taxdb(run_label)
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -788,11 +788,11 @@ def cluster_filter_species(tax_cluster):
     return new_cluster
 
 
-def flag_header(str_id):
+def flag_header(str_id, run_label):
     """Gets the flag header from the flag_clusters file, (first line, starts
     with #\t)
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     flag_clusters_file = run_path + '/flag_clusters'
     f_header = ''
     header = {}
@@ -1284,7 +1284,7 @@ def prompt_remove(input, my_cluster):
     return input_loop
 
 
-def run_correction(my_cluster, review, rem_header, exclude_all):
+def run_correction(my_cluster, review, rem_header, exclude_all, run_label):
     """Wrapping function to perform full correction on cluster.
     """
     if exclude_all:
@@ -1297,16 +1297,17 @@ def run_correction(my_cluster, review, rem_header, exclude_all):
     else:
         review, rem_header = manual_correction(
             my_cluster,
-            rem_header
+            rem_header,
+            run_label
         )
     return review, rem_header
 
 
-def repr_correction(str_id):
+def repr_correction(str_id, run_label):
     """Creates a new file, repr_correction, which contains all manually
     corrected flagged taxonomies, as well as those that were not flagged.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     repr_clusters_file = run_path + '/repr_clusters'
     repr_correction_file = run_path + '/repr_correction'
     flag_correction_file = run_path + '/flag_correction'
@@ -1341,10 +1342,10 @@ def manual_correction(my_cluster, rem_header):
     input_loop = True
     review = ''
     str_id = my_cluster.get_strid()
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     removed_path = return_removed_path()
     flag_exclusions_file = removed_path + 'flag_exclusions'
-    orig_header = flag_header(str_id)
+    orig_header = flag_header(str_id, run_label)
 
     def_prompt = prompt_print(my_cluster)
     while input_loop:
@@ -1530,7 +1531,7 @@ def flag_correction(str_id, run_label, exclude_all=False):
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)
 
-    rem_header = flag_header(str_id)
+    rem_header = flag_header(str_id, run_label)
 
     with open(flag_clusters_file, 'r') as flag_file, \
          open(flag_correction_file, 'w') as corr_file:
@@ -1569,7 +1570,8 @@ def flag_correction(str_id, run_label, exclude_all=False):
                         my_cluster,
                         review,
                         rem_header,
-                        exclude_all
+                        exclude_all,
+                        run_label
                     )
 
                     if review == 'exit':
@@ -1591,4 +1593,4 @@ def flag_correction(str_id, run_label, exclude_all=False):
             else:
                 curr_cluster.append(curr_line)
 
-    repr_correction(str_id)
+    repr_correction(str_id, run_label)

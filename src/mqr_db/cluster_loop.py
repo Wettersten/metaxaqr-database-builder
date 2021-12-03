@@ -37,7 +37,7 @@ def create_final_repr(
     when the method is called from the cluster_loop method at identities below
     100.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     repr_corr_file = run_path + '/repr_correction'
     final_repr_file = run_path + '/final_repr'
     uc_file = run_path + '/uc'
@@ -136,13 +136,13 @@ def create_final_repr(
                     ))
 
 
-def create_final_cent(str_id, cent_loop=False):
+def create_final_cent(str_id, run_label, cent_loop=False):
     """Creates the final centroid file, including cluster label, centroid label
     , representative taxonomy followed by the centroid sequence. Cent_loop is
     used when the method is called from the cluster_loop method at identities
     below 100.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     centroid_file = run_path + '/centroids'
     final_cent_file = run_path + '/final_centroids'
     final_repr_file = run_path + '/final_repr'
@@ -198,7 +198,7 @@ def create_label_tree(str_id, run_label, tree_loop=False):
     str_id up to max str_id. Tree_loop is called when the identity is below 99
     in order to iterate over the last tree_label file.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     uc_file = run_path + "/uc"
     label_tree_file = run_path + "/label_tree"
     cluster_dir = run_path + "/clusters"
@@ -211,7 +211,7 @@ def create_label_tree(str_id, run_label, tree_loop=False):
         else:
             old_id = str(int(str_id)+1)
 
-        old_tree_file = return_proj_path() + old_id + "/label_tree"
+        old_tree_file = return_proj_path(run_label) + old_id + "/label_tree"
         with open(old_tree_file, 'r') as old_tree:
             for line in old_tree:
                 curr_line = line.rstrip().split("\t")
@@ -319,12 +319,12 @@ def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
                       gene_marker,
                       cent_loop
                       )
-    create_final_cent(str_id, cent_loop)
+    create_final_cent(str_id, run_label, cent_loop)
 
     if cent_loop:
         create_label_tree(str_id, run_label, tree_loop)
 
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     final_cent_file = run_path + '/final_centroids'
 
     #: vsearch clustering using final files

@@ -29,6 +29,7 @@ def cross_validation(run_label, eval_prop=0.1):
 
     cv_path = f"{path}/cross_validation"
     data_path = f"{cv_path}/data"
+    Path(data_path).mkdir(parents=True, exist_ok=True)
 
     #: split into training, test sets
     training_set, test_set = split_fasta(centroid_file, eval_prop, data_path)
