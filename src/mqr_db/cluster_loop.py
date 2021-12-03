@@ -276,10 +276,10 @@ def loop_repr_corr(str_id, run_label):
                        )
 
     #: repr_and_flag
-    repr_and_flag(str_id)
+    repr_and_flag(str_id, run_label)
 
     #: cleanup repr_and_flag files
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     flag_cluster_file = run_path + "/flag_clusters"
     repr_cluster_file = run_path + "/repr_clusters"
     repr_corr_file = run_path + "/repr_correction"

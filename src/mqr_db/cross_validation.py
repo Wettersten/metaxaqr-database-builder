@@ -1,9 +1,14 @@
 import os
 from pathlib import Path
 import random
-import argparse
-from .handling import check_dir, check_file, return_proj_path
-from .mqrdb_run import main_mqrdb
+from .handling import check_dir, check_file, return_proj_path, get_v_loop
+from .handling import cleanup
+from .cluster_tax import create_taxdb, create_cluster_tax, repr_and_flag
+from .cluster_tax import flag_correction
+from .clustering import cluster_vs
+from .cluster_loop import cluster_loop
+from .make_db import make_db
+from .make_hmms import make_hmms
 
 
 def cross_validation(run_label, eval_prop=0.1):
@@ -29,13 +34,57 @@ def cross_validation(run_label, eval_prop=0.1):
     training_set, test_set = split_fasta(centroid_file, eval_prop, data_path)
 
     #: make new temp database from training set
-    #: doing the 'prepare' run
-    parser_p = argparse.ArgumentParser()
-    args_p = parser.parse_args()
-    args_p.opt_prepare = training_set
-    args_p.opt_label = tmp_label
-    # TODO - add options for QC
-    main_mqrdb(args_p)
+    str_id = '100'
+    float_id = 1.0
+    tmp_dir = f"{os.getcwd()}/tmp"
+    removed_path = f"{tmp_dir}/removed/"
+    init_path = f"{tmp_dir}/init/"
+    proj_path = return_proj_path(tmp_label)
+    Path(removed_path).mkdir(parents=True, exist_ok=True)
+    Path(init_path).mkdir(parents=True, exist_ok=True)
+    Path(proj_path).mkdir(parents=True, exist_ok=True)
+
+    # TODO - fix QC options
+    qc_taxonomy_quality = False
+    qc_sequence_quality = False
+    gene_marker = ""
+
+    cluster_vs(training_set, float_id, tmp_label)
+    create_taxdb(tmp_label)
+    create_cluster_tax(
+                       str_id,
+                       tmp_label,
+                       qc_taxonomy_quality,
+                       qc_sequence_quality,
+                       gene_marker=gene_marker
+                       )
+    repr_and_flag(str_id, tmp_label)
+    exclude_all = True
+    path = return_proj_path(run_label)
+    qc_limited_clusters = False
+    flag_correction(str_id, tmp_label, exclude_all)
+    v_loop = get_v_loop()
+
+    for id in v_loop:
+        cluster_loop(
+                     id,
+                     tmp_label,
+                     qc_sequence_quality,
+                     gene_marker
+                    )
+
+    make_db(tmp_label, qc_limited_clusters, qc_taxonomy_quality)
+    cleanup("md", False, tmp_label)
+    tree_file = f"{Path(return_proj_path(tmp_label)).parent}/mqr.tree"
+    mode = "divergent"  # TODO give options for mode selection
+    make_hmms(
+             mode,
+             tree_file,
+             tmp_label
+             )
+
+    cleanup("mh", False, run_label)
+    print("done CV")
 
     #: doing the 'make' run
 

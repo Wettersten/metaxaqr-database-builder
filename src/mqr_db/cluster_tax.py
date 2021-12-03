@@ -74,10 +74,10 @@ class Cluster:
         return self.str_id
 
 
-def create_taxdb():
+def create_taxdb(run_label):
     """Creates a taxonomy database from all entries, no chloro/mito.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     cluster_dir = run_path + '/clusters/'
     tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
@@ -810,13 +810,13 @@ def flag_header(str_id):
     return header
 
 
-def repr_and_flag(str_id):
+def repr_and_flag(str_id, run_label):
     """Takes an identity (in str) and opens the corresponding tax_clusters
     file, where all clusters are iterated over. Each cluster is assigned a
     representative taxonomy and those that are considered unusual are flagged
     for later manual review.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     tax_clusters_file = run_path + '/tax_clusters'
     repr_clusters_file = run_path + '/repr_clusters'
     flag_clusters_file = run_path + '/flag_clusters' + '.bak'
@@ -1513,7 +1513,7 @@ def valid_input(input):
     return valid
 
 
-def flag_correction(str_id, exclude_all=False):
+def flag_correction(str_id, run_label, exclude_all=False):
     """Opens the flag file, and with the use of manual inputs corrects the
     flagged suggestions of representative taxonomy, into a new file with all
     non-flagged suggestions.
@@ -1521,7 +1521,7 @@ def flag_correction(str_id, exclude_all=False):
     accepted_flags = []
     excluded_flags = []
 
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     removed_path = return_removed_path()
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'

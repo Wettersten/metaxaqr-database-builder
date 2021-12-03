@@ -74,7 +74,7 @@ def main_mqrdb(args):
         logging("clustering_seq_end", quiet=quiet)
 
         logging("clustering_tax_start", quiet=quiet)
-        create_taxdb()
+        create_taxdb(run_label)
         create_cluster_tax(
                            str_id,
                            run_label,
@@ -82,7 +82,7 @@ def main_mqrdb(args):
                            qc_sequence_quality,
                            gene_marker=gene_marker
                            )
-        repr_and_flag(str_id)
+        repr_and_flag(str_id, run_label)
         logging("clustering_tax_end", quiet=quiet)
 
         logging("clustering_end", quiet=quiet)
@@ -116,7 +116,7 @@ def main_mqrdb(args):
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
-        flag_correction(str_id, exclude_all)
+        flag_correction(str_id, run_label, exclude_all)
         logging("manual review_end", quiet=quiet)
 
         #: finalizing files and further clustering
@@ -248,6 +248,8 @@ def main_mqrdb(args):
 
     #: running the cross validation method
     if args.opt_crossval:
+        error_check(args)
+        check_installation(args)
         run_label = args.opt_label
 
         # TODO ADD LOGGING
