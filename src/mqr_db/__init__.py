@@ -33,3 +33,5 @@ from .make_db import get_deleted_clusters
 from .make_hmms import make_hmms
 
 from .add_entries import add_entries
+
+from .mqrdb_run import main_mqrdb

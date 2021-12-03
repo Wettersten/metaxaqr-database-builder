@@ -565,7 +565,7 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.3"
+    return "Version: 1.0.4"
 
 
 def print_updates():
@@ -577,6 +577,7 @@ V1.0.1: Added support for the sequence quality option,
 separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
 V1.0.2: Initial support for the Make HMMs module.\n
 v1.0.3: Adjustments to allow for integration into MetaxaQR.\n
+v1.0.4: Addin cross validation module.\n
 """
     print(upd_history)
 

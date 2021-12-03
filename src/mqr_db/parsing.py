@@ -112,6 +112,14 @@ def create_parser():
                         help="""Database to create HMMs from, when using the
                         conserved mode.""")
 
+    parser.add_argument('-c', dest='opt_crossval',
+                        action='store_true', default=False,
+                        help="""Cross validates database of specified label""")
+
+    parser.add_argument('--eval_proportion', dest='opt_evalprop',
+                        type=str, metavar='',
+                        help="""Proportion used for test set {0-1}""")
+
     parser.add_argument('-a', dest='opt_addseq', type=str,
                         metavar='',
                         help="""Reads FASTA format file of new entries and adds
