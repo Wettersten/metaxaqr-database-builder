@@ -15,6 +15,7 @@ from .handling import print_updates, check_installation, error_check
 from .make_db import make_db
 from .add_entries import add_entries
 from .make_hmms import make_hmms
+from .cross_validation import cross_validation
 
 
 def main_mqrdb(args):
@@ -244,6 +245,16 @@ def main_mqrdb(args):
 
         #: cleans up intermediate files after process
         cleanup("mh", args.opt_keep, run_label)
+
+    #: running the cross validation method
+    if args.opt_crossval:
+        run_label = args.opt_label
+
+        # TODO ADD LOGGING
+        if args.eval_prop:
+            cross_validation(run_label, eval_prop)
+        else:
+            cross_validation(run_label)
 
     #: running the add new sequences method
     if args.opt_addseq:

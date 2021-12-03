@@ -35,3 +35,5 @@ from .make_hmms import make_hmms
 from .add_entries import add_entries
 
 from .mqrdb_run import main_mqrdb
+
+from .cross_validation import cross_validation
