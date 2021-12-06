@@ -286,10 +286,6 @@ def check_prereqs(args):
             error_msg = "ERROR: {} already exists".format(dir)
             quit(error_msg)
 
-        if not args.opt_label:
-            error_msg = "ERROR: No label specified"
-            quit(error_msg)
-
     if args.opt_makedb:
         flag_file = return_proj_path() + '100/flag_clusters'
         error_msg = "ERROR: {file} {txt}".format(

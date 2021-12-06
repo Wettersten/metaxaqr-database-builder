@@ -45,7 +45,7 @@ def create_final_repr(
     removed_cluster_file = return_removed_path() + 'deleted_clusters_100'
     repr_dict = {}
     removed_list = []
-    tax_db = read_taxdb()
+    tax_db = read_taxdb(run_label)
 
     #: reads repr_correction file into memory
     with open(repr_corr_file, 'r') as corr_file:
