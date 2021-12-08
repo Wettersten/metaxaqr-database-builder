@@ -248,8 +248,8 @@ def main_mqrdb(args):
 
     #: running the cross validation method
     if args.opt_crossval:
-        error_check(args)
-        check_installation(args)
+        # error_check(args)  TODO - add specific for CV
+        # check_installation(args)  TODO - add specific for CV
         run_label = args.opt_label
 
         # TODO ADD LOGGING

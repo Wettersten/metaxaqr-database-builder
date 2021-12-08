@@ -252,19 +252,20 @@ def cleanup(mode, keep, run_label):
     """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
     mqr_db/results to final output directory mqr_label.
     """
-    run_label = return_label()
     mqr_path = return_proj_path(run_label)
     #: used after make_db
     if mode == "md":
         src_rem = f"{return_removed_path()}"
-        shutil.rmtree(src_rem)
+        if check_dir(src_rem):
+            shutil.rmtree(src_rem)
 
         if not keep:
             v_loop = get_v_loop()
             v_loop.remove("100")
             files_to_remove = [f"{mqr_path}{v}/" for v in v_loop]
             for file in files_to_remove:
-                shutil.rmtree(file)
+                if check_dir(file):
+                    shutil.rmtree(file)
 
     #: used after make_hmms
     elif mode == "mh":
