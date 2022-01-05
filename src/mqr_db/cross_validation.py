@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import random
+import subprocess
+from datetime import datetime
 from .handling import check_dir, check_file, return_proj_path, get_v_loop
 from .handling import cleanup
 from .cluster_tax import create_taxdb, create_cluster_tax, repr_and_flag
@@ -11,26 +13,46 @@ from .make_db import make_db
 from .make_hmms import make_hmms
 
 
-def cross_validation(run_label, eval_prop=0.1):
-    """
+def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
+    """Cross validation method. Splits a database into training set and test
+    set with proportion of entries decided by eval_prop (default 10%), creates
+    a new database using only the training set entries then evaluates the test
+    set entries against that database.
     """
     cv_label = f"cv_{run_label}"
     tax_dict = {}
-    #: get centroid file
     centroid_file = ""
-    path = Path(return_proj_path(run_label)).parent
-    if check_dir(path):
-        centroid_file = f"{path}/mqr.fasta"
-        if not check_file(centroid_file):
-            error_msg = "ERROR: Missing centroid file from specified database"
-            quit(error_msg)
+    path = ""
+
+    # TODO ADD LOGGING
+
+    if db_file:
+        #: uses a FASTA file for cross validation instead of a finished db
+        centroid_file = db_file
+        run_label = "tmp_db"
+        curr_dir = os.getcwd()
+        tmp_path = f"{curr_dir}/metaxaQR_db/{run_label}/mqr_db/"
+        Path(tmp_path).mkdir(parents=True, exist_ok=True)
+        path = Path(return_proj_path(run_label)).parent
+
     else:
-        error_msg = """ERROR: Missing database directory for specified label"""
-        quit(error_msg)
+        #: uses a finished MQR db to evaluate
+        path = Path(return_proj_path(run_label)).parent
+        if check_dir(path):
+            centroid_file = f"{path}/mqr.fasta"
+            if not check_file(centroid_file):
+                error_msg = "ERROR: Missing centroid file from specified database"
+                quit(error_msg)
+        else:
+            error_msg = """ERROR: Missing database directory for specified label"""
+            quit(error_msg)
 
     cv_path = f"{path}/cross_validation"
     data_path = f"{cv_path}/data"
     Path(data_path).mkdir(parents=True, exist_ok=True)
+    today = str(datetime.now())
+    curr_time = today.split(".")[0].replace(" ", "T").replace(":", "")[:-2]
+    cv_results_file = f"Results_{curr_time}.txt"
 
     #: split into training, test sets
     training_set, test_set = split_fasta(centroid_file, eval_prop, data_path)
@@ -45,6 +67,8 @@ def cross_validation(run_label, eval_prop=0.1):
     Path(removed_path).mkdir(parents=True, exist_ok=True)
     Path(init_path).mkdir(parents=True, exist_ok=True)
     Path(proj_path).mkdir(parents=True, exist_ok=True)
+
+
 
     # TODO - fix QC options
     qc_taxonomy_quality = False
@@ -77,9 +101,8 @@ def cross_validation(run_label, eval_prop=0.1):
     make_db(cv_label, qc_limited_clusters, qc_taxonomy_quality)
     cleanup("md", False, cv_label)
     tree_file = f"{Path(return_proj_path(cv_label)).parent}/mqr.tree"
-    mode = "divergent"  # TODO give options for mode selection
     make_hmms(
-             mode,
+             hmm_mode,
              tree_file,
              cv_label
              )
@@ -88,7 +111,7 @@ def cross_validation(run_label, eval_prop=0.1):
 
     #: creating the training taxonomy cheat sheet, and reading into dict
     train_centroids = f"{Path(return_proj_path(cv_label)).parent}/mqr.fasta"
-    training_tax_file = make_train_tax(train_centroids, data_path)
+    training_tax_file = make_train_tax(centroid_file, data_path)
 
     tax_dict = get_tax_dict(training_tax_file)
 
@@ -105,16 +128,33 @@ def cross_validation(run_label, eval_prop=0.1):
             run_label,
             cv_label,
             data_path,
-            test_run
+            test_run,
             cpu=10  # todo - make not hardcoded
             )
         test_results[test_run] = evaluation(mqr_results, tax_dict)
 
-    print("Cross validation results\n")  # todo - make writeout instead
-    for result in test_results:
-        correct = sum(test_results[result][:-1]) / sum(test_results[result])
-        corr_perc = "{:.2%}".format(correct)
-        print(f"{result}: {corr_perc}")  # todo - make writeout instead
+    with open(cv_results_file, 'w') as f:
+        res_header = "Cross validation results"
+        print(res_header)
+        f.write(f"{res_header}\n")
+
+        res_hmm = f"HMM mode used: {hmm_mode}"
+        print(res_hmm)
+        f.write(f"{res_hmm}\n")
+
+        for result in test_results:
+            correct = sum(test_results[result][:-1]) / sum(test_results[result])
+            corr_perc = "{:.2%}".format(correct)
+            res_length = f"{result}: {corr_perc}"
+            print(res_length)
+            f.write(f"{res_length}\n")
+
+    #: cleanup - removing data dir and the cv_label database
+    keep = True
+    if db_file:
+        keep = False
+
+    cleanup("cv", keep, run_label)
 
 
 def split_fasta(fasta_file, eval_prop, out_path):
@@ -173,8 +213,13 @@ def read_fasta(fasta_file):
                 if seq:
                     fasta_dict[id] = seq
 
-                acc_id = curr_line.split("\t")[0]
-                tax = curr_line.split("\t")[-1]
+                if len(curr_line.split("\t")) < 2:
+                    acc_id = curr_line.split(" ")[0]
+                    tax = " ".join(curr_line.split(" ")[1:])
+                else:
+                    acc_id = curr_line.split("\t")[0]
+                    tax = curr_line.split("\t")[-1]
+
                 id = f"{acc_id}\t{tax}"
                 seq = ""
             else:
@@ -186,7 +231,7 @@ def read_fasta(fasta_file):
 
 
 def make_train_tax(centroid_file, out_dir):
-    """
+    """Creates a taxonomy file used to evaluate the test set results against.
     """
     taxes = {}
     tax_file = f"{out_dir}/train_tax.txt"
@@ -195,16 +240,26 @@ def make_train_tax(centroid_file, out_dir):
 
         for line in c:
             if line[0] == ">":
-                split_line = line.rstrip().split("\t")
+                if len(line.rstrip().split("\t")) < 2:
+                    split_line = line.rstrip().split(" ")
+                    tax = " ".join(split_line[1:])
+
+                else:
+                    split_line = line.rstrip().split("\t")
+                    tax = split_line[-1]
+
                 id = split_line[0]
-                tax = split_line[-1]
                 f.write(f"{id}\t{tax}\n")
 
     return tax_file
 
 
 def cut_test_set(test_file, out_dir):
-    """
+    """Splits the test set into different read length files. Full: normal
+    sequence length, half: 50% of the normal sequence length, read: 100 bp. The
+    sequence starts at a random position in the sequence and extracts the
+    length from there. If the sequences are below 300 bp in length the read
+    length version is ignored.
     """
     half_file = f"{out_dir}/test_half.fasta"
     read_file = f"{out_dir}/test_read.fasta"
@@ -257,7 +312,8 @@ def cut_test_set(test_file, out_dir):
 
 
 def get_half_seq(seq):
-    """
+    """Extracts a sequence equal to half of the length of the input sequence,
+    starting at a random position.
     """
     half_seq = ""
     half_len = int(len(seq)/2)
@@ -269,7 +325,8 @@ def get_half_seq(seq):
 
 
 def get_read_seq(seq):
-    """
+    """Extracts a sequence equal to 100 bps from the input sequence, starting
+    at a random position.
     """
     read_seq = ""
     read_len = 100
@@ -281,7 +338,7 @@ def get_read_seq(seq):
 
 
 def get_tax_dict(file):
-    """
+    """Reads the taxonomy file into a dictionary for evaluation.
     """
     tax_dict = {}
     with open(file, 'r') as f:
@@ -294,7 +351,7 @@ def get_tax_dict(file):
 
 
 def run_mqr(test_set, run_label, cv_label, output_dir, test_len, cpu=10):
-    """
+    """Runs MetaxaQR to evaluate the test set file(s).
     """
     inp_opt = f"-i {test_set}"
     outfile = f"{output_dir}/{test_len}_{run_label}"
@@ -303,14 +360,15 @@ def run_mqr(test_set, run_label, cv_label, output_dir, test_len, cpu=10):
     db_opt = f"-g {cv_label}"
     mqr_cmd = f"./metaxaQR {inp_opt} {out_opt} {cpu_opt} {db_opt}".split(" ")
 
-    subprocess.run(mqr_db)
+    subprocess.run(mqr_cmd)
 
     taxonomy_file = f"{outfile}.taxonomy.txt"
     return taxonomy_file
 
 
 def evaluation(test_results, tax_dict):
-    """
+    """Calculates a ratio of correct hits from the MetaxaQR taxonomy result
+    files.
     """
     species_hits = 0
     genus_hits = 0
@@ -322,9 +380,12 @@ def evaluation(test_results, tax_dict):
             curr_line = line.rstrip()
 
             acc_id = ">{}".format(curr_line.split("\t")[0])
-            facit_tax = tax_dict[acc_id].lower()
-            facit_split = facit_tax.split(";")
-            curr_tax = curr_line.split("\t")[1].lower()
+            if acc_id in tax_dict:
+                facit_tax = tax_dict[acc_id].lower()
+                facit_split = facit_tax.split(";")
+                curr_tax = curr_line.split("\t")[1].lower()
+            else:
+                curr_tax = ""
 
             if curr_tax:  # no empty entries allowed
                 if curr_tax[-1] == ";":
@@ -334,8 +395,6 @@ def evaluation(test_results, tax_dict):
                 #: make sure that the taxonomy is there
                 if len(curr_split) <= 1:
                     incorrect_hits += 1
-                    print(curr_line)
-                    print(facit_tax, "\n")
 
                 else:
                     curr_sp = " ".join(curr_split[-1].split(" ")[:2]).lower()
@@ -365,11 +424,7 @@ def evaluation(test_results, tax_dict):
                     #: otherwise add to incorrects
                     else:
                         incorrect_hits += 1
-                        print(curr_line)
-                        print(facit_tax, "\n")
             else:
                 incorrect_hits += 1
-                print(curr_line)
-                print(facit_tax, "\n")
 
     return [species_hits, genus_hits, partial_hits, incorrect_hits]

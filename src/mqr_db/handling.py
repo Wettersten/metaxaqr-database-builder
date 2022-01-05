@@ -275,6 +275,23 @@ def cleanup(mode, keep, run_label):
         if not keep:
             shutil.rmtree(mqr_path)
 
+    #: used after cross_validation
+    elif mode = "cv":
+        path = Path(return_proj_path(run_label)).parent
+        data_path = f"{path}/cross_validation/data"
+        cv_label = f"cv_{run_label}"
+        cv_path = Path(return_proj_path(cv_label)).parent
+
+        if check_dir(data_path):
+            shutil.rmtree(data_path)
+
+        if check_dir(cv_path):
+            shutil.rmtree(cv_path)
+
+        if not keep:
+            if check_dir(path):
+                shutil.rmtree(path)
+
 
 def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting
@@ -754,7 +771,7 @@ def genetic_region_found(sequence, ref_seq):
     return found
 
 
-def sequence_region_check(sequence, genetic_marker):
+def sequence_region_check(sequence, genetic_marker):  # TODO - remove?
     """Main region sequence method, including the reference sequences used
     """
     seq = sequence.lower().replace('t', 'u')

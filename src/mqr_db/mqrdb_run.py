@@ -250,11 +250,35 @@ def main_mqrdb(args):
     if args.opt_crossval:
         # error_check(args)  TODO - add specific for CV
         # check_installation(args)  TODO - add specific for CV
-        run_label = args.opt_label
+
+        #: defaults
+        eval_prop = 0.1
+        hmm_mode = "divergent"
+        db_file = ""
+        run_label = ""
+
+        if args.opt_label:
+            run_label = args.opt_label
+
+        if args.opt_mode:
+            hmm_mode = args.opt_mode
+
+        # TODO - add to parsing
+        if args.opt_cvdb:
+            db_file = args.opt_cvdb
+
+        # TODO - add to parsin
+        if args.opt_cvprop:
+            eval_prop = args.opt_cvprop
 
         # TODO ADD LOGGING
-        # TODO ADD option for eval_prop
-        cross_validation(run_label)
+
+        cross_validation(
+                         run_label,
+                         hmm_mode,
+                         eval_prop,
+                         db_file=db_file
+                         )
 
     #: running the add new sequences method
     if args.opt_addseq:
