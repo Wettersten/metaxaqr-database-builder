@@ -29,7 +29,6 @@ def cross_validation(
     a new database using only the training set entries then evaluates the test
     set entries against that database.
     """
-    cv_label = f"cv_{run_label}"
     tax_dict = {}
     centroid_file = ""
     path = ""
@@ -40,11 +39,10 @@ def cross_validation(
     if db_file:
         #: uses a FASTA file for cross validation instead of a finished db
         centroid_file = db_file
-        run_label = "tmp_db"
+        run_label = db_file.split("/")[-1]
         curr_dir = os.getcwd()
-        tmp_path = f"{curr_dir}/metaxaQR_db/{run_label}/mqr_db/"
-        Path(tmp_path).mkdir(parents=True, exist_ok=True)
-        path = Path(return_proj_path(run_label)).parent
+        path = f"{curr_dir}/metaxaQR_db/{run_label}"
+        Path(path).mkdir(parents=True, exist_ok=True)
 
     else:
         #: uses a finished MQR db to evaluate
@@ -58,6 +56,7 @@ def cross_validation(
             error_msg = "ERROR: Missing database directory for specified label"
             quit(error_msg)
 
+    cv_label = f"cv_{run_label}"
     cv_path = f"{path}/cross_validation"
     data_path = f"{cv_path}/data"
     Path(data_path).mkdir(parents=True, exist_ok=True)
