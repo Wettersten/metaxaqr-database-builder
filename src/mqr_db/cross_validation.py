@@ -145,7 +145,7 @@ def cross_validation(
         test_results[test_run] = evaluation(mqr_results, tax_dict)
 
     with open(cv_results_file, 'w') as f:
-        res_header = "Cross validation results"
+        res_header = "Cross validation results:"
         f.write(f"{res_header}\n")
 
         res_hmm = f"HMM mode used: {hmm_mode}"
@@ -153,6 +153,11 @@ def cross_validation(
 
         if not quiet:
             print(res_header)
+            if db_file:
+                db_used = db_file
+            else:
+                db_used = run_label
+            print(f"Database used: {db_used}")
             print(res_hmm)
 
         for result in test_results:
@@ -364,7 +369,7 @@ def get_tax_dict(file):
     return tax_dict
 
 
-def run_mqr(test_set, run_label, cv_label, output_dir, test_len, cpu=10):
+def run_mqr(test_set, run_label, cv_label, output_dir, test_len, cpu):
     """Runs MetaxaQR to evaluate the test set file(s).
     """
     inp_opt = f"-i {test_set}"
