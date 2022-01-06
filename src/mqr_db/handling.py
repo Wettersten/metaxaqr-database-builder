@@ -110,7 +110,7 @@ def check_args(args):
         error_msg = "ERROR: No option chosen"
         quit(error_msg)
 
-    #: check if --keep is used outside -m_d/-m_h/-m
+    #: check if --keep is used outside correct modules
     if (
         args.opt_keep and not args.opt_makedb
         and args.opt_keep and not args.opt_makehmms
@@ -119,7 +119,7 @@ def check_args(args):
         error_msg = """ERROR: --keep only works with -m, -m_d, -m_h"""
         quit(error_msg)
 
-    #: --label check
+    #: check if --label is used outside correct modules
     if (
         args.opt_label and not args.opt_prepare
         and args.opt_label and not args.opt_makedb
@@ -128,27 +128,36 @@ def check_args(args):
         and args.opt_label and not args.opt_make
         and args.opt_label and not args.opt_crossval
     ):
-        error_msg = """ERROR: --label only works with -p, -m, -m_d, -m_h or
+        error_msg = """ERROR: --label only works with -p, -m, -m_d, -m_h, -c or
         -a"""
         quit(error_msg)
 
+    #: check for modules that requires --label to function
     if args.opt_addseq and not args.opt_label:
         error_msg = """ERROR: -a requires --label"""
         quit(error_msg)
+    elif args.opt_prepare and not args.opt_label:
+        error_msg = """ERROR: -p requires --label"""
+        quit(error_msg)
 
-    #: --qc check
+    #: --qc mode check
     if args.opt_qc:
-        if (
-            's' in args.opt_qc and not args.opt_prepare
-            or 't' in args.opt_qc and not args.opt_prepare
-        ):
-            error_msg = """--qc modes s and t only works with -p"""
-            quit(error_msg)
-        elif (
-              'l' in args.opt_qc and not args.opt_makedb
-              and 'l' in args.opt_qc and not args.opt_make
-        ):
-            error_msg = """--qc mode l only works with -m or -m_d"""
+        if 's' in args.opt_qc or 't' in args.opt_qc:
+            if not args.opt_prepare and not args.opt_crossval:
+                error_msg = """ERROR: --qc modes 's' and 't' only works with -p
+                or -c"""
+                quit(error_msg)
+        elif 'l' in args.opt_qc:
+            if (
+                not args.opt_make
+                and not args.opt_makedb
+                and not args.opt_crossval
+            ):
+                error_msg = """ERROR: --qc mode 'l' only works with -m, -m_d or
+                -c"""
+                quit(error_msg)
+        else:
+            error_msg = """ERROR: --qc only allows 'l', 's' or 't' as modes"""
             quit(error_msg)
 
     #: --gene_marker check
@@ -170,8 +179,9 @@ def check_args(args):
     if (
         args.opt_mode and not args.opt_make
         and args.opt_mode and not args.opt_makehmms
+        and args.opt_mode and not args.opt_crossval
     ):
-        error_msg = """ERROR: --mode only works with -m or -m_h"""
+        error_msg = """ERROR: --mode only works with -m, -m_h or -c"""
         quit(error_msg)
 
     #: HMMs error checks
@@ -201,10 +211,45 @@ def check_args(args):
         if check_dir(db_path):
             labels = os.listdir(db_path)
             if args.opt_label not in labels:
-                error_msg = """ERROR: incorrect --label name."""
+                error_msg = """ERROR: incorrect --label name, the database is
+                missing."""
                 quit(error_msg)
         else:
             error_msg = """ERROR: no available databases for --label."""
+            quit(error_msg)
+
+    #: --cross_val_fasta checks
+    if args.opt_cvfile:
+        if not args.opt_crossval:
+            error_msg = """ERROR: --cross_val_fasta only works using -c."""
+            quit(error_msg)
+        else:
+            if not check_file(args.opt_cvfile):
+                error_msg = """ERROR: missing file supplied to
+                --cross_val_fasta"""
+                quit(error_msg)
+
+    #: eval_prop checks:
+    if args.opt_evalprop:
+        if not args.opt_crossval:
+            error_msg = """ERROR: --eval_proportion only works using -c."""
+            quit(error_msg)
+        else:
+            if float(args.opt_evalprop) <= 0 or float(args.opt_evalprop) >= 1:
+                error_msg = """ERROR: --eval_proportion only allows for values
+                between 0-1."""
+                quit(error_msg)
+
+    #: cross_validation checks:
+    if args.opt_crossval:
+        if not args.opt_label and not args.opt_cvfile:
+            error_msg = """ERROR: -c requires either a finished database
+            supplied by --label or a FASTA file supplied by
+            --cross_fal_fasta"""
+            quit(error_msg)
+        if args.opt_label and args.opt_cvfile:
+            error_msg = """ERROR: -c doesn't accept both a database and a FASTA
+            file at the same time"""
             quit(error_msg)
 
 
@@ -231,20 +276,18 @@ def check_installation(args):
         or args.opt_addseq
     ):
         reqs = ['vsearch']
-        preqs = []
     elif (
         args.opt_makehmms
     ):
         reqs = ['mafft', 'hmmbuild', 'hmmpress']
+    elif (
+          args.opt_crossval
+    ):
+        reqs = ['vsearch', 'mafft', 'hmmbuild', 'hmmpress']
 
     for tool in reqs:
         error_msg = "{} was not found".format(tool)
         if not is_tool(tool):
-            quit(error_msg)
-
-    for package in preqs:
-        error_msg = "{} was not found".format(package)
-        if not is_package(package):
             quit(error_msg)
 
 
@@ -276,7 +319,7 @@ def cleanup(mode, keep, run_label):
             shutil.rmtree(mqr_path)
 
     #: used after cross_validation
-    elif mode = "cv":
+    elif mode == "cv":
         path = Path(return_proj_path(run_label)).parent
         data_path = f"{path}/cross_validation/data"
         cv_label = f"cv_{run_label}"
@@ -489,6 +532,16 @@ finished.".format(id=str(int(id)-5))
             print("{dt} : {st}\n".format(
                 dt=get_dateinfo(),
                 st="MetaxaQR HMMs have been created!"
+            ))
+        elif option == "cross val_start":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="Cross validaiton started!"
+            ))
+        elif option == "cross val_end":
+            print("{dt} : {st}\n".format(
+                dt=get_dateinfo(),
+                st="Cross validation is completed!"
             ))
 
 

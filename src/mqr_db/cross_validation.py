@@ -4,7 +4,7 @@ import random
 import subprocess
 from datetime import datetime
 from .handling import check_dir, check_file, return_proj_path, get_v_loop
-from .handling import cleanup
+from .handling import cleanup, get_dateinfo
 from .cluster_tax import create_taxdb, create_cluster_tax, repr_and_flag
 from .cluster_tax import flag_correction
 from .clustering import cluster_vs
@@ -13,7 +13,17 @@ from .make_db import make_db
 from .make_hmms import make_hmms
 
 
-def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
+def cross_validation(
+                    run_label,
+                    hmm_mode,
+                    eval_prop,
+                    db_file,
+                    qc_limited_clusters,
+                    qc_taxonomy_quality,
+                    qc_sequence_quality,
+                    quiet,
+                    cpu
+                    ):
     """Cross validation method. Splits a database into training set and test
     set with proportion of entries decided by eval_prop (default 10%), creates
     a new database using only the training set entries then evaluates the test
@@ -23,9 +33,10 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
     tax_dict = {}
     centroid_file = ""
     path = ""
+    if not quiet:
+        dt = get_dateinfo()
 
-    # TODO ADD LOGGING
-
+    #: check if input finished database or FASTA file
     if db_file:
         #: uses a FASTA file for cross validation instead of a finished db
         centroid_file = db_file
@@ -44,7 +55,7 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
                 error_msg = "ERROR: Missing centroid file from specified database"
                 quit(error_msg)
         else:
-            error_msg = """ERROR: Missing database directory for specified label"""
+            error_msg = "ERROR: Missing database directory for specified label"
             quit(error_msg)
 
     cv_path = f"{path}/cross_validation"
@@ -68,12 +79,10 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
     Path(init_path).mkdir(parents=True, exist_ok=True)
     Path(proj_path).mkdir(parents=True, exist_ok=True)
 
-
-
-    # TODO - fix QC options
-    qc_taxonomy_quality = False
-    qc_sequence_quality = False
     gene_marker = ""
+
+    if not quiet:
+        print(f"{dt} : Creating the cross validation database")
 
     cluster_vs(training_set, float_id, cv_label)
     create_taxdb(cv_label)
@@ -86,7 +95,6 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
                        )
     repr_and_flag(str_id, cv_label)
     exclude_all = True
-    qc_limited_clusters = False
     flag_correction(str_id, cv_label, exclude_all)
     v_loop = get_v_loop()
 
@@ -120,6 +128,9 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
     test_files = cut_test_set(test_set, data_path)
     test_results = {}
 
+    if not quiet:
+        print(f"{dt} : Evaluating the cross validation database")
+
     #: run metaxaQR on each test file
     for test_file in test_files:
         test_run = test_file.split("/")[-1].split(".")[0].split("_")[-1]
@@ -129,25 +140,28 @@ def cross_validation(run_label, hmm_mode, eval_prop, db_file=""):
             cv_label,
             data_path,
             test_run,
-            cpu=10  # todo - make not hardcoded
+            cpu=cpu
             )
         test_results[test_run] = evaluation(mqr_results, tax_dict)
 
     with open(cv_results_file, 'w') as f:
         res_header = "Cross validation results"
-        print(res_header)
         f.write(f"{res_header}\n")
 
         res_hmm = f"HMM mode used: {hmm_mode}"
-        print(res_hmm)
         f.write(f"{res_hmm}\n")
+
+        if not quiet:
+            print(res_header)
+            print(res_hmm)
 
         for result in test_results:
             correct = sum(test_results[result][:-1]) / sum(test_results[result])
             corr_perc = "{:.2%}".format(correct)
             res_length = f"{result}: {corr_perc}"
-            print(res_length)
             f.write(f"{res_length}\n")
+            if not quiet:
+                print(res_length)
 
     #: cleanup - removing data dir and the cv_label database
     keep = True

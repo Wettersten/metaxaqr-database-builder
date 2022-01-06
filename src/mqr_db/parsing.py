@@ -118,7 +118,11 @@ def create_parser():
 
     parser.add_argument('--eval_proportion', dest='opt_evalprop',
                         type=str, metavar='',
-                        help="""Proportion used for test set {0-1}""")
+                        help="""Proportion used for test set (default 0.1)""")
+
+    parser.add_argument('--cross_val_fasta', dest='opt_cvfile',
+                        type=str, metavar='',
+                        help="""FASTA file used for cross validation""")
 
     parser.add_argument('-a', dest='opt_addseq', type=str,
                         metavar='',

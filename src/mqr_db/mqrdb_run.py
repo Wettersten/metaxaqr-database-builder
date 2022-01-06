@@ -248,14 +248,19 @@ def main_mqrdb(args):
 
     #: running the cross validation method
     if args.opt_crossval:
-        # error_check(args)  TODO - add specific for CV
-        # check_installation(args)  TODO - add specific for CV
+        error_check(args)
+        check_installation(args)
 
         #: defaults
         eval_prop = 0.1
         hmm_mode = "divergent"
         db_file = ""
         run_label = ""
+        qc_limited_clusters = False
+        qc_taxonomy_quality = False
+        qc_sequence_quality = False
+        quiet = False
+        cpu = 10
 
         if args.opt_label:
             run_label = args.opt_label
@@ -263,22 +268,34 @@ def main_mqrdb(args):
         if args.opt_mode:
             hmm_mode = args.opt_mode
 
-        # TODO - add to parsing
-        if args.opt_cvdb:
-            db_file = args.opt_cvdb
+        if args.opt_cvfile:
+            db_file = args.opt_cvfile
 
-        # TODO - add to parsin
-        if args.opt_cvprop:
-            eval_prop = args.opt_cvprop
+        if args.opt_evalprop:
+            eval_prop = args.opt_evalprop
 
-        # TODO ADD LOGGING
+        if args.opt_qc:
+            qc_opts = str(args.opt_qc).lower()
+            if "l" in qc_opts:
+                qc_limited_clusters = True
+            if "s" in qc_opts:
+                qc_sequence_quality = True
+            if "t" in qc_opts:
+                qc_taxonomy_quality = True
 
+        logging("cross val_start", quiet=quiet)
         cross_validation(
-                         run_label,
-                         hmm_mode,
-                         eval_prop,
-                         db_file=db_file
-                         )
+                        run_label,
+                        hmm_mode,
+                        eval_prop,
+                        db_file,
+                        qc_limited_clusters,
+                        qc_taxonomy_quality,
+                        qc_sequence_quality,
+                        quiet,
+                        cpu
+                        )
+        logging("cross val_end", quiet=quiet)
 
     #: running the add new sequences method
     if args.opt_addseq:
