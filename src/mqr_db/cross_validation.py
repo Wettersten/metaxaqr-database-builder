@@ -62,7 +62,9 @@ def cross_validation(
     Path(data_path).mkdir(parents=True, exist_ok=True)
     today = str(datetime.now())
     curr_time = today.split(".")[0].replace(" ", "T").replace(":", "")[:-2]
-    cv_results_file = f"Results_{curr_time}.txt"
+    cv_res_path = f"metaxaQR_db/Cross Validation"
+    Path(cv_res_path).mkdir(parents=True, exist_ok=True)
+    cv_results_file = f"{cv_res_path}/Results_{curr_time}.txt"
 
     #: split into training, test sets
     training_set, test_set = split_fasta(centroid_file, eval_prop, data_path)
