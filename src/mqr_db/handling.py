@@ -534,9 +534,11 @@ finished.".format(id=str(int(id)-5))
                 st="MetaxaQR HMMs have been created!"
             ))
         elif option == "cross val_start":
-            print("{dt} : {st}\n".format(
+            print("{he}\n{ln}\n{dt} : {st}".format(
+                he=get_header(option.split("_")[0]),
+                ln=ln,
                 dt=get_dateinfo(),
-                st="Cross validaiton started!"
+                st="Cross validation started..."
             ))
         elif option == "cross val_end":
             print("{dt} : {st}\n".format(
@@ -603,7 +605,7 @@ def get_header(option):
 
     elif option == "finalize":
         htext = "MetaxaQR_DBB Finalize -- Preparation of final output files" \
-                " and clustering down to 50% sequence identity."
+                " and clustering down to 50% sequence identity"
         header = "{}\n{}\n{}".format(
             htext,
             bytext,
@@ -622,6 +624,16 @@ def get_header(option):
     elif option == "add entries":
         htext = "MetaxaQR_DBB Add Entries -- Adds new entries from a FASTA" \
             " file to a finished MetaxaQR database."
+        header = "{}\n{}\n{}".format(
+            htext,
+            bytext,
+            version,
+        )
+
+    elif option == "cross val":
+        htext = "MetaxaQR_DBB Cross Validation -- Cross validation of a" \
+            "finished MetaxaQR database or a FASTA file, displaying accuracy" \
+            "of taxonomic classification."
         header = "{}\n{}\n{}".format(
             htext,
             bytext,
