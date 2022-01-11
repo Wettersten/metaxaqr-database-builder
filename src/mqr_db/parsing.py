@@ -76,6 +76,16 @@ def create_parser():
                         help="""Skips the manual review step by excluding all
  flagged clusters""")
 
+    parser.add_argument('-hmm_limit_entries', dest='opt_limit_entries',
+                        action='store_true', default=False,
+                        help="""Limit the number of alignments used per
+                        alignment when creating HMMs""")
+
+    parser.add_argument('--hmm_align_max', dest='opt_max_entries',
+                        type=int, metavar='',
+                        help="""Specify maximum number of entries per alignment
+                        when creating HMMs (default=100000)""")
+
     parser.add_argument('-m_h', dest='opt_makehmms',
                         action='store_true', default=False,
                         help="""Creates HMMs from a MetaxaQR Database""")

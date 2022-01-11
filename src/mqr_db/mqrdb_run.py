@@ -114,6 +114,16 @@ def main_mqrdb(args):
             if "l" in qc_opts:
                 qc_limited_clusters = True
 
+        #: defaults for limiting max entries in HMM alignments
+        limit_entries = False
+        max_limit = 0
+        if args.opt_limit_entries:
+            limit_entries = True
+            if args.opt_max_entries:
+                max_limit = args.opt_max_entries
+            else:
+                max_limit = 100000
+
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
         flag_correction(str_id, run_label, exclude_all)
@@ -154,6 +164,8 @@ def main_mqrdb(args):
                  mode,
                  tree_file,
                  run_label,
+                 limit_entries,
+                 max_limit,
                  seq_id=str(args.opt_con_seq_id),
                  seq_db=args.opt_con_seq_db,
                  cpu=args.opt_cpu
@@ -188,6 +200,16 @@ def main_mqrdb(args):
             qc_opts = str(args.opt_qc).lower()
             if "l" in qc_opts:
                 qc_limited_clusters = True
+
+        #: defaults for limiting max entries in HMM alignments
+        limit_entries = False
+        max_limit = 0
+        if args.opt_limit_entries:
+            limit_entries = True
+            if args.opt_max_entries:
+                max_limit = args.opt_max_entries
+            else:
+                max_limit = 100000
 
         #: manual review of flag file and creation of corrected repr file
         logging("manual review_start", quiet=quiet)
@@ -237,6 +259,8 @@ def main_mqrdb(args):
                  mode,
                  tree_file,
                  run_label,
+                 limit_entries,
+                 max_limit,
                  seq_id=str(args.opt_con_seq_id),
                  seq_db=args.opt_con_seq_db,
                  cpu=args.opt_cpu
@@ -283,6 +307,16 @@ def main_mqrdb(args):
             if "t" in qc_opts:
                 qc_taxonomy_quality = True
 
+        #: defaults for limiting max entries in HMM alignments
+        limit_entries = False
+        max_limit = 0
+        if args.opt_limit_entries:
+            limit_entries = True
+            if args.opt_max_entries:
+                max_limit = args.opt_max_entries
+            else:
+                max_limit = 100000
+
         logging("cross val_start", quiet=quiet)
         cross_validation(
                         run_label,
@@ -292,6 +326,8 @@ def main_mqrdb(args):
                         qc_limited_clusters,
                         qc_taxonomy_quality,
                         qc_sequence_quality,
+                        limit_entries,
+                        max_limit,
                         quiet,
                         cpu
                         )

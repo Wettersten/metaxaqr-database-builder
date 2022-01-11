@@ -331,6 +331,10 @@ def cleanup(mode, keep, run_label):
         if check_dir(cv_path):
             shutil.rmtree(cv_path)
 
+        if not keep:
+            if check_dir(path):
+                shutil.rmtree(path)
+
 
 def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting

@@ -21,6 +21,8 @@ def cross_validation(
                     qc_limited_clusters,
                     qc_taxonomy_quality,
                     qc_sequence_quality,
+                    limit_entries,
+                    max_limit,
                     quiet,
                     cpu
                     ):
@@ -39,7 +41,7 @@ def cross_validation(
     if db_file:
         #: uses a FASTA file for cross validation instead of a finished db
         centroid_file = db_file
-        run_label = db_file.split("/")[-1]
+        run_label = db_file.split("/")[-1].split(".")[0]
         curr_dir = os.getcwd()
         path = f"{curr_dir}/metaxaQR_db/{run_label}"
         Path(path).mkdir(parents=True, exist_ok=True)
@@ -62,7 +64,7 @@ def cross_validation(
     Path(data_path).mkdir(parents=True, exist_ok=True)
     today = str(datetime.now())
     curr_time = today.split(".")[0].replace(" ", "T").replace(":", "")[:-2]
-    cv_res_path = f"metaxaQR_db/Cross Validation"
+    cv_res_path = f"metaxaQR_db/Cross_validation_results"
     Path(cv_res_path).mkdir(parents=True, exist_ok=True)
     cv_results_file = f"{cv_res_path}/Results_{curr_time}.txt"
 
@@ -111,10 +113,12 @@ def cross_validation(
     cleanup("md", False, cv_label)
     tree_file = f"{Path(return_proj_path(cv_label)).parent}/mqr.tree"
     make_hmms(
-             hmm_mode,
-             tree_file,
-             cv_label
-             )
+            hmm_mode,
+            tree_file,
+            cv_label,
+            limit_entries,
+            max_limit,
+            )
 
     cleanup("mh", False, cv_label)
 

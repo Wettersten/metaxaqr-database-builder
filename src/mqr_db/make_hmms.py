@@ -1,6 +1,7 @@
 """Make HMM module, makes hidden markov models from a MetaxaQR database.
 """
 import subprocess
+import random
 from pathlib import Path
 from collections import Counter
 from .handling import return_proj_path, return_label
@@ -10,6 +11,8 @@ def make_hmms(
     mode,
     tree_file,
     run_label,
+    limit_entries,
+    max_limit,
     seq_id="50",
     seq_db="",
     cpu="4",
@@ -43,6 +46,10 @@ def make_hmms(
         for id in orig_ids:
             for origin in orig_ids[id]:
                 file = f"{align_dir}cluster_{id}_{origin}"
+
+                #: limits number of entries in the alignment
+                if limit_entries:
+                    file = process_alignment_cap(file, max_limit)
 
                 #: align the sequences
                 a_file = run_mafft(file, cpu)
@@ -94,6 +101,10 @@ def make_hmms(
         for id in orig_ids:
             for origin in orig_ids[id]:
                 file = f"{align_dir}cluster_{id}_{origin}"
+
+                #: limits number of entries in the alignment
+                if limit_entries:
+                    file = process_alignment_cap(file, max_limit)
 
                 #: aligns the file
                 a_file = run_mafft(file, cpu)
@@ -162,6 +173,10 @@ def make_hmms(
         for id in orig_ids:
             for origin in orig_ids[id]:
                 file = f"{align_dir}cluster_{id}_{origin}"
+
+                #: limits number of entries in the alignment
+                if limit_entries:
+                    file = process_alignment_cap(file, max_limit)
 
                 #: aligns the file
                 a_file = run_mafft(file, cpu, align_dir=align_dir)
@@ -872,3 +887,58 @@ def create_hmm_names(runs_dict, hmm_dir, mode):
                         else:
                             f.write(f"{origin}{i}\t{origin}{i}\n")
                     f.write(f"{end}\t{end}\tend\n")
+
+
+def cap_alignment(file, max_cap):
+    """Takes input file pre-alignment, creates a capped file containing entries
+    from the original file. Total number of entries matching max_cap, chosen
+    randomly.
+    """
+    orig_dict = {}
+    capped_dict = {}
+    capped_file = f"{file}.capped"
+
+    #: reads the original file into a dictionary
+    with open(file, 'r') as f:
+        for line in f:
+            if line[0] == ">":
+                id = line.rstrip()
+            else:
+                seq = line.rstrip()
+                orig_dict[id] = seq
+
+    #: reads dictionary, retrieving entries randomly and storing in capped dict
+    while len(capped_dict) < max_cap:
+        new_key = random.choice(list(orig_dict))
+        if new_key not in capped_dict:
+            capped_dict[new_key] = orig_dict[new_key]
+        orig_dict.pop(new_key)
+
+    #: creates a new file using the capped dict
+    with open(capped_file, 'w') as f:
+        for id in capped_dict:
+            seq = capped_dict[id]
+            f.write(f"{id}\n{seq}\n")
+
+    return capped_file
+
+
+def count_entries(file):
+    """Counts, and returns, total number of entries in a file
+    """
+    grp_cmd = f"grep \">\" {file}"
+    wc_cmd = "wc -l"
+    cmd = f"{grp_cmd} | {wc_cmd}"
+    out = subprocess.check_output(cmd, shell=True).decode("utf-8")
+
+    return int(out)
+
+
+def process_alignment_cap(file, max_cap):
+    """Processes pre-alignment files, returning list of capped failes, if a
+    file contains less entries than the max_cap it is not processed
+    """
+    if count_entries(file) > max_cap:
+        return cap_alignment(file, max_cap)
+    else:
+        return file
