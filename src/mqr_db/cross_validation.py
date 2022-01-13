@@ -23,6 +23,7 @@ def cross_validation(
                     qc_sequence_quality,
                     limit_entries,
                     max_limit,
+                    exclude_all,
                     quiet,
                     cpu
                     ):
@@ -97,7 +98,6 @@ def cross_validation(
                        gene_marker=gene_marker
                        )
     repr_and_flag(str_id, cv_label)
-    exclude_all = True
     flag_correction(str_id, cv_label, exclude_all)
     v_loop = get_v_loop()
 

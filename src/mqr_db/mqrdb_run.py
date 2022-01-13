@@ -12,6 +12,7 @@ from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
 from .handling import print_updates, check_installation, error_check
+from .handling import check_qc
 from .make_db import make_db
 from .add_entries import add_entries
 from .make_hmms import make_hmms
@@ -105,14 +106,18 @@ def main_mqrdb(args):
 
         #: initializing quality check options
         qc_limited_clusters = False
-        gene_marker = ""  # TODO remove - replace if not needed
-        qc_sequence_quality = False  # TODO remove - check in /removed instead
-        qc_taxonomy_quality = False  # TODO remove - check in /removed instead
+        qc_sequence_quality = False
+        qc_taxonomy_quality = False
+        gene_marker = ""
 
         if args.opt_qc:
             qc_opts = str(args.opt_qc).lower()
             if "l" in qc_opts:
                 qc_limited_clusters = True
+
+        if check_qc():
+            qc_sequence_quality = True
+            qc_taxonomy_quality = True
 
         #: defaults for limiting max entries in HMM alignments
         limit_entries = False
@@ -192,14 +197,18 @@ def main_mqrdb(args):
 
         #: initializing quality check options
         qc_limited_clusters = False
-        gene_marker = ""  # TODO remove - replace if not needed
-        qc_sequence_quality = False  # TODO remove - check in /removed instead
-        qc_taxonomy_quality = False  # TODO remove - check in /removed instead
+        qc_sequence_quality = False
+        qc_taxonomy_quality = False
+        gene_marker = ""
 
         if args.opt_qc:
             qc_opts = str(args.opt_qc).lower()
             if "l" in qc_opts:
                 qc_limited_clusters = True
+
+        if check_qc():
+            qc_sequence_quality = True
+            qc_taxonomy_quality = True
 
         #: defaults for limiting max entries in HMM alignments
         limit_entries = False
@@ -284,7 +293,8 @@ def main_mqrdb(args):
         qc_taxonomy_quality = False
         qc_sequence_quality = False
         quiet = False
-        cpu = 10
+        cpu = args.opt_cpu
+        exclude_all = False
 
         if args.opt_label:
             run_label = args.opt_label
@@ -297,6 +307,9 @@ def main_mqrdb(args):
 
         if args.opt_evalprop:
             eval_prop = args.opt_evalprop
+
+        if args.opt_exclude_all:
+            exclude_all = True
 
         if args.opt_qc:
             qc_opts = str(args.opt_qc).lower()
@@ -328,6 +341,7 @@ def main_mqrdb(args):
                         qc_sequence_quality,
                         limit_entries,
                         max_limit,
+                        exclude_all
                         quiet,
                         cpu
                         )

@@ -11,11 +11,14 @@ MetaxaQR Database Builder automatically curates a database of genetic markers, s
 1. Installation instructions
 2. Usage and commands
 3. Output files
-4. Documentation: 'prepare'
-5. Documentation: 'make'
-6. Documentation: 'addseq'
-7. Version history
-8. License information
+4. Documentation
+   4.1. Preparing the database
+   4.2. Making the database
+   4.3. Cross validation
+   4.4. Adding sequences to a finished database
+5. Known issues
+6. Version history
+7. License information
 
 
 
@@ -150,19 +153,23 @@ Contains all clusters that are excluded in the manual review step, either manual
 
 
 
-## 4. Documentation: prepare: '-p'
+## 4. Documentation
 
-'Prepare' creates initial directory structure, if any `--format` options are chosen the database is formatted before usage, clustering of the database at 100% sequence identity is done using VSEARCH, a tax_db file is created. Followed by taxonomic processing of all clusters created and warning flags applied to clusters that match any flagging conditions. All files are then prepared to for manual review and further clustering done in `-m`.
+This section details how the different modules in MetaxaQR Database Builder works. 
 
-### Formatting
+### 4.1 Preparing the database
+
+'Prepare' `-p` creates initial directory structure, if any `--format` options are chosen the database is formatted before usage, clustering of the database at 100% sequence identity is done using VSEARCH, a tax_db file is created. Followed by taxonomic processing of all clusters created and warning flags applied to clusters that match any flagging conditions. All files are then prepared to for manual review and further clustering done in `-m`.
+
+#### Formatting
 
 If `--format` is used the input database will be used to create a temporary formatted database, in the format of a SILVA database, that will be used for the creation of the MetaxaQR database. Allowed formats are the UNITE and the iBol formats.
 
-### Clustering
+#### Clustering
 
 Clustering is performed here at 100% sequence identity, using VSEARCH: `VSEARCH --cluster_fast input database --clusters mqr_db/clusters/cluster_ --uc mqr_db/100/uc --centroids mqr_db/100/centroids --id 1.0 --log mqr_db/vs_log.txt --no_progress --notrunclabels --quiet`.
 
-### Taxonomic processing
+#### Taxonomic processing
 
 After the clustering is complete, taxonomic processing is applied to all clusters that contain more than one entry. This is done in order to get a representative taxonomy for all multiple entry clusters, where more than one taxonomy can be present. The algorithm to get the representative taxonomy is done in several steps.
 
@@ -172,7 +179,7 @@ The comparison of taxonomic ranks below the species level is done in a similar m
 
 If no match is found in the taxonomic ranks below species level, e.g. in the first step - the origin, then the representative taxonomy is marked as "Mismatch".
 
-### Flagging
+#### Flagging
 
 Clusters are marked as flagged for manual review if the meet any of the following requirements:
 
@@ -181,7 +188,7 @@ Clusters are marked as flagged for manual review if the meet any of the followin
 
 Flagging is only performed during the taxonomy processing step after the clustering at 100% sequence identity.
 
-### Quality checks
+#### Quality checks
 
 In order to prevent the inclusion of entries with dubious taxonomy into the final database a filtering step exists, which can be enabled using `--qc t`, where any entry with a taxonomy that differs too much from the "correct" taxonomy for that species is excluded from the database processing. In order to determine the "correct" taxonomy for species a 'tax_db' file of reference taxonomies is created, which contains all unique taxonomy entries from the input database containing species level information. The species rank is stripped to only contain the genus then all taxonomies with the same genus are compared in order to determine the "correct" taxonomy for that genus. This is decided by matching the following criteria: if possible the genus should be the last taxonomic rank before the species level information and the entry should have the greatest amount of taxonomic ranks.
 
@@ -194,12 +201,11 @@ Using `--qc l` enables low cluster quantity checks. This step examines all clust
 Both the taxonomy quality and the low cluster quantity checks are best used on large databases, as these can remove more entries than intended on smaller databases, especially those with many different entries that becomes separate clusters.
 
 
+### 4.2. Making the database
 
-## 5. Documentation: make: '-m'
+'Make' `-m` start with a manual review of any flagged clusters, after which files are prepared for further clustering using the corrected taxonomies from the manual review. A loop of clustering followed by preparation for further clustering is then repeated, done by descending sequence identity % in steps of 1% between 100-90% and then in steps of 5% between 90-50%. After the loop is completed the MetaxaQR database files are created using the output. HMMs are then created using the MetaxaQR database.
 
-'Make' start with a manual review of any flagged clusters, after which files are prepared for further clustering using the corrected taxonomies from the manual review. A loop of clustering followed by preparation for further clustering is then repeated, done by descending sequence identity % in steps of 1% between 100-90% and then in steps of 5% between 90-50%. After the loop is completed the MetaxaQR database files are created using the output. HMMs are then created using the MetaxaQR database.
-
-### Manual review
+#### Manual review
 
 Manual review is performed at the start of `-m` if any clusters are flagged during taxonomic processing. Here the user is presented with all flagged clusters, one at a time, and given options how the representative taxonomy should be for that cluster. Each cluster is presented with the flag(s), the cluster id, all the entries in the cluster, their index in the cluster and the corresponding taxonomies, as well as the suggested representative taxonomy for the cluster. Following options to process the cluster are available:
 
@@ -213,46 +219,62 @@ Manual review is performed at the start of `-m` if any clusters are flagged duri
 
 The manual review step can also be skipped using `--exclude_all_flags` which auto excludes all clusters which are flagged.
 
-### Clustering loop
+#### Clustering loop
 
 After manual review is completed a loop of processing output files and then using them for further clustering is done, at sequence identity below 100% 'tree_label' files are created which contain all cluster labels and how they relate to each other, in lower sequence identity these labels contain the full tree up to 100% sequence identity label. At every step 'final_repr' files are created containing all clusters (singletons and those with multiple entries) with their respective representative taxonomy.
 
-### Creation of the MetaxaQR database
+#### Creation of the MetaxaQR database
 
 The MetaxaQR database files are created using intermediary files, all representative taxonomy files are combined to create the 'mqr.repr' file. The 'mqr.tree' is created using all 100% sequence identity labels in the 'label_tree' from the 50% sequence identity cluster and finally the 'final_centroids' file is the 'mqr.fasta' file created during the 100% sequence identity cluster.
 
-### Creation of the HMMs
+#### Creation of the HMMs
 
 The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode.
 
-#### divergent
+##### divergent
 
 The divergent mode first aligns the clusters, followed by splitting each cluster in two parts down the middle of the first sequence in the alignment. Each segment is then used to create a HMM for each cluster.
 
-#### conserved
+##### conserved
 
 The conserved mode takes an input dataset, which is treated as one cluster, this initial cluster is first aligned, following by trimming everything outside the leftmost and rightmost edges of the first sequence in the alignment, followed by another aligning. The trimmed alignment is used to find conserved regions, each conserved region is then aligned. When all conserved regions are found and aligned they are used to create one HMM.
 
-#### hybrid
+##### hybrid
 
 The hybrid mode combines conserved and divergent: the initial clusters are first aligned, following by trimming everything outside the leftmost and rightmost edges of the first sequence in the alignment, followed by another aligning. The trimmed alignment is used to find conserved regions, each conserved region is then aligned. When all conserved regions are found and aligned they are used to create one HMM for each initial cluster.
 
-## 6. Documentation: addseq: '-a'
 
-'Addseq' adds new entries to a finished MetaxaQR database, using the VSEARCH 'search' function. This compares the sequences from the new entries against the clustered output of the MetaxaQR database at 100% sequence identity level. If a match is found the matching % is used to retrieve taxonomy information for the match at all lower sequence identities, keeping the taxonomy of the new entry for the matching % and up, all new matches are then added to the MetaxaQR database files. For example: new_entry matches old_entry at 94% identity, the taxonomy from the new_entry is used at 95-100%, the taxonomy for the old_entry at identities 50-94% is used, new labels are created for the higher identities and these are combined to update the MetaxaQR database files.
+### 4.3. Cross validation
+'Cross validation' `-c` can be performed on a finished MetaxaQR database or a gene marker FASTA file. Cross validation on an already created database is done by supplying the database name using `--label`, by instead using `--cross_val_fasta` the user can specify a FASTA file as input. Cross validation requires MetaxaQR to be installed, with both the 'metaxaqr_dbb.py' file and the 'src' folder from MetaxaQR Database Builder included in the MetaxaQR directory. As the cross validation uses MetaxaQR classification for evaluation this requires execution permissions for the following MetaxaQR files: 'metaxaQR', 'get_fasta', 'metaxaQR_c', 'metaxaQR_x' to avoid errors.
+
+Cross validation reads all entries from the input database or FASTA file and splits these into a training set and a test set. The proportion of total entries split into the test set can be specified using `--eval_proportion`, with the default set to 0.1 (10%). Entries from the input are chosen at random until the proportion for the test set is met, the remaining entries becomes the training set. The test set is also split into three different versions: 'full', 'half' and 'read'. These are all entries but the sequences are full length, half of the sequence length or 100 base pairs long respectively. The shorter sequences are extracted from the original sequences, starting at a random position in the sequence, if the original sequences are shorter than 300 base pairs the read sequence length is not created. These shorter sequence files allows brief overview of the impact of sequence length for classification using the database. 
+
+A MetaxaQR database is created using the training set, by default the HMM mode is set to 'divergent', all quality checks are disabled, there is no cap on HMM entries and all flags are excluded. These can be altered by supplying the corresponding commands when performing the cross validation. This database is then supplied to MetaxaQR in order to classify the entries from the test set. Accuracy of predictions are evaluated by comparing the predicted taxonomies from MetaxaQR to the known taxonomies from the initial input, reporting back the percentage of correct predictions, which is also stored within a 'Cross_validation' folder within the 'metaxaQR_db/' directory.
+
+The accession id of predictions is used to retrieve the known taxonomy from the original entries. The predicted taxonomy is then compared with the known taxonomy, where correct predictions are defined as:  matching species names, matching genus name, or the case where the predicted taxonomy doesn't include genus/species information but the taxonomy matches perfectly that of the known taxonomy.
+
+As of MetaxaQR [development version Jan 2022] the cross validation for full length sequences, tested using 10000 SSU genetic markers, results in the range of 60-70% correct hits. This limitation is caused by several factors, mostly linked to processing taxonomies. One big factor is that unique species or taxonomic groups might be fully removed from the training set and placed in the test set, when these are then classified this will lead to wrong predictions.   
+
+### 4.4. Adding sequences to a finished database
+
+'Addseq' `-a` adds new entries to a finished MetaxaQR database, using the VSEARCH 'search' function. This compares the sequences from the new entries against the clustered output of the MetaxaQR database at 100% sequence identity level. If a match is found the matching % is used to retrieve taxonomy information for the match at all lower sequence identities, keeping the taxonomy of the new entry for the matching % and up, all new matches are then added to the MetaxaQR database files. For example: new_entry matches old_entry at 94% identity, the taxonomy from the new_entry is used at 95-100%, the taxonomy for the old_entry at identities 50-94% is used, new labels are created for the higher identities and these are combined to update the MetaxaQR database files.
 
 
 
-## 7. Version history
+## 5. Known issues
+
+
+
+## 6. Version history
 
 V1.0.0: Initial release.
 v1.0.1: Added support for the sequence quality check option, filtering sequence either too small or too long to match the chosen genetic marker. Also split the QC option into 3 separate modules: Sequence quality check, taxonomy quality check and low quantity cluster check, can be used separately or in combination with others.
 V1.0.2: Implementation of the make HMMs module, adding the ability to create HMMs based on the MetaxaQR databases.
 V1.0.3: Adjustments for integration into MetaxaQR, replacing the old database builder.
+V1.0.4: Implementation of the cross validation module, adding the ability to cross validate finished databases or gene marker databases from FASTA files. An option to cap the number of entries used for alignments when making HMMs is added in order to tackle extreme time use by MAFFT during creation of HMMs for large databases.
 
 
-
-## 8. License information
+## 7. License information
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

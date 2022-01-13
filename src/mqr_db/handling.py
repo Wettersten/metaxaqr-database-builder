@@ -18,7 +18,7 @@ def create_dir_structure(str_id, run_label):
     Path(cluster_dir).mkdir(parents=True, exist_ok=True)
 
 
-def return_proj_path(label=''):
+def return_proj_path(label):
     """Returns the path to project dir.
     """
     run_label = ''
@@ -140,6 +140,13 @@ def check_args(args):
         error_msg = """ERROR: -p requires --label"""
         quit(error_msg)
 
+    #: exclude_all_flags check
+    if args.opt_exclude_all:
+        if not args.opt_make and not args.opt_makedb and not args.opt_crossval:
+            error_msg = """ERROR: --exclude all only works with -m, -m_d or -c
+            """
+            quit(error_msg)
+
     #: --qc mode check
     if args.opt_qc:
         if 's' in args.opt_qc or 't' in args.opt_qc:
@@ -252,6 +259,20 @@ def check_args(args):
             file at the same time"""
             quit(error_msg)
 
+    #: HMM entry cap checks:
+    if args.opt_limit_entries or args.opt_max_entries:
+        if (
+            not args.opt_make
+            and not args.opt_makehmms
+            and not args.opt_crossval
+        ):
+            error_msg = """ERROR: --hmm_limit_entries and --hmm_align_max only
+            work in -m, -m_h or -c"""
+            quit(error_msg)
+    if args.opt_max_entries and not args.opt_limit_entries:
+        error_msg = """ERROR: --hmm_align_max requires --hmm_limit_entries"""
+        quit(error_msg)
+
 
 def check_dir(path):
     """Checks if the directory/path exists, returning True/False
@@ -340,20 +361,35 @@ def check_prereqs(args):
     """Checks if the args are used correctly - in correct order (not starting
     with the review before using initial clustering).
     """
-    if args.opt_prepare:
-        dir = return_proj_path()
+    label = ""
+    if args.opt_label:
+        label = args.opt_label
+    path = return_proj_path(label)
 
-        if check_dir(dir):
-            error_msg = "ERROR: {} already exists".format(dir)
+    #: check to find problems before starting prepare module
+    if args.opt_prepare:
+        if check_dir(path):
+            error_msg = "ERROR: {} already exists".format(path)
             quit(error_msg)
 
-    if args.opt_makedb:
-        flag_file = return_proj_path() + '100/flag_clusters'
-        error_msg = "ERROR: {file} {txt}".format(
-            file=flag_file,
-            txt="missing, please perform preparation [-p] first"
-            )
+    #: check to find problems before starting make module
+    if args.opt_makedb or args.opt_make:
+        flag_file = f"{path}100/flag_clusters"
         if not check_file(flag_file):
+            error_msg = "ERROR: {file} {txt}".format(
+                file=flag_file,
+                txt="missing, please perform preparation [-p] first"
+                )
+            quit(error_msg)
+
+    #: check to find problem before starting make_hmm module
+    if args.opt_makehmms:
+        mqr_fasta_file = f"{Path(path).parent}/mqr.fasta"
+        if not check_file(mqr_fasta_file):
+            error_msg = "ERROR: {file} {txt}".format(
+                file=mqr_fasta_file,
+                txt="missing, please perform make db [-m or -m_d] first"
+                )
             quit(error_msg)
 
 
@@ -363,14 +399,21 @@ def is_tool(name):
     return shutil.which(name)
 
 
-def is_package(name):
-    """Check whether `name` is an installed python package
+def check_qc():
+    """Checks if the prepare module used --qc, by searching for removed entries
+    in the removed directory
     """
-    package = importlib.util.find_spec(name)
-    if package:
-        return True
+    removed_dir = return_removed_path()
+    if check_dir(removed_dir):
+        cl_file = "deleted_clusters_100"
+        en_file = "deleted_entries_100"
+        removed_files = os.listdir(removed_path)
+        if cl_file in removed_files or en_file in removed_files:
+            return true
+        else:
+            return false
     else:
-        return False
+        return false
 
 
 def logging(option, id='', quiet=False):
@@ -804,14 +847,7 @@ def sequence_quality_check(sequence, genetic_marker):
 
     sl = sequence_length_check(sequence, genetic_marker)
 
-    """ Region check too strict to use outside E. coli, it is also very
-    inefficient in its implementation making it unsustainable in use with
-    large databases. Disabled for now
-    """
-    # sr = sequence_region_check(sequence, genetic_marker)
-    sr = True
-
-    if not sl or not sr:
+    if not sl:
         pass_checks = False
 
     return pass_checks
@@ -834,30 +870,6 @@ def genetic_region_found(sequence, ref_seq):
             found = True
             break
     return found
-
-
-def sequence_region_check(sequence, genetic_marker):  # TODO - remove?
-    """Main region sequence method, including the reference sequences used
-    """
-    seq = sequence.lower().replace('t', 'u')
-    ref_seq_start = ""
-    ref_seq_end = ""
-    pass_checks = False
-
-    if genetic_marker == "ssu":
-        #: >X80721.1 E.coli rrnA gene
-        ref_seq_start = """GTTTGATCATGGCTCAGATTGAACGCTGGCGGCAGGCCTAACACATGCAAGT
-CGAACGGTAACAGGAAGAAGCTTGCTTCTTTGCTGACGAGTGGCGGAC"""
-        ref_seq_end = """AGAATGCCACGGTGAATACGTTCCCGGGCCTTGTACACACCGCCCGTCACACCA
-TGGGAGTGGGTTGCAAAAGAAGTAGGTAGCTTAACTTCGGGAGGGC"""
-
-    cs = genetic_region_found(seq, ref_seq_start.lower().replace('t', 'u'))
-    if cs:
-        ce = genetic_region_found(seq, ref_seq_end.lower().replace('t', 'u'))
-        if ce:
-            pass_checks = True
-
-    return pass_checks
 
 
 def sequence_length_check(sequence, genetic_marker):

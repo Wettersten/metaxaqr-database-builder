@@ -26,6 +26,7 @@ from .handling import return_qc_opts
 from .handling import print_updates
 from .handling import check_installation
 from .handling import return_removed_path
+from .handling import check_qc
 
 from .make_db import make_db
 from .make_db import get_deleted_clusters

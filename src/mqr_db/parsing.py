@@ -76,7 +76,7 @@ def create_parser():
                         help="""Skips the manual review step by excluding all
  flagged clusters""")
 
-    parser.add_argument('-hmm_limit_entries', dest='opt_limit_entries',
+    parser.add_argument('--hmm_limit_entries', dest='opt_limit_entries',
                         action='store_true', default=False,
                         help="""Limit the number of alignments used per
                         alignment when creating HMMs""")
