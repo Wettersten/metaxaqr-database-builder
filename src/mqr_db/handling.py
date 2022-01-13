@@ -407,13 +407,13 @@ def check_qc():
     if check_dir(removed_dir):
         cl_file = "deleted_clusters_100"
         en_file = "deleted_entries_100"
-        removed_files = os.listdir(removed_path)
+        removed_files = os.listdir(removed_dir)
         if cl_file in removed_files or en_file in removed_files:
-            return true
+            return True
         else:
-            return false
+            return False
     else:
-        return false
+        return False
 
 
 def logging(option, id='', quiet=False):

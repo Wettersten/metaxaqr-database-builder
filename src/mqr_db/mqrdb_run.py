@@ -341,7 +341,7 @@ def main_mqrdb(args):
                         qc_sequence_quality,
                         limit_entries,
                         max_limit,
-                        exclude_all
+                        exclude_all,
                         quiet,
                         cpu
                         )

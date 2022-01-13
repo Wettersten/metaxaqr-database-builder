@@ -49,26 +49,24 @@ def get_centroids(path, result_path, qc, run_label):
     if qc:
         excluded_clusters = get_deleted_clusters()
 
-        first_line = True
-        header = ''
-        sequence = ''
         with open(my_cent, 'r') as rf, \
              open(to_cent, 'w') as of:
 
+            seq = ""
+            cluster = ""
             for line in rf:
                 curr_line = line.rstrip()
 
-                if curr_line[0] == '>':
-                    if not first_line and cluster not in excluded_clusters:
-                        of.write("{}\n{}\n".format(header, sequence))
+                if curr_line[0] == ">":
+                    if seq and id not in excluded_clusters:
+                        of.write(f"{header}\n{seq}")
 
                     header = curr_line
-                    sequence = ''
-                    first_line = False
+                    seq = ""
                     cluster = header.split("\t")[1]
 
                 else:
-                    sequence += curr_line + '\n'
+                    seq += f"{curr_line}\n"
 
     else:
         shutil.copy(my_cent, to_cent)

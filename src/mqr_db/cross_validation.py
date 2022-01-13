@@ -233,7 +233,7 @@ def read_fasta(fasta_file):
     with open(fasta_file, 'r') as f:
         for line in f:
             curr_line = line.rstrip()
-            if curr_line[0] == ">":
+            if curr_line and curr_line[0] == ">":
                 if seq:
                     fasta_dict[id] = seq
 
