@@ -6,7 +6,9 @@ file to continue with next iteration.
 from .cluster_tax import repr_and_flag, create_cluster_tax
 from .cluster_tax import find_taxonomy, read_taxdb
 from .clustering import cluster_vs
-from .handling import return_proj_path
+from .handling import return_proj_path, sequence_quality_check
+from .handling import return_removed_path
+from .make_db import get_deleted_clusters
 
 import os
 from shutil import rmtree
@@ -23,19 +25,27 @@ def clean_singleton(repr_tax):
     return repr_tax
 
 
-def create_final_repr(str_id, run_label, cent_loop=False):
+def create_final_repr(
+                      str_id,
+                      run_label,
+                      qc_sequence_quality,
+                      gene_marker,
+                      cent_loop=False
+                      ):
     """Creates the final_repr file, includes the cluster label, centroid entry
     label and the representative taxonomy for every centroid. Cent_loop is used
     when the method is called from the cluster_loop method at identities below
     100.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     repr_corr_file = run_path + '/repr_correction'
     final_repr_file = run_path + '/final_repr'
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
+    removed_cluster_file = return_removed_path() + 'deleted_clusters_100'
     repr_dict = {}
-    tax_db = read_taxdb()
+    removed_list = []
+    tax_db = read_taxdb(run_label)
 
     #: reads repr_correction file into memory
     with open(repr_corr_file, 'r') as corr_file:
@@ -43,14 +53,18 @@ def create_final_repr(str_id, run_label, cent_loop=False):
             curr_line = line.rstrip().split("\t")
             repr_dict[curr_line[0]] = curr_line[1]
 
+    if str_id == "100":
+        removed_list = get_deleted_clusters(dels_only=True)
+
     with open(final_repr_file, 'w') as repr_out, \
          open(uc_file, 'r') as read_uc:
 
         for line in read_uc:
             curr_line = line.rstrip().split("\t")
 
-            if curr_line[0] == "C":
+            if curr_line[0] == "C" and curr_line[1] not in removed_list:
                 excluded = False
+                cluster = str(curr_line[1])
                 if cent_loop:
                     cluster_label = "MQR_{}_{}_{}".format(
                         run_label,
@@ -63,7 +77,7 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                     cluster_label = "MQR_{}_{}_{}".format(
                         run_label,
                         str_id,
-                        str(curr_line[1]))
+                        cluster)
                     centroid_label = ">{}".format(curr_line[8].split(" ")[0])
                     singleton_repr = " ".join(curr_line[8].split(" ")[1:])
                 entries = int(curr_line[2])
@@ -71,17 +85,40 @@ def create_final_repr(str_id, run_label, cent_loop=False):
 
                 if entries == 1:
                     repr_tax = clean_singleton(singleton_repr)
+                    cluster_file = cluster_dir + "/cluster_" + cluster
+                    sequence = ""
+                    with open(cluster_file, 'r') as cfile:
+                        cfile.readline()  # skips header
+                        for tmp in cfile:
+                            sequence += tmp.rstrip()
 
                     #: fixes chloro/mito taxonomies
                     if (
-                        "Chloroplast" in repr_tax.split(";")
-                        or "Mitochondria" in repr_tax.split(";")
+                        "Chloroplast" in repr_tax.split(";")[0]
+                        or "Mitochondria" in repr_tax.split(";")[0]
+                    ):
+                        pass
+                    elif (
+                        "Chloroplast" in repr_tax.split(";")[1:]
+                        or "Mitochondria" in repr_tax.split(";")[1:]
                     ):
                         #: check to prevent index errors
                         if len(repr_tax.split(";")) > 2:
                             temp_dict = {0: repr_tax}
                             temp_ft = find_taxonomy(temp_dict, tax_db, str_id)
-                            repr_tax = temp_ft[0]
+                            if temp_ft:
+                                repr_tax = temp_ft[0]
+
+                    #: checks sequence quality
+                    if qc_sequence_quality:
+                        if not sequence_quality_check(sequence, gene_marker):
+                            excluded = True
+                            with open(removed_cluster_file, 'a') as rcf:
+                                rcf.write("MQR_{}_{}_{}".format(
+                                                                run_label,
+                                                                str_id,
+                                                                cluster
+                                ))
 
                 #: allows for checking if missing cluster (excluded/removed)
                 elif entries > 1 and cluster_label in repr_dict:
@@ -99,13 +136,13 @@ def create_final_repr(str_id, run_label, cent_loop=False):
                     ))
 
 
-def create_final_cent(str_id, cent_loop=False):
+def create_final_cent(str_id, run_label, cent_loop=False):
     """Creates the final centroid file, including cluster label, centroid label
     , representative taxonomy followed by the centroid sequence. Cent_loop is
     used when the method is called from the cluster_loop method at identities
     below 100.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     centroid_file = run_path + '/centroids'
     final_cent_file = run_path + '/final_centroids'
     final_repr_file = run_path + '/final_repr'
@@ -161,7 +198,7 @@ def create_label_tree(str_id, run_label, tree_loop=False):
     str_id up to max str_id. Tree_loop is called when the identity is below 99
     in order to iterate over the last tree_label file.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     uc_file = run_path + "/uc"
     label_tree_file = run_path + "/label_tree"
     cluster_dir = run_path + "/clusters"
@@ -174,7 +211,7 @@ def create_label_tree(str_id, run_label, tree_loop=False):
         else:
             old_id = str(int(str_id)+1)
 
-        old_tree_file = return_proj_path() + old_id + "/label_tree"
+        old_tree_file = return_proj_path(run_label) + old_id + "/label_tree"
         with open(old_tree_file, 'r') as old_tree:
             for line in old_tree:
                 curr_line = line.rstrip().split("\t")
@@ -230,13 +267,19 @@ def loop_repr_corr(str_id, run_label):
     100.
     """
     #: create_cluser_tax
-    create_cluster_tax(str_id, run_label, loop=True)
+    create_cluster_tax(
+                       str_id,
+                       run_label,
+                       qc_taxonomy_quality=False,
+                       qc_sequence_quality=False,
+                       loop=True
+                       )
 
     #: repr_and_flag
-    repr_and_flag(str_id)
+    repr_and_flag(str_id, run_label)
 
     #: cleanup repr_and_flag files
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     flag_cluster_file = run_path + "/flag_clusters"
     repr_cluster_file = run_path + "/repr_clusters"
     repr_corr_file = run_path + "/repr_correction"
@@ -245,7 +288,7 @@ def loop_repr_corr(str_id, run_label):
     os.rename(repr_cluster_file, repr_corr_file)
 
 
-def cluster_loop(str_id, run_label):
+def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
@@ -269,15 +312,26 @@ def cluster_loop(str_id, run_label):
             tree_loop = True
 
     #: creating final_repr and final_cent files for clustering
-    create_final_repr(str_id, run_label, cent_loop)
-    create_final_cent(str_id, cent_loop)
+    create_final_repr(
+                      str_id,
+                      run_label,
+                      sequence_quality_check,
+                      gene_marker,
+                      cent_loop
+                      )
+    create_final_cent(str_id, run_label, cent_loop)
 
     if cent_loop:
         create_label_tree(str_id, run_label, tree_loop)
 
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     final_cent_file = run_path + '/final_centroids'
 
     #: vsearch clustering using final files
     if next_ident >= stop_ident:
-        cluster_vs(final_cent_file, float(next_ident/100), loop=False)
+        cluster_vs(
+                   final_cent_file,
+                   float(next_ident/100),
+                   run_label,
+                   loop=False
+                   )

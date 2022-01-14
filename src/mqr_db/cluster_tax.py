@@ -2,7 +2,8 @@
 flags, manual review and correction and all related functions.
 """
 
-from .handling import return_proj_path, tax_list_to_str
+from .handling import return_proj_path, tax_list_to_str, sequence_quality_check
+from .handling import return_removed_path
 import os
 import subprocess
 from collections import Counter
@@ -73,10 +74,10 @@ class Cluster:
         return self.str_id
 
 
-def create_taxdb():
+def create_taxdb(run_label):
     """Creates a taxonomy database from all entries, no chloro/mito.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     cluster_dir = run_path + '/clusters/'
     tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
@@ -109,19 +110,19 @@ def create_taxdb():
     #: runs the command
     subprocess.run(tax_cmd, shell=True)
     #: processing the raw file, creating the tax_db file
-    process_taxdb()
+    process_taxdb(run_label)
     #: removing the raw file
     os.remove(tax_db_raw_file)
     os.remove(tax_db_tmp_file)
 
 
-def process_taxdb():
+def process_taxdb(run_label):
     """Processing the tax_db_raw file, creating a database of all "correct"
     unique genus entries and their taxonomy, correct taxonomy defined as the
     one with genus as the last taxonomic category before species and the
     taxonomy with most taxonomic categories.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     tax_db_tmp_file = run_path + '/tax_db_tmp'
     tax_db_raw_file = run_path + '/tax_db_raw'
     tax_db_file = run_path + '/tax_db'
@@ -187,10 +188,10 @@ def process_taxdb():
             tax_db.write(taxes[sp] + "\n")
 
 
-def read_taxdb():
+def read_taxdb(run_label):
     """Reads the taxonomy db into a dictionary.
     """
-    run_path = return_proj_path() + '100'
+    run_path = return_proj_path(run_label) + '100'
     tax_db_file = run_path + '/tax_db'
     tax_db = {}
 
@@ -226,9 +227,10 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
         new_tax = ''
         not_found = False
 
-        if "Chloroplast" in tax_split:
+        #: checks for mito/chloro, but not native entries (like NCBI)
+        if "Chloroplast" in tax_split[1:]:
             chlr_mito = 'Chloroplast'
-        elif "Mitochondria" in tax_split:
+        elif "Mitochondria" in tax_split[1:]:
             chlr_mito = 'Mitochondria'
 
         if len(sp_split) > 2:
@@ -236,52 +238,57 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
         else:
             str_info = ''
 
-        #: find in tax_db (species name)
-        if species in tax_dict:
-            temp_tax = tax_dict[species]
-            split = temp_tax.split(";")[1:-1]
-            split.append(species)
-            tax = ";".join(split)
-            found_tax = ";".join(tax.split(";")[:-1])
-
-        #: find in tax_db (genus)
-        elif (
-            genus in tax_dict
-            and genus != 'Eukaryota'
+        #: Removes chloro/mito check for native entries (like NCBI)
+        if (
+            "Chloroplast" not in tax_split[0]
+            and "Mitochondria" not in tax_split[0]
         ):
-            temp_tax = tax_dict[genus]
-            split = temp_tax.split(";")[1:-1]
-            split.append(species)
-            tax = ";".join(split)
-            found_tax = ";".join(tax.split(";")[:-1])
+            #: find in tax_db (species name)
+            if species in tax_dict:
+                temp_tax = tax_dict[species]
+                split = temp_tax.split(";")[1:-1]
+                split.append(species)
+                tax = ";".join(split)
+                found_tax = ";".join(tax.split(";")[:-1])
 
-        #: if not in either
-        if not tax:
-            if int(str_id) == 100:
-                if found_tax:
-                    tax = "{};{}".format(found_tax, species)
+            #: find in tax_db (genus)
+            elif (
+                genus in tax_dict
+                and genus != 'Eukaryota'
+            ):
+                temp_tax = tax_dict[genus]
+                split = temp_tax.split(";")[1:-1]
+                split.append(species)
+                tax = ";".join(split)
+                found_tax = ";".join(tax.split(";")[:-1])
+
+            #: if not in either
+            if not tax:
+                if int(str_id) == 100:
+                    if found_tax:
+                        tax = "{};{}".format(found_tax, species)
+                    else:
+                        tax = "undefined taxonomy;{}".format(species)
+                        not_found = True
                 else:
                     tax = "undefined taxonomy;{}".format(species)
-                    not_found = True
+
+            #: creating new tax_line
+            #: if there are any strain/variation information for species
+            if str_info:
+                new_tax = "{cm};{tx} {st}".format(
+                    cm=chlr_mito,
+                    tx=tax,
+                    st=str_info
+                )
+
             else:
-                tax = "undefined taxonomy;{}".format(species)
+                new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
 
-        #: creating new tax_line
-        #: if there are any strain/variation information for species
-        if str_info:
-            new_tax = "{cm};{tx} {st}".format(
-                cm=chlr_mito,
-                tx=tax,
-                st=str_info
-            )
-
-        else:
-            new_tax = "{cm};{tx}".format(cm=chlr_mito, tx=tax)
-
-        if not_found:
-            undef_taxes[nr_tax] = new_tax
-        else:
-            found_taxes[nr_tax] = new_tax
+            if not_found:
+                undef_taxes[nr_tax] = new_tax
+            else:
+                found_taxes[nr_tax] = new_tax
 
     #: if any taxonomies considered undef before found a taxonomy to use
     if undef_taxes:
@@ -301,19 +308,26 @@ def find_taxonomy(in_tax_dict, tax_dict, str_id):
     return new_taxes
 
 
-def create_cluster_tax(str_id, run_label, loop=False, qc=True):
+def create_cluster_tax(
+                       str_id,
+                       run_label,
+                       qc_taxonomy_quality,
+                       qc_sequence_quality,
+                       loop=False,
+                       gene_marker=""
+                       ):
     """Create a tax_clusters file, this contains the label for each cluster
     followed by the label + taxonomy of all hits in the cluster.
     """
-    run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    run_path = return_proj_path(run_label) + str_id
+    removed_path = return_removed_path()
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
-    deleted_entries_file = removed_path + "/deleted_entries_100"
-    if not loop and qc:
-        tax_db = read_taxdb()
+    deleted_entries_file = removed_path + "deleted_entries_100"
+    if not loop and qc_taxonomy_quality:
+        tax_db = read_taxdb(run_label)
 
     with open(tax_clusters_file, 'w') as clust_out, \
          open(uc_file, 'r') as read_uc:
@@ -343,6 +357,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                                              new_cluster
                                                              ))
 
+                    sequence = ""
                     for lines in read_cluster:
                         if lines[0] == ">":
                             if loop:
@@ -361,6 +376,15 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                 )
                                 clust_out.write("{}\n".format(curr_id))
                             else:
+                                #: sequence quality check
+                                if qc_sequence_quality and sequence:
+                                    if not sequence_quality_check(
+                                                                  sequence,
+                                                                  gene_marker
+                                    ):
+                                        deleted_entries[tax_nr-1] = curr_line
+                                    sequence = ""
+
                                 curr_line = remove_cf_line(lines.rstrip())
                                 curr_id = curr_line.split(" ")[0]
                                 id_dict[tax_nr] = curr_id
@@ -374,14 +398,21 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                     )
 
                                 #: adding chloro/mito taxonomies
+                                #: avoiding native entries (like NCBI)
+                                cm_line = curr_tax.split(";")
                                 if (
-                                    "Chloroplast" in curr_line.split(";")
-                                    or "Mitochondria" in curr_line.split(";")
+                                    "Chloroplast" in cm_line[1:]
+                                    or "Mitochondria" in cm_line[1:]
                                 ):
                                     cm_dict[tax_nr] = curr_tax
                                 #: checking tax and replacing/removing for rest
-                                elif qc:
-                                    if curr_genus in tax_db:
+                                elif qc_taxonomy_quality:
+                                    if (
+                                        "Chloroplast" in cm_line[0]
+                                        or "Mitochondria" in cm_line[0]
+                                    ):
+                                        pass
+                                    elif curr_genus in tax_db:
                                         curr_species = curr_tax.split(";")[-1]
                                         curr_tax_entry = ";".join(
                                             curr_tax.split(";")[:-1]
@@ -401,6 +432,17 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                             deleted_entries[tax_nr] = curr_line
 
                             tax_nr += 1
+
+                        else:
+                            sequence += lines.rstrip()
+
+                    #: checks last entry
+                    if qc_sequence_quality and sequence and not loop:
+                        if not sequence_quality_check(
+                                                      sequence,
+                                                      gene_marker
+                        ):
+                            deleted_entries[tax_nr-1] = curr_line
 
                     #: fixes chloro/mito taxonomies
                     if cm_dict:
@@ -427,7 +469,7 @@ def create_cluster_tax(str_id, run_label, loop=False, qc=True):
                                 )
                                 clust_out.write("{}\n".format(curr_id))
                     elif not loop and len(deleted_entries) == len(out_dict):
-                        exc_clusters = removed_path + "/deleted_clusters_100"
+                        exc_clusters = removed_path + "deleted_clusters_100"
                         with open(exc_clusters, 'a+') as f:
                             f.write("MQR_{}_{}_{}\n".format(
                                                          run_label,
@@ -746,11 +788,11 @@ def cluster_filter_species(tax_cluster):
     return new_cluster
 
 
-def flag_header(str_id):
+def flag_header(str_id, run_label):
     """Gets the flag header from the flag_clusters file, (first line, starts
     with #\t)
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     flag_clusters_file = run_path + '/flag_clusters'
     f_header = ''
     header = {}
@@ -768,13 +810,13 @@ def flag_header(str_id):
     return header
 
 
-def repr_and_flag(str_id):
+def repr_and_flag(str_id, run_label):
     """Takes an identity (in str) and opens the corresponding tax_clusters
     file, where all clusters are iterated over. Each cluster is assigned a
     representative taxonomy and those that are considered unusual are flagged
     for later manual review.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     tax_clusters_file = run_path + '/tax_clusters'
     repr_clusters_file = run_path + '/repr_clusters'
     flag_clusters_file = run_path + '/flag_clusters' + '.bak'
@@ -970,8 +1012,8 @@ def cluster_exclude(my_cluster):
     """Excludes clusters in the manual review, saved to a excluded cluster
     file.
     """
-    removed_path = return_proj_path() + 'removed'
-    exclusions_file = removed_path + '/flag_exclusions'
+    removed_path = return_removed_path()
+    exclusions_file = removed_path + 'flag_exclusions'
 
     with open(exclusions_file, 'a+') as exclusions:
 
@@ -1242,7 +1284,7 @@ def prompt_remove(input, my_cluster):
     return input_loop
 
 
-def run_correction(my_cluster, review, rem_header, exclude_all):
+def run_correction(my_cluster, review, rem_header, exclude_all, run_label):
     """Wrapping function to perform full correction on cluster.
     """
     if exclude_all:
@@ -1255,16 +1297,17 @@ def run_correction(my_cluster, review, rem_header, exclude_all):
     else:
         review, rem_header = manual_correction(
             my_cluster,
-            rem_header
+            rem_header,
+            run_label
         )
     return review, rem_header
 
 
-def repr_correction(str_id):
+def repr_correction(str_id, run_label):
     """Creates a new file, repr_correction, which contains all manually
     corrected flagged taxonomies, as well as those that were not flagged.
     """
-    run_path = return_proj_path() + str_id
+    run_path = return_proj_path(run_label) + str_id
     repr_clusters_file = run_path + '/repr_clusters'
     repr_correction_file = run_path + '/repr_correction'
     flag_correction_file = run_path + '/flag_correction'
@@ -1299,10 +1342,10 @@ def manual_correction(my_cluster, rem_header):
     input_loop = True
     review = ''
     str_id = my_cluster.get_strid()
-    run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
-    flag_exclusions_file = removed_path + '/flag_exclusions'
-    orig_header = flag_header(str_id)
+    run_path = return_proj_path(run_label) + str_id
+    removed_path = return_removed_path()
+    flag_exclusions_file = removed_path + 'flag_exclusions'
+    orig_header = flag_header(str_id, run_label)
 
     def_prompt = prompt_print(my_cluster)
     while input_loop:
@@ -1471,7 +1514,7 @@ def valid_input(input):
     return valid
 
 
-def flag_correction(str_id, exclude_all=False):
+def flag_correction(str_id, run_label, exclude_all=False):
     """Opens the flag file, and with the use of manual inputs corrects the
     flagged suggestions of representative taxonomy, into a new file with all
     non-flagged suggestions.
@@ -1479,16 +1522,16 @@ def flag_correction(str_id, exclude_all=False):
     accepted_flags = []
     excluded_flags = []
 
-    run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    run_path = return_proj_path(run_label) + str_id
+    removed_path = return_removed_path()
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
-    flag_exclusions_file = removed_path + '/flag_exclusions'
+    flag_exclusions_file = removed_path + 'flag_exclusions'
 
     if os.path.isfile(flag_exclusions_file):
         os.remove(flag_exclusions_file)
 
-    rem_header = flag_header(str_id)
+    rem_header = flag_header(str_id, run_label)
 
     with open(flag_clusters_file, 'r') as flag_file, \
          open(flag_correction_file, 'w') as corr_file:
@@ -1527,7 +1570,8 @@ def flag_correction(str_id, exclude_all=False):
                         my_cluster,
                         review,
                         rem_header,
-                        exclude_all
+                        exclude_all,
+                        run_label
                     )
 
                     if review == 'exit':
@@ -1549,4 +1593,4 @@ def flag_correction(str_id, exclude_all=False):
             else:
                 curr_cluster.append(curr_line)
 
-    repr_correction(str_id)
+    repr_correction(str_id, run_label)

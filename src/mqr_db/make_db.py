@@ -5,13 +5,19 @@ import os
 from pathlib import Path
 import shutil
 from .handling import return_proj_path, check_file, return_label, get_v_loop
+from .handling import return_removed_path
 
 
-def get_deleted_clusters(path):
+def get_deleted_clusters(dels_only=False):
+    """Returns list of all excluded clusters (excluded from qc s/l/t) if
+    dels_only then returns only those deleted by the sequence quality check
+    """
     excluded_clusters = []
-    bad_hits = Path("{}removed/bad_hits".format(path))
-    del_clusters = Path("{}removed/deleted_clusters_100".format(path))
+    removed = return_removed_path()
+    bad_hits = Path(f"{removed}bad_hits")
+    del_clusters = Path(f"{removed}deleted_clusters_100")
     excluded_clusters = []
+    removed_list = []
 
     if check_file(bad_hits):
         with open(bad_hits, 'r') as f:
@@ -24,55 +30,64 @@ def get_deleted_clusters(path):
             for label in f:
                 if label.rstrip() not in excluded_clusters:
                     excluded_clusters.append(label.rstrip())
+                if dels_only:
+                    deleted_cluster = label.rstrip().split("_")[-1]
+                    removed_list.append(deleted_cluster)
 
-    return excluded_clusters
+    if dels_only:
+        return removed_list
+    else:
+        return excluded_clusters
 
 
 def get_centroids(path, result_path, qc, run_label):
     """Copies the 'final_centroids' file from mqr_db/100/ to db result path
     """
     my_cent = Path("{}100/final_centroids".format(path))
-    to_cent = Path("{}/{}_final_centroids".format(result_path, run_label))
+    to_cent = Path("{}mqr.fasta".format(result_path))
 
     if qc:
-        excluded_clusters = get_deleted_clusters(path)
+        excluded_clusters = get_deleted_clusters()
 
-        first_line = True
-        header = ''
-        sequence = ''
         with open(my_cent, 'r') as rf, \
              open(to_cent, 'w') as of:
 
+            seq = ""
+            cluster = ""
             for line in rf:
                 curr_line = line.rstrip()
 
-                if curr_line[0] == '>':
-                    if not first_line and cluster not in excluded_clusters:
-                        of.write("{}\n{}\n".format(header, sequence))
+                if curr_line[0] == ">":
+                    if seq and id not in excluded_clusters:
+                        of.write(f"{header}\n{seq}")
 
                     header = curr_line
-                    sequence = ''
-                    first_line = False
+                    seq = ""
                     cluster = header.split("\t")[1]
 
                 else:
-                    sequence += curr_line + '\n'
+                    seq += f"{curr_line}\n"
 
     else:
         shutil.copy(my_cent, to_cent)
 
 
-def get_label_tree(path, result_path, v_loop, qc, run_label):
+def get_label_tree(
+                   path,
+                   result_path,
+                   v_loop,
+                   qc_low_clusters,
+                   run_label):
     """Takes the label tree created at 50% seqence identity and converts it
     into a dictionary format where the mqr_100 (100% seq id) label is key and
     the values are all the labels of the lower sequence identities, in
     descending order.
     """
     excluded_clusters = []
-    if qc:
-        excluded_clusters = get_deleted_clusters(path)
+    if qc_low_clusters:
+        excluded_clusters = get_deleted_clusters()
     label_file = "{}50/label_tree".format(path)
-    final_label = "{}/{}_final_label_tree".format(result_path, run_label)
+    final_label = "{}mqr.tree".format(result_path)
 
     dl = {}
     for v in v_loop:
@@ -96,7 +111,7 @@ def get_label_tree(path, result_path, v_loop, qc, run_label):
                             label_out = "{}\t".format(dl["curr_100"])
                         else:
                             label_out += "{} ".format(dl[key])
-                    if qc:
+                    if qc_low_clusters:
                         if label_out.split("\t")[0] not in excluded_clusters:
                             wf.write("{}\n".format(label_out[:-1]))
                     else:
@@ -108,7 +123,7 @@ def get_repr(path, result_path, v_loop, run_label):
     files in the runs from 50-100% sequence identity. Every line is the label,
     entry id, and representative taxonomy, seperated by tabs.
     """
-    final_repr = "{}/{}_final_repr".format(result_path, run_label)
+    final_repr = "{}mqr.repr".format(result_path)
 
     with open(final_repr, 'w') as f:
         for id in v_loop:
@@ -120,17 +135,17 @@ def get_repr(path, result_path, v_loop, run_label):
                         f.write(line)
 
 
-def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
+def find_bad_hits(run_label, cutoff_point=5, str_id='70', depth=False):
     """Looks at the tree_label file output in (str_id)% sequence identity run,
     if any entries at this point are matched with fewer than (cuttoff_point)
     other entries these are all added to /removed/bad_hits to be filtered out
     in creation of the databas. Entries not finding more than 5 matches at 70%
     sequence identity in a large database are fairly dubious.
     """
-    run_path = return_proj_path() + str_id
-    removed_path = return_proj_path() + 'removed'
+    run_path = return_proj_path(run_label) + str_id
+    removed_path = return_removed_path()
     label_file = "{}/label_tree".format(run_path)
-    bad_hits = "{}/bad_hits".format(removed_path)
+    bad_hits = "{}bad_hits".format(removed_path)
     hit_label = "_100_"
 
     with open(label_file, 'r') as tree, \
@@ -164,21 +179,25 @@ def find_bad_hits(cutoff_point=5, str_id='70', depth=False):
                         out.write("{}\n".format(hit))
 
 
-def make_db(qc=True):
+def make_db(run_label, qc_limited_clusters, qc_taxonomy_quality):
     """Creates the output datasets used by MetaxaQR. A centroid file which
     contains all entries clustered at 100% sequence identity, a representative
     taxonomy file containing all representative taxonomies at all sequence
     identity levels and finally a file containing the tree structure of all
     labels at all sequence identity levels.
     """
-    run_label = return_label()
-    path = return_proj_path()
-    result_path = "{}results".format(path)
-    Path(result_path).mkdir(parents=True, exist_ok=True)
+    path = return_proj_path(run_label)
+    result_path = f"{Path(path).parent}/"
     v_loop = get_v_loop()
+    removed_path = return_removed_path()
+    rem_files = os.listdir(removed_path)
+    qc_taxonomy_quality = False
+    if rem_files:
+        qc_taxonomy_quality = True
+    qc = qc_limited_clusters or qc_taxonomy_quality
 
-    if qc:
-        find_bad_hits()
+    if qc_limited_clusters:
+        find_bad_hits(run_label)
     get_centroids(path, result_path, qc, run_label)
     get_label_tree(path, result_path, v_loop, qc, run_label)
     get_repr(path, result_path, v_loop, run_label)

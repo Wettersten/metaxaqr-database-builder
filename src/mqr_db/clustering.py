@@ -5,13 +5,13 @@ import subprocess
 from .handling import return_proj_path, float_to_str_id, create_dir_structure
 
 
-def cluster_vs(database, float_id, loop=False):
+def cluster_vs(database, float_id, run_label, loop=False):
     """Used to perform clustering of a FASTA file at certain taxonomy identity
     using VSEARCH, producing cluster files which are later analysed.
     """
     str_id = float_to_str_id(float_id)
-    create_dir_structure(str_id)
-    proj_path = return_proj_path()
+    create_dir_structure(str_id, run_label)
+    proj_path = return_proj_path(run_label)
     dir_path = proj_path + str_id
     uc_file = dir_path + '/uc'
     centroids_file = dir_path + '/centroids'
