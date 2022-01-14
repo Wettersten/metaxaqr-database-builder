@@ -369,7 +369,8 @@ def check_prereqs(args):
     #: check to find problems before starting prepare module
     if args.opt_prepare:
         if check_dir(path):
-            error_msg = "ERROR: {} already exists".format(path)
+            label = path.split("/")[-2]
+            error_msg = f"ERROR: a '{label}' database already exists"
             quit(error_msg)
 
     #: check to find problems before starting make module

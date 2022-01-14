@@ -79,12 +79,12 @@ def create_parser():
     parser.add_argument('--hmm_limit_entries', dest='opt_limit_entries',
                         action='store_true', default=False,
                         help="""Limit the number of alignments used per
-                        alignment when creating HMMs""")
+                        alignment when creating HMMs (default=100000""")
 
     parser.add_argument('--hmm_align_max', dest='opt_max_entries',
                         type=int, metavar='',
                         help="""Specify maximum number of entries per alignment
-                        when creating HMMs (default=100000)""")
+                        when creating HMMs)""")
 
     parser.add_argument('-m_h', dest='opt_makehmms',
                         action='store_true', default=False,
@@ -124,7 +124,8 @@ def create_parser():
 
     parser.add_argument('-c', dest='opt_crossval',
                         action='store_true', default=False,
-                        help="""Cross validates database of specified label""")
+                        help="""Cross validates database of specified label or
+                        a genetic marker database FASTA file""")
 
     parser.add_argument('--eval_proportion', dest='opt_evalprop',
                         type=str, metavar='',

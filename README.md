@@ -1,6 +1,6 @@
 # User's Guide: Manual for MetaxaQR Database Builder
 
-This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.3, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
+This guide contains explanations on how to install and use the MetaxaQR Database builder, version 1.0.4, as well as documentation of the major parts of the software. The software is written for Unix-like platforms.
 
 MetaxaQR Database Builder automatically curates a database of genetic markers, such as 16S/18S small subunit rRNA gene, in FASTA format and outputs a dataset, and HMMs based on the dataset, useable by MetaxaQR for taxonomic classification of metagenomic data.
 
@@ -60,29 +60,37 @@ The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list al
 
 | Option                | Description                                                  |
 | --------------------- | ------------------------------------------------------------ |
+| -h, --help            | Displays the help message                                    |
 | -p {file}             | Prepare - initial clustering and preparation of the input FASTA database |
-| --label {name}        | Labelling of the output files, required by '-p' and '-m'     |
+| --label {name}        | Labelling of the output files, required by '-p' and '-m', can be used in '-c' |
 | --format {option}     | Format of the input FASTA file {ibol, unite}                 |
 | --taxfile {file}      | Separate taxonomy file                                       |
 | --qc {options}        | Enables quality checking; -p allows for {s, t}, s: sequence quality check, t: taxonomy quality check, -m allows for {l}, l: low quantity cluster check. These can be combined. |
 | --gene_marker         | Gene marker used for quality sequence checks {SSU}           |
 | -m                    | Make - creates the MetaxaQR database from the prepared files, starting with manual review of flagged clusters, and the HMMs |
 | --mode {option}       | HMM creation mode {divergent, conserved, hybrid}, required by -m and -m_h |
+| -m_d                  | Make_database - creating only the MetaxaQR database from the prepared files |
 | --keep                | Keeps all intermediate files                                 |
 | --exclude_all_flags   | Excludes all flagged clusters, skipping manual review        |
-| -m_d                  | Make_database - creating only the MetaxaQR database from the prepared files |
-| -m_h                  | Makes HMMs - using finished MetaxaQR database                |
-| --conservation_length | Minimum length for a conserved region {default=20}           |
-| --look_ahead          | Look ahead bases/amino acids when creating a conserved region {default=4} |
-| --conservation_cutoff | Consensus cutoff point for alignment, between 0-1 {default=0.6} |
-| --max_gaps            | Maximum number of gaps allowed in a conserved region {default=5} |
-| --conservation_seq_id | Sequence id used to create the HMMs from {default=50}        |
-| --conservation_seq_db | Database to create HMMs from, when using the conserved mode  |
-| --a {file}            | Addseq - adds new entries to a completed MetaxaQR database   |
+| --hmm_limit_entries   | Limit the number of alignments used per alignment when creating HMMs, defaults to 100000 entries |
+| --hmm_align_max {number} | Specify maximum number of entries per alignment when creating HMMs        |
+| -m_h                  | Make_HMMs - using finished MetaxaQR database                |
+| --conservation_length {number} | Minimum length for a conserved region {default=20}           |
+| --look_ahead {number} | Look ahead bases/amino acids when creating a conserved region {default=4} |
+| --conservation_cutoff {floating number} | Consensus cutoff point for alignment, between 0-1 {default=0.6} |
+| --max_gaps {number}   | Maximum number of gaps allowed in a conserved region {default=5} |
+| --conservation_seq_id {number} | Sequence id used to create the HMMs from {default=50}        |
+| --conservation_seq_db {file} | Database to create HMMs from, when using the conserved mode  |
+| -c            | Cross Validation - Cross validates database of specified label or a genetic marker database FASTA file   |
+| --eval_proportion {floating number} | Proportion used for test set {default 0.1}         |
+| --cross_val_fasta {file} | FASTA file used for cross validation        |
+| -a {file}            | Add_Sequences - adds new entries to a completed MetaxaQR database   |
 | --quiet               | Disables status output                                       |
+| --cpu {number}      | Threads used {default 4}                                      |
 | --license             | Displays the license                                         |
+| --version_history             | Displays the version history                 |
 | --version             | Displays the current version of the software                 |
-| -h                    | Displays the help message                                    |
+
 
 
 ### Example usage
@@ -90,7 +98,8 @@ The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list al
 | Command                                                    | Description                                                  |
 | ---------------------------------------------------------- | ------------------------------------------------------------ |
 | python metaxaQR_dbb.py -p database --label SSU             | Preparation step, using 'SSU' as a label                     |
-| python metaxaQR_dbb.py -m --mode hybrid --keep --label SSU | Makes the MetaxaQR database and HMMs, keeping all intermediate files |
+| python metaxaQR_dbb.py -m --mode divergent --keep --label SSU | Makes the MetaxaQR database and HMMs, keeping all intermediate files |
+| python metaxaQR_dbb.py -c --mode divergent --label SSU | Cross validates the 'SSU' database  |
 | python metaxaQR_dbb.py -a new_entries --label SSU          | Adds entries from new entry database to a finished MetaxaQR database |
 
 
@@ -229,7 +238,9 @@ The MetaxaQR database files are created using intermediary files, all representa
 
 #### Creation of the HMMs
 
-The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode.
+The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode. 
+
+The creation of the HMMs can take an extremely long time in the case of databases with a large number of similar entries. This stems from the first step, the alignment step, as each cluster is aligned using MAFFT before further processing. While testing, a cluster was found to contain more than 1 million bacterial entries, the alignment of this single cluster took more than 30 days to complete. To speed this process up an option was added to limit the maximum number of entries that was used for any one alignment. By using `hmm_limit_entries` the program will by default limit the maximum number of entries per alignment from each cluster to 100 000 entries. This maximum can be altered by specifying a limit manually by also using `--hmm_align_max {number}`. The alignment process can be further sped up by allowing more core usage with `--cpu {number}`.
 
 ##### divergent
 
@@ -289,4 +300,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program, in the file named 'LICENSE'. If not, see <https://www.gnu.org/licenses/>.
 
-Copyright (C) 2020-2021 Sebastian Wettersten
+Copyright (C) 2020-2022 Sebastian Wettersten
