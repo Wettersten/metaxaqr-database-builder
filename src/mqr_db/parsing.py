@@ -12,14 +12,13 @@ seq_name = 'MetaxaQR Database Builder'
 
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
-    Required arguments: One of the main 4 arguments, -c/-r/-f/-m
-    Optional arguments:
+    Required arguments: One of the main 4 arguments, -p, -m, -c, -a
+    Arguments:
     """
     parser = argparse.ArgumentParser(
         prog=seq_name,
         description="""Create database for MetaxaQR using taxonomic database of
-        genetic markers.""",
-        epilog='Examples: ')
+        genetic markers.""")
 
     parser.add_argument('-p', dest='opt_prepare', type=str,
                         metavar='',
