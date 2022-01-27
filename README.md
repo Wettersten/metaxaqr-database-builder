@@ -35,7 +35,7 @@ Download the MetaxaQR Database Builder (https://github.com/Wettersten/metaxaqr-d
 Testing the installation:
 `python --version`
 `vsearch --version`
-`python metaxaqr-database-builder/mqr_db.py --version`
+`python metaxaQR_dbb.py --version`
 
 
 
@@ -54,7 +54,7 @@ Creating only the database from the prepared input files:
 Creating the HMMs from the database:
 `python metaxaQR_dbb.py -m_h --mode HMM_mode --label label_name`
 
-The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list all the available options for the MetaxaQR Database Builder, type `python mqr_db.py --help`.
+The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list all the available options for the MetaxaQR Database Builder, type `python metaxaQR_dbb.py --help`.
 
 ### Options
 
