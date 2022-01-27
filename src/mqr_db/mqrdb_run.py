@@ -72,7 +72,7 @@ def main_mqrdb(args):
             gene_marker = str(args.opt_gene_marker).lower()
 
         logging("clustering_start", quiet=quiet)
-        cluster_vs(db, float_id, run_label)
+        cluster_vs(db, float_id, run_label, cpu)
         logging("clustering_seq_end", quiet=quiet)
 
         logging("clustering_tax_start", quiet=quiet)

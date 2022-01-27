@@ -88,7 +88,7 @@ def cross_validation(
     if not quiet:
         print(f"{dt} : Creating the cross validation database")
 
-    cluster_vs(training_set, float_id, cv_label)
+    cluster_vs(training_set, float_id, cv_label, cpu)
     create_taxdb(cv_label)
     create_cluster_tax(
                        str_id,
