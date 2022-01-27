@@ -11,7 +11,7 @@ from pathlib import Path
 from .handling import return_proj_path
 
 
-def add_entries(entries_file, run_label):
+def add_entries(entries_file, run_label, cpu):
     """Main function that takes input fasta file + MQR db, uses vsearch and
     finally writes the new entries to the finished databases
     """
@@ -43,7 +43,7 @@ def add_entries(entries_file, run_label):
 
     #: handles vsearch searching
     vs_out = "{}/vs_out.txt".format(db_path)
-    v_search(entries_file, final_centroids_file, vs_out)
+    v_search(entries_file, final_centroids_file, vs_out, cpu)
     vs_dict = read_vsout(vs_out)
 
     #: reads in the entries file and get start number for new label
@@ -96,7 +96,7 @@ def add_entries(entries_file, run_label):
     shutil.move(final_repr_tmp, final_repr_file)
 
 
-def v_search(entries_file, centroids_file, vs_out):
+def v_search(entries_file, centroids_file, vs_out, cpu):
     """Uses vsearch Searching function to compare the new entries with the
     finished centroid database, finding hits with percentage identity
     """
@@ -106,14 +106,16 @@ def v_search(entries_file, centroids_file, vs_out):
     vs_id = "{} {}".format('-id', id)
     vs_out = "{} {}".format('-blast6out', vs_out)
     vs_no_progress = "{}".format('--no_progress')
+    vs_cpu = "{} {}".format('--threads', cpu)
     vs_quiet = "{}".format('--quiet')
 
-    vs_cmd = 'vsearch {fi} {db} {id} {ou} {np} {qu}'.format(
+    vs_cmd = 'vsearch {fi} {db} {id} {ou} {np} {cp} {qu}'.format(
         fi=vs_input,
         db=vs_db,
         id=vs_id,
         ou=vs_out,
         np=vs_no_progress,
+        cp=vs_cpu,
         qu=vs_quiet
     )
 

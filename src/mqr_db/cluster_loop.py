@@ -288,7 +288,7 @@ def loop_repr_corr(str_id, run_label):
     os.rename(repr_cluster_file, repr_corr_file)
 
 
-def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
+def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker, cpu):
     """Prepares final_centroids and final_repr files, the tree_label file and
     starts vsearch clustering of the next identity (str_id - 0.01), looping
     over with 100, 99... allows for creation of all relevant files for all
@@ -333,5 +333,6 @@ def cluster_loop(str_id, run_label, sequence_quality_check, gene_marker):
                    final_cent_file,
                    float(next_ident/100),
                    run_label,
+                   cpu,
                    loop=False
                    )

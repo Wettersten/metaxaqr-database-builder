@@ -23,8 +23,9 @@ def main_mqrdb(args):
     """Main method, uses user args to run corresponding methods/modules
     """
     quiet = args.opt_quiet
+    cpu = args.opt_cpu
 
-    #: running start command, clustering at 100% identity
+    #: preparing database, initial 100% clustering run and prep of files
     if args.opt_prepare:
         error_check(args)
         check_installation(args)
@@ -147,7 +148,8 @@ def main_mqrdb(args):
                          id,
                          run_label,
                          qc_sequence_quality,
-                         gene_marker
+                         gene_marker,
+                         cpu
                         )
             logging("finalize_loop_end", id=id, quiet=quiet)
 
@@ -173,7 +175,7 @@ def main_mqrdb(args):
                  max_limit,
                  seq_id=str(args.opt_con_seq_id),
                  seq_db=args.opt_con_seq_db,
-                 cpu=args.opt_cpu
+                 cpu=cpu
                  )
         logging("make hmms_end", quiet=quiet)
 
@@ -238,7 +240,8 @@ def main_mqrdb(args):
                          id,
                          run_label,
                          qc_sequence_quality,
-                         gene_marker
+                         gene_marker,
+                         cpu
                         )
             logging("finalize_loop_end", id=id, quiet=quiet)
 
@@ -272,7 +275,7 @@ def main_mqrdb(args):
                  max_limit,
                  seq_id=str(args.opt_con_seq_id),
                  seq_db=args.opt_con_seq_db,
-                 cpu=args.opt_cpu
+                 cpu=cpu
                  )
         logging("make hmms_end", quiet=quiet)
 
@@ -293,7 +296,6 @@ def main_mqrdb(args):
         qc_taxonomy_quality = False
         qc_sequence_quality = False
         quiet = False
-        cpu = args.opt_cpu
         exclude_all = False
 
         if args.opt_label:
@@ -358,7 +360,7 @@ def main_mqrdb(args):
             db = format_file(db, args.opt_format)
 
         logging("add entries_start", quiet=quiet)
-        add_entries(db, run_label)
+        add_entries(db, run_label, cpu)
         logging("add entries_end", quiet=quiet)
 
     #: returns the license for MetaxaQR Database Builder

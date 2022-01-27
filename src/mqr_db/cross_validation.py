@@ -106,7 +106,8 @@ def cross_validation(
                      id,
                      cv_label,
                      qc_sequence_quality,
-                     gene_marker
+                     gene_marker,
+                     cpu
                     )
 
     make_db(cv_label, qc_limited_clusters, qc_taxonomy_quality)

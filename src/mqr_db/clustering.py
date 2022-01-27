@@ -5,7 +5,7 @@ import subprocess
 from .handling import return_proj_path, float_to_str_id, create_dir_structure
 
 
-def cluster_vs(database, float_id, run_label, loop=False):
+def cluster_vs(database, float_id, run_label, cpu, loop=False):
     """Used to perform clustering of a FASTA file at certain taxonomy identity
     using VSEARCH, producing cluster files which are later analysed.
     """
@@ -32,9 +32,10 @@ def cluster_vs(database, float_id, run_label, loop=False):
     vs_log = "{} {}".format('--log', log_file)
     vs_no_progress = "{}".format('--no_progress')
     vs_notrunclabels = "{}".format('--notrunclabels')
+    vs_cpu = "{} {}".format('--threads', cpu)
     vs_quiet = "{}".format('--quiet')
 
-    vs_cmd = 'vsearch {co} {cl} {uc} {ce} {id} {lo} {np} {nt} {qu}'.format(
+    vs_cmd = 'vsearch {co} {cl} {uc} {ce} {id} {lo} {np} {nt} {cp} {qu}'.format(
         co=vs_cluster_option,
         cl=vs_clusters,
         uc=vs_uc,
@@ -43,6 +44,7 @@ def cluster_vs(database, float_id, run_label, loop=False):
         lo=vs_log,
         np=vs_no_progress,
         nt=vs_notrunclabels,
+        cp=vs_cpu,
         qu=vs_quiet
     )
 
