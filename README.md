@@ -35,7 +35,7 @@ Download the MetaxaQR Database Builder (https://github.com/Wettersten/metaxaqr-d
 Testing the installation:
 `python --version`
 `vsearch --version`
-`python metaxaQR_dbb.py --version`
+`metaxaQR_dbb --version`
 
 
 
@@ -46,15 +46,15 @@ MetaxaQR Database Builder accepts databases of genetic markers in FASTA formats,
 Two steps are used in order to create the output MetaxaQR files; a preparation step where the input file(s) are clustered, followed by the make step where both the database and the HMMs are created. The database and the HMMs can also be created separately. 
 
 Preparing the input files:
-`python metaxaQR_dbb.py -p input_file --label label_name`
+`metaxaQR_dbb -p input_file --label label_name`
 Making the database & HMMs:
-`python metaxaQR_dbb.py -m --mode HMM_mode --label label_name`
+`metaxaQR_dbb -m --mode HMM_mode --label label_name`
 Creating only the database from the prepared input files:
-`python metaxaQR_dbb.py -m_d --label label_name`
+`metaxaQR_dbb -m_d --label label_name`
 Creating the HMMs from the database:
-`python metaxaQR_dbb.py -m_h --mode HMM_mode --label label_name`
+`metaxaQR_dbb -m_h --mode HMM_mode --label label_name`
 
-The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list all the available options for the MetaxaQR Database Builder, type `python metaxaQR_dbb.py --help`.
+The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list all the available options for the MetaxaQR Database Builder, type `metaxaQR_dbb --help`.
 
 ### Options
 
@@ -95,12 +95,12 @@ The output database and HMMs are stored in 'metaxaQR_db/label_name/'. To list al
 
 ### Example usage
 
-| Command                                                    | Description                                                  |
-| ---------------------------------------------------------- | ------------------------------------------------------------ |
-| python metaxaQR_dbb.py -p database --label SSU             | Preparation step, using 'SSU' as a label                     |
-| python metaxaQR_dbb.py -m --mode divergent --keep --label SSU | Makes the MetaxaQR database and HMMs, keeping all intermediate files |
-| python metaxaQR_dbb.py -c --mode divergent --label SSU | Cross validates the 'SSU' database  |
-| python metaxaQR_dbb.py -a new_entries --label SSU          | Adds entries from new entry database to a finished MetaxaQR database |
+| Command                                             | Description                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------ |
+| metaxaQR_dbb -p database --label SSU                | Preparation step, using 'SSU' as a label                     |
+| metaxaQR_dbb -m --mode divergent --keep --label SSU | Makes the MetaxaQR database and HMMs, keeping all intermediate files |
+| metaxaQR_dbb -c --mode divergent --label SSU        | Cross validates the 'SSU' database                           |
+| metaxaQR_dbb -a new_entries --label SSU             | Adds entries from new entry database to a finished MetaxaQR database |
 
 
 
@@ -256,7 +256,7 @@ The hybrid mode combines conserved and divergent: the initial clusters are first
 
 
 ### 4.3. Cross validation
-'Cross validation' `-c` can be performed on a finished MetaxaQR database or a gene marker FASTA file. Cross validation on an already created database is done by supplying the database name using `--label`, by instead using `--cross_val_fasta` the user can specify a FASTA file as input. Cross validation requires MetaxaQR to be installed, with both the 'metaxaqr_dbb.py' file and the 'src' folder from MetaxaQR Database Builder included in the MetaxaQR directory. As the cross validation uses MetaxaQR classification for evaluation this requires execution permissions for the following MetaxaQR files: 'metaxaQR', 'get_fasta', 'metaxaQR_c', 'metaxaQR_x' to avoid errors.
+'Cross validation' `-c` can be performed on a finished MetaxaQR database or a gene marker FASTA file. Cross validation on an already created database is done by supplying the database name using `--label`, by instead using `--cross_val_fasta` the user can specify a FASTA file as input. Cross validation requires MetaxaQR to be installed, with both the 'metaxaQR_dbb' file and the 'src' folder from MetaxaQR Database Builder included in the MetaxaQR directory. As the cross validation uses MetaxaQR classification for evaluation this requires execution permissions for the following MetaxaQR files: 'metaxaQR', 'get_fasta', 'metaxaQR_c', 'metaxaQR_x' to avoid errors.
 
 Cross validation reads all entries from the input database or FASTA file and splits these into a training set and a test set. The proportion of total entries split into the test set can be specified using `--eval_proportion`, with the default set to 0.1 (10%). Entries from the input are chosen at random until the proportion for the test set is met, the remaining entries becomes the training set. The test set is also split into three different versions: 'full', 'half' and 'read'. These are all entries but the sequences are full length, half of the sequence length or 100 base pairs long respectively. The shorter sequences are extracted from the original sequences, starting at a random position in the sequence, if the original sequences are shorter than 300 base pairs the read sequence length is not created. These shorter sequence files allows brief overview of the impact of sequence length for classification using the database. 
 
