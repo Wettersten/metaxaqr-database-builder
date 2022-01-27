@@ -274,6 +274,17 @@ As of MetaxaQR [development version Jan 2022] the cross validation for full leng
 
 ## 5. Known issues
 
+### Older Python version
+
+One error that occurs when a Python version earlier than 3.7 is used is:
+
+`File "/path/to/mqr_dbb/metaxaqr-database-builder/src/mqr_db/cluster_tax.py", line 297`
+    `new_taxes = {**found_taxes, **undef_taxes}`
+
+
+
+
+
 
 
 ## 6. Version history
