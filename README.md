@@ -28,13 +28,16 @@ Python version 3.7, or later, (https://www.python.org/) is required to run the M
 
 Download and install VSEARCH version 2.15 or later (https://github.com/torognes/vsearch). VSEARCH is used to perform all clustering steps and is therefore required to use the MetaxaQR Database Builder in both the prepare step and the creation of the database.
 
-Download and install MAFFT version xx or later (link) and HMMER version xx or later (). These are required for the creation of the HMMs that are created based for the MetaxaQR databases.
+Download and install MAFFT version 7.4 or later (https://mafft.cbrc.jp/alignment/software/) and HMMER version 3.3 or later (http://hmmer.org/). These are required for the creation of the HMMs that are created based for the MetaxaQR databases.
 
 Download the MetaxaQR Database Builder (https://github.com/Wettersten/metaxaqr-database-builder).
 
 Testing the installation:
 `python --version`
 `vsearch --version`
+`mafft --version`
+`hmmbuild -h`
+
 `metaxaQR_dbb --version`
 
 
@@ -238,7 +241,7 @@ The MetaxaQR database files are created using intermediary files, all representa
 
 #### Creation of the HMMs
 
-The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode. 
+The HMMs are created using the 'mqr.tree' file, here a HMM file is created for each of the separate clusters at the 50% sequence identity level. Using the 'mqr.tree' file, all entries contained for each cluster at the 50% sequence identity are grouped, these are then used to create the HMMs according to the method used for each HMM mode. Multiple sequence alignment of the clusters is performed by MAFFT using `mafft --auto --reorder --quiet --thread {cpu} {cluster}`. Each individual cluster is used to create a HMM using hmmbuild with `hmmbuild -n {hmm_name} --dna --informat afa --cpu {cpu} {hmm_file} {alignment}`. Hmmpress then creates the HMM database from all hmmbuild files.
 
 The creation of the HMMs can take an extremely long time in the case of databases with a large number of similar entries. This stems from the first step, the alignment step, as each cluster is aligned using MAFFT before further processing. While testing, a cluster was found to contain more than 1 million bacterial entries, the alignment of this single cluster took more than 30 days to complete. To speed this process up an option was added to limit the maximum number of entries that was used for any one alignment. By using `hmm_limit_entries` the program will by default limit the maximum number of entries per alignment from each cluster to 100 000 entries. This maximum can be altered by specifying a limit manually by also using `--hmm_align_max {number}`. The alignment process can be further sped up by allowing more core usage with `--cpu {number}`.
 
