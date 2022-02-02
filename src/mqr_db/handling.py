@@ -115,6 +115,7 @@ def check_args(args):
         args.opt_keep and not args.opt_makedb
         and args.opt_keep and not args.opt_makehmms
         and args.opt_keep and not args.opt_make
+        and args.opt_keep and not args.opt_crossval
     ):
         error_msg = """ERROR: --keep only works with -m, -m_d, -m_h"""
         quit(error_msg)
