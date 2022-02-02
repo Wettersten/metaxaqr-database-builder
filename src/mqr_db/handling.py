@@ -346,13 +346,13 @@ def cleanup(mode, keep, run_label):
         cv_label = f"cv_{run_label}"
         cv_path = Path(return_proj_path(cv_label)).parent
 
-        if check_dir(data_path):
-            shutil.rmtree(data_path)
-
-        if check_dir(cv_path):
-            shutil.rmtree(cv_path)
-
         if not keep:
+            if check_dir(data_path):
+                shutil.rmtree(data_path)
+
+            if check_dir(cv_path):
+                shutil.rmtree(cv_path)
+
             if check_dir(path):
                 shutil.rmtree(path)
 

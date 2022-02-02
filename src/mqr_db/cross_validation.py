@@ -25,6 +25,7 @@ def cross_validation(
                     max_limit,
                     exclude_all,
                     quiet,
+                    keep,
                     cpu
                     ):
     """Cross validation method. Splits a database into training set and test
@@ -175,10 +176,6 @@ def cross_validation(
                 print(res_length)
 
     #: cleanup - removing data dir and the cv_label database
-    keep = True
-    if db_file:
-        keep = False
-
     cleanup("cv", keep, run_label)
 
 

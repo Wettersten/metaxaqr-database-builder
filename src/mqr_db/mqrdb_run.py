@@ -297,6 +297,7 @@ def main_mqrdb(args):
         qc_sequence_quality = False
         quiet = False
         exclude_all = False
+        keep = False
 
         if args.opt_label:
             run_label = args.opt_label
@@ -312,6 +313,9 @@ def main_mqrdb(args):
 
         if args.opt_exclude_all:
             exclude_all = True
+
+        if args.opt_keep:
+            keep = args.opt_keep
 
         if args.opt_qc:
             qc_opts = str(args.opt_qc).lower()
@@ -345,6 +349,7 @@ def main_mqrdb(args):
                         max_limit,
                         exclude_all,
                         quiet,
+                        keep,
                         cpu
                         )
         logging("cross val_end", quiet=quiet)
