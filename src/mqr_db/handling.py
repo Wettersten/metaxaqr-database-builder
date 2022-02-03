@@ -3,6 +3,7 @@ the project, checking if files exists, error handling etc.
 """
 
 import argparse
+import subprocess
 from datetime import datetime
 import importlib
 import os
@@ -907,5 +908,5 @@ def check_fasta_file(file):
             error_msg = f"ERROR: No entries found in {file}"
             quit(error_msg)
     else:
-        error_msg = f"ERROR: {file} not found "
+        error_msg = f"ERROR: File {file} not found "
         quit(error_msg)

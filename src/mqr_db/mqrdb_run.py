@@ -311,6 +311,10 @@ def main_mqrdb(args):
             db_file = args.opt_cvfile
             check_fasta_file(db_file)  # error checks file
 
+            #: formatting if another format is used in the database
+            if args.opt_format:
+                db_file = format_file(db_file, args.opt_format)
+
         if args.opt_evalprop:
             eval_prop = args.opt_evalprop
 
@@ -363,6 +367,7 @@ def main_mqrdb(args):
         if args.opt_label:
             run_label = args.opt_label
         db = args.opt_addseq
+        check_fasta_file(db)
 
         if args.opt_format:
             db = format_file(db, args.opt_format)
