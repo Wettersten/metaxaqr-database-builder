@@ -12,6 +12,7 @@ from .clustering import cluster_vs
 from .handling import logging, return_label, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
 from .handling import print_updates, check_installation, error_check
+from .handling import check_fasta_file
 from .handling import check_qc
 from .make_db import make_db
 from .add_entries import add_entries
@@ -34,6 +35,7 @@ def main_mqrdb(args):
         float_id = 1.0
         run_label = "tmp"
         db = args.opt_prepare
+        check_fasta_file(db)  # error checks file
         qc_sequence_quality = False
         qc_taxonomy_quality = False
 
@@ -307,6 +309,7 @@ def main_mqrdb(args):
 
         if args.opt_cvfile:
             db_file = args.opt_cvfile
+            check_fasta_file(db_file)  # error checks file
 
         if args.opt_evalprop:
             eval_prop = args.opt_evalprop

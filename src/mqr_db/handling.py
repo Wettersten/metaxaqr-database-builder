@@ -231,11 +231,6 @@ def check_args(args):
         if not args.opt_crossval:
             error_msg = """ERROR: --cross_val_fasta only works using -c."""
             quit(error_msg)
-        else:
-            if not check_file(args.opt_cvfile):
-                error_msg = """ERROR: missing file supplied to
-                --cross_val_fasta"""
-                quit(error_msg)
 
     #: eval_prop checks:
     if args.opt_evalprop:
@@ -890,3 +885,27 @@ def sequence_length_check(sequence, genetic_marker):
         return False
     else:
         return True
+
+
+def count_entries(file):
+    """Counts, and returns, total number of entries in a file (grepping '>')
+    """
+    grp_cmd = f"grep \">\" {file}"
+    wc_cmd = "wc -l"
+    cmd = f"{grp_cmd} | {wc_cmd}"
+    out = subprocess.check_output(cmd, shell=True).decode("utf-8")
+
+    return int(out)
+
+
+def check_fasta_file(file):
+    """Checks if the fasta file exist, and if it contains entries, otherwise
+    quits and prints error messages.
+    """
+    if check_file(file):
+        if count_entries(file) < 1:
+            error_msg = f"ERROR: No entries found in {file}"
+            quit(error_msg)
+    else:
+        error_msg = f"ERROR: {file} not found "
+        quit(error_msg)

@@ -4,7 +4,7 @@ import subprocess
 import random
 from pathlib import Path
 from collections import Counter
-from .handling import return_proj_path, return_label
+from .handling import return_proj_path, return_label, count_entries
 
 
 def make_hmms(
@@ -921,17 +921,6 @@ def cap_alignment(file, max_cap):
             f.write(f"{id}\n{seq}\n")
 
     return capped_file
-
-
-def count_entries(file):
-    """Counts, and returns, total number of entries in a file
-    """
-    grp_cmd = f"grep \">\" {file}"
-    wc_cmd = "wc -l"
-    cmd = f"{grp_cmd} | {wc_cmd}"
-    out = subprocess.check_output(cmd, shell=True).decode("utf-8")
-
-    return int(out)
 
 
 def process_alignment_cap(file, max_cap):
