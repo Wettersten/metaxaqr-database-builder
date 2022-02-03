@@ -415,7 +415,7 @@ def check_qc():
 
 
 def logging(option, id='', quiet=False):
-    """
+    """Used to print out status of program
     """
     ln = "-----------------------------------------------------------------"
 

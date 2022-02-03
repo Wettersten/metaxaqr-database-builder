@@ -1,3 +1,8 @@
+"""Methods related to cross validation - taking a finished database, or a
+database file, and then creates a database trained on a subset, with the
+remainder the set used to test the created database. Giving the resulting
+correct/total % statistics
+"""
 import os
 from pathlib import Path
 import random

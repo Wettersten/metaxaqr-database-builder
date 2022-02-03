@@ -854,6 +854,9 @@ def remove_overlaps(conserved_dictionary):
 
 
 def create_hmm_names(runs_dict, hmm_dir, mode):
+    """Creates the hmm names file, these are the various hmms with the start
+    and end numbers, required for MetaxaQR to parse correctly
+    """
     h_file = f"{hmm_dir}hmm_names.txt"
     orig_dict = dict(sorted(runs_dict.items()))
     with open(h_file, 'w') as f:

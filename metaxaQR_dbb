@@ -13,5 +13,5 @@ if __name__ == "__main__":
     parser = create_parser()
     args = return_args(parser)
 
-    #: runs the main loop of meta_clustering
+    #: runs the main loop of MetaxaQR_Database Builder
     main_mqrdb(args)
