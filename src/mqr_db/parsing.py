@@ -12,7 +12,12 @@ seq_name = 'MetaxaQR Database Builder'
 
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
-    Required arguments: One of the main 4 arguments, -p, -m, -c, -a
+
+    Creating a database: prepare (-p) the database, then make (-p) it
+    Prepare database: -p db.fasta --label DB
+    Make database & HMMs: -m --mode hmm_mode --label DB
+    Cross validate finished database: -c --mode hmm_mode --label DB
+
     Arguments:
     """
     parser = argparse.ArgumentParser(
