@@ -687,7 +687,7 @@ def get_header(option):
 def get_version():
     """Current version of the MetaxaQR Database Builder.
     """
-    return "Version: 1.0.4"
+    return "Version: 1.1.0"
 
 
 def print_updates():
@@ -698,9 +698,10 @@ V1.0.0: Initial release.\n
 V1.0.1: Added support for the sequence quality option,
 separating the QC option into 3 modes (Sequence, Taxonomy, Low clusters).\n
 V1.0.2: Initial support for the Make HMMs module.\n
-v1.0.3: Adjustments to allow for integration into MetaxaQR.\n
-v1.0.4: Adding cross validation module & optional limit for entries used in
+V1.0.3: Adjustments to allow for integration into MetaxaQR.\n
+V1.0.4: Adding cross validation module & optional limit for entries used in
 MAFFT multiple sequence alignments (HMMs).\n
+V1.1.0: Final stable release. MetaxaQR integration completed.\n
 """
     print(upd_history)
 
@@ -709,10 +710,13 @@ def print_license():
     """Prints the GNU GPL 3 license.
     """
     license_file = "{}/LICENSE".format(Path(__file__).parent.parent.parent)
-
-    with open(license_file, 'r') as f:
-        a = f.read()
-        print(a)
+    if check_file(license_file):
+        with open(license_file, 'r') as f:
+            a = f.read()
+            print(a)
+    else:
+        url = "https://github.com/Wettersten/metaxaqr-database-builder"
+        print(f"License file not found in directory. Visit {url} instead.")
 
 
 def format_file(file, format):

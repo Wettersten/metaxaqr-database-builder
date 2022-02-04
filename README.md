@@ -12,10 +12,10 @@ MetaxaQR Database Builder automatically curates a database of genetic markers, s
 2. Usage and commands
 3. Output files
 4. Documentation
-   4.1. Preparing the database
-   4.2. Making the database
-   4.3. Cross validation
-   4.4. Adding sequences to a finished database
+4.1. Preparing the database
+4.2. Making the database
+4.3. Cross validation
+4.4. Adding sequences to a finished database
 5. Known issues
 6. Version history
 7. License information
@@ -267,7 +267,7 @@ A MetaxaQR database is created using the training set, by default the HMM mode i
 
 The accession id of predictions is used to retrieve the known taxonomy from the original entries. The predicted taxonomy is then compared with the known taxonomy, where correct predictions are defined as:  matching species names, matching genus name, or the case where the predicted taxonomy doesn't include genus/species information but the taxonomy matches perfectly that of the known taxonomy.
 
-As of MetaxaQR [development version Jan 2022] the cross validation for full length sequences, tested using 10000 SSU genetic markers, results in the range of 60-70% correct hits. This limitation is caused by several factors, mostly linked to processing taxonomies. One big factor is that unique species or taxonomic groups might be fully removed from the training set and placed in the test set, when these are then classified this will lead to wrong predictions.   
+As of MetaxaQR development version 1 (https://github.com/bengtssonpalme/MetaxaQR/releases/tag/3.0d1) the cross validation for full length sequences, tested using 10000 SSU genetic markers extracted from the SILVA SSU dataset release 138 (https://www.arb-silva.de/documentation/release-138/), results in the range of 60-70% correct hits. This limitation is caused by several factors, mostly stemming from using small datasets for cross validation: one big factor is that unique species or taxonomic groups might be fully removed from the training set and placed in the test set, removing the ability from MetaxaQR to predict taxonomies from those missing taxonomic groups, which is particularly a problem using smaller datasets. Another problem stems from a similar issue where two species in the same taxonomic group is split, one into the test set and one into the training set, causing the prediction of the correct taxonomic group but the overprediction of the wrong species. Cross validation using the full 2.2 million entries of the SILVA SSU dataset release 138, MetaxaQR development version 1 and the HMM mode divergent resulted in the correct predictions of 93.54% of all full length sequence in the test set.
 
 ### 4.4. Adding sequences to a finished database
 
@@ -279,24 +279,27 @@ As of MetaxaQR [development version Jan 2022] the cross validation for full leng
 
 ### Older Python version
 
-One error that occurs when a Python version earlier than 3.7 is used is:
+Following error occurs when using a Python version older than 3.4, this is due to missing the Pathlib module which is first integrated into Python 3.4:
 
-`File "/path/to/mqr_dbb/metaxaqr-database-builder/src/mqr_db/cluster_tax.py", line 297`
-    `new_taxes = {**found_taxes, **undef_taxes}`
-
-
-
-
+File "/metaxaqr-database-builder/src/mqr_db/cluster_tax.py", line 297
+new_taxes = {\*\*found_taxes, \*\*undef_taxes}
 
 
 
 ## 6. Version history
 
 V1.0.0: Initial release.
+
 v1.0.1: Added support for the sequence quality check option, filtering sequence either too small or too long to match the chosen genetic marker. Also split the QC option into 3 separate modules: Sequence quality check, taxonomy quality check and low quantity cluster check, can be used separately or in combination with others.
+
 V1.0.2: Implementation of the make HMMs module, adding the ability to create HMMs based on the MetaxaQR databases.
+
 V1.0.3: Adjustments for integration into MetaxaQR, replacing the old database builder.
+
 V1.0.4: Implementation of the cross validation module, adding the ability to cross validate finished databases or gene marker databases from FASTA files. An option to cap the number of entries used for alignments when making HMMs is added in order to tackle extreme time use by MAFFT during creation of HMMs for large databases.
+
+V1.1.0: Final stable release. MetaxaQR integration completed. 
+
 
 
 ## 7. License information

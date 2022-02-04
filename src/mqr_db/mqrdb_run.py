@@ -268,6 +268,17 @@ def main_mqrdb(args):
             run_label = return_label()
         tree_file = f"{Path(return_proj_path(run_label)).parent}/mqr.tree"
         mode = args.opt_mode
+
+        #: defaults for limiting max entries in HMM alignments
+        limit_entries = False
+        max_limit = 0
+        if args.opt_limit_entries:
+            limit_entries = True
+            if args.opt_max_entries:
+                max_limit = args.opt_max_entries
+            else:
+                max_limit = 100000
+
         logging("make hmms_start", quiet=quiet)
         make_hmms(
                  mode,
