@@ -52,19 +52,6 @@ def return_removed_path(label):
     return path
 
 
-def return_qc_opts(run_label):
-    """Gets the quality check options for the run from initial -p command.
-    """
-    init_dir = return_init_path(run_label)
-    qc_opts = ''
-    qc_opts_file = f"{init_dir}qc_opts"
-    if check_file(qc_opts_file):
-        with open(qc_opts_file, 'r') as f:
-            qc_opts = f.read()
-
-    return qc_opts
-
-
 def tax_list_to_str(tlist):
     """Changes a split list of taxonomies back to a string.
     """
@@ -426,7 +413,7 @@ def logging(option, id='', quiet=False):
                 he=get_header(option),
                 ln=ln,
                 dt=get_dateinfo(),
-                st="Starting MetaxaQR_DB Clustering..."
+                st="Starting MetaxaQR_dbb Clustering..."
             ))
 
         elif option == "clustering_start":
@@ -468,7 +455,7 @@ def logging(option, id='', quiet=False):
                 he=get_header(option.split("_")[0]),
                 ln=ln,
                 dt=get_dateinfo(),
-                st="Starting MetaxaQR_DB Manual Review...",
+                st="Starting MetaxaQR_dbb Manual Review...",
                 tt="Manual Review of flagged clusters started."
             ))
 
@@ -484,7 +471,7 @@ def logging(option, id='', quiet=False):
                 he=get_header(option.split("_")[0]),
                 ln=ln,
                 dt=get_dateinfo(),
-                st="Starting MetaxaQR_DB Finalize..."
+                st="Starting MetaxaQR_dbb Finalize..."
             ))
 
         elif option == "finalize_loop_start":
@@ -554,7 +541,7 @@ finished.".format(id=str(int(id)-5))
                 he=get_header(option.split("_")[0]),
                 ln=ln,
                 dt=get_dateinfo(),
-                st="Starting MetaxaQR_DB Add Entries...",
+                st="Starting MetaxaQR_dbb Add Entries...",
                 at="Adding new entries to the MetaxaQR database..."
             ))
         elif option == "add entries_end":
@@ -628,7 +615,7 @@ def get_header(option):
         )
 
     elif option == "clustering":
-        htext = "MetaxaQR_DBB Clustering -- Clusters a database using" \
+        htext = "MetaxaQR_dbb Clustering -- Clusters a database using" \
                 " VSEARCH"
         header = "{}\n{}\n{}".format(
             htext,
@@ -637,7 +624,7 @@ def get_header(option):
         )
 
     elif option == "manual review":
-        htext = "MetaxaQR_DBB Manual Review -- Manual review of clusters" \
+        htext = "MetaxaQR_dbb Manual Review -- Manual review of clusters" \
                 " flagged during taxonomic processing"
         header = "{}\n{}\n{}".format(
             htext,
@@ -646,7 +633,7 @@ def get_header(option):
         )
 
     elif option == "finalize":
-        htext = "MetaxaQR_DBB Finalize -- Preparation of final output files" \
+        htext = "MetaxaQR_dbb Finalize -- Preparation of final output files" \
                 " and clustering down to 50% sequence identity"
         header = "{}\n{}\n{}".format(
             htext,
@@ -655,7 +642,7 @@ def get_header(option):
         )
 
     elif option == "make db":
-        htext = "MetaxaQR_DBB Make DB -- Creates the MetaxaQR database from" \
+        htext = "MetaxaQR_dbb Make DB -- Creates the MetaxaQR database from" \
             " the output of 'Finalize'."
         header = "{}\n{}\n{}".format(
             htext,
@@ -664,7 +651,7 @@ def get_header(option):
         )
 
     elif option == "add entries":
-        htext = "MetaxaQR_DBB Add Entries -- Adds new entries from a FASTA" \
+        htext = "MetaxaQR_dbb Add Entries -- Adds new entries from a FASTA" \
             " file to a finished MetaxaQR database."
         header = "{}\n{}\n{}".format(
             htext,
@@ -673,9 +660,9 @@ def get_header(option):
         )
 
     elif option == "cross val":
-        htext = "MetaxaQR_DBB Cross Validation -- Cross validation of a " \
-            "finished MetaxaQR database or a FASTA file, displaying accuracy" \
-            " of taxonomic classification."
+        htext = "MetaxaQR_dbb Cross Validation -- Cross validation of a" \
+            " finished MetaxaQR database or a FASTA file, displaying" \
+            " accuracy of taxonomic classification."
         header = "{}\n{}\n{}".format(
             htext,
             bytext,
