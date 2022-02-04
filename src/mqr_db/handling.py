@@ -31,7 +31,7 @@ def return_proj_path(label):
 def return_tmp_path(label):
     """Returns the path to the tmp directory.
     """
-    path = f"{Path(return_proj_path(run_label)).parent}/tmp/"
+    path = f"{Path(return_proj_path(label)).parent}/tmp/"
 
     return path
 
@@ -354,7 +354,6 @@ def check_prereqs(args):
     #: check to find problems before starting prepare module
     if args.opt_prepare:
         if check_dir(path):
-            label = path.split("/")[-2]
             error_msg = f"ERROR: a '{label}' database already exists"
             quit(error_msg)
 

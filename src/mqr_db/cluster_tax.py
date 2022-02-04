@@ -325,7 +325,7 @@ def create_cluster_tax(
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
-    deleted_entries_file = _path + "deleted_entries_100"
+    deleted_entries_file = removed_path + "deleted_entries_100"
     if not loop and qc_taxonomy_quality:
         tax_db = read_taxdb(run_label)
 
