@@ -42,7 +42,8 @@ def create_final_repr(
     final_repr_file = run_path + '/final_repr'
     uc_file = run_path + '/uc'
     cluster_dir = run_path + "/clusters"
-    removed_cluster_file = return_removed_path() + 'deleted_clusters_100'
+    removed_dir = return_removed_path(run_label)
+    removed_cluster_file = removed_dir + 'deleted_clusters_100'
     repr_dict = {}
     removed_list = []
     tax_db = read_taxdb(run_label)
@@ -54,7 +55,7 @@ def create_final_repr(
             repr_dict[curr_line[0]] = curr_line[1]
 
     if str_id == "100":
-        removed_list = get_deleted_clusters(dels_only=True)
+        removed_list = get_deleted_clusters(run_label, dels_only=True)
 
     with open(final_repr_file, 'w') as repr_out, \
          open(uc_file, 'r') as read_uc:

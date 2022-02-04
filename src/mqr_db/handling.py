@@ -22,46 +22,42 @@ def create_dir_structure(str_id, run_label):
 def return_proj_path(label):
     """Returns the path to project dir.
     """
-    run_label = ''
-    if label:
-        run_label = label
-    else:
-        run_label = return_label()
-
     curr_dir = os.getcwd()
-    proj_path = f"{curr_dir}/metaxaQR_db/{run_label}/mqr_db/"
+    proj_path = f"{curr_dir}/metaxaQR_db/{label}/mqr_db/"
 
     return proj_path
 
 
-def return_removed_path():
-    """Returns the path to the removed directory.
+def return_tmp_path(label):
+    """Returns the path to the tmp directory.
     """
-    path = f"{os.getcwd()}/tmp/removed/"
+    path = f"{Path(return_proj_path(run_label)).parent}/tmp/"
 
     return path
 
 
-def return_label():
-    """Gets the label specified for the run.
+def return_init_path(label):
+    """Returns the path to the init directory.
     """
-    label = ''
+    path = f"{return_tmp_path(label)}init/"
 
-    curr_dir = os.getcwd()
-    label_file = f"{curr_dir}/tmp/init/label"
-
-    if check_file(label_file):
-        with open(label_file, 'r') as f:
-            label = f.read()
-
-    return label
+    return path
 
 
-def return_qc_opts():
+def return_removed_path(label):
+    """Returns the path to the removed directory.
+    """
+    path = f"{return_tmp_path(label)}removed/"
+
+    return path
+
+
+def return_qc_opts(run_label):
     """Gets the quality check options for the run from initial -p command.
     """
+    init_dir = return_init_path(run_label)
     qc_opts = ''
-    qc_opts_file = "{}init/qc_opts"
+    qc_opts_file = f"{init_dir}qc_opts"
     if check_file(qc_opts_file):
         with open(qc_opts_file, 'r') as f:
             qc_opts = f.read()
@@ -140,6 +136,15 @@ def check_args(args):
         quit(error_msg)
     elif args.opt_prepare and not args.opt_label:
         error_msg = """ERROR: -p requires --label"""
+        quit(error_msg)
+    elif args.opt_make and not args.opt_label:
+        error_msg = """ERROR: -m requires --label"""
+        quit(error_msg)
+    elif args.opt_makedb and not args.opt_label:
+        error_msg = """ERROR: -m_d requires --label"""
+        quit(error_msg)
+    elif args.opt_makehmms and not args.opt_label:
+        error_msg = """ERROR: -m_h requires --label"""
         quit(error_msg)
 
     #: exclude_all_flags check
@@ -310,16 +315,12 @@ def check_installation(args):
 
 
 def cleanup(mode, keep, run_label):
-    """Cleanup of intermediate files, moves all files in mqr_db/removed/ and
+    """Cleanup of intermediate files, moves all files in /removed/ and
     mqr_db/results to final output directory mqr_label.
     """
     mqr_path = return_proj_path(run_label)
     #: used after make_db
     if mode == "md":
-        src_rem = f"{return_removed_path()}"
-        if check_dir(src_rem):
-            shutil.rmtree(src_rem)
-
         if not keep:
             v_loop = get_v_loop()
             v_loop.remove("100")
@@ -330,7 +331,7 @@ def cleanup(mode, keep, run_label):
 
     #: used after make_hmms
     elif mode == "mh":
-        tmp_path = f"{os.getcwd()}/tmp/"
+        tmp_path = return_tmp_path(run_label)
         if check_dir(tmp_path):
             shutil.rmtree(tmp_path)
         if not keep:
@@ -397,11 +398,11 @@ def is_tool(name):
     return shutil.which(name)
 
 
-def check_qc():
+def check_qc(run_label):
     """Checks if the prepare module used --qc, by searching for removed entries
     in the removed directory
     """
-    removed_dir = return_removed_path()
+    removed_dir = return_removed_path(run_label)
     if check_dir(removed_dir):
         cl_file = "deleted_clusters_100"
         en_file = "deleted_entries_100"
@@ -672,9 +673,9 @@ def get_header(option):
         )
 
     elif option == "cross val":
-        htext = "MetaxaQR_DBB Cross Validation -- Cross validation of a" \
+        htext = "MetaxaQR_DBB Cross Validation -- Cross validation of a " \
             "finished MetaxaQR database or a FASTA file, displaying accuracy" \
-            "of taxonomic classification."
+            " of taxonomic classification."
         header = "{}\n{}\n{}".format(
             htext,
             bytext,

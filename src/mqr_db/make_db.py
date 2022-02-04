@@ -4,16 +4,16 @@
 import os
 from pathlib import Path
 import shutil
-from .handling import return_proj_path, check_file, return_label, get_v_loop
-from .handling import return_removed_path
+from .handling import return_proj_path, check_file, get_v_loop
+from .handling import return_removed_path, check_dir
 
 
-def get_deleted_clusters(dels_only=False):
+def get_deleted_clusters(run_label, dels_only=False):
     """Returns list of all excluded clusters (excluded from qc s/l/t) if
     dels_only then returns only those deleted by the sequence quality check
     """
     excluded_clusters = []
-    removed = return_removed_path()
+    removed = return_removed_path(run_label)
     bad_hits = Path(f"{removed}bad_hits")
     del_clusters = Path(f"{removed}deleted_clusters_100")
     excluded_clusters = []
@@ -47,7 +47,7 @@ def get_centroids(path, result_path, qc, run_label):
     to_cent = Path("{}mqr.fasta".format(result_path))
 
     if qc:
-        excluded_clusters = get_deleted_clusters()
+        excluded_clusters = get_deleted_clusters(run_label)
 
         with open(my_cent, 'r') as rf, \
              open(to_cent, 'w') as of:
@@ -85,7 +85,7 @@ def get_label_tree(
     """
     excluded_clusters = []
     if qc_low_clusters:
-        excluded_clusters = get_deleted_clusters()
+        excluded_clusters = get_deleted_clusters(run_label)
     label_file = "{}50/label_tree".format(path)
     final_label = "{}mqr.tree".format(result_path)
 
@@ -143,7 +143,7 @@ def find_bad_hits(run_label, cutoff_point=5, str_id='70', depth=False):
     sequence identity in a large database are fairly dubious.
     """
     run_path = return_proj_path(run_label) + str_id
-    removed_path = return_removed_path()
+    removed_path = return_removed_path(run_label)
     label_file = "{}/label_tree".format(run_path)
     bad_hits = "{}bad_hits".format(removed_path)
     hit_label = "_100_"
@@ -189,8 +189,10 @@ def make_db(run_label, qc_limited_clusters, qc_taxonomy_quality):
     path = return_proj_path(run_label)
     result_path = f"{Path(path).parent}/"
     v_loop = get_v_loop()
-    removed_path = return_removed_path()
-    rem_files = os.listdir(removed_path)
+    removed_path = return_removed_path(run_label)
+    rem_files = ""
+    if check_dir(removed_path):
+        rem_files = os.listdir(removed_path)
     qc_taxonomy_quality = False
     if rem_files:
         qc_taxonomy_quality = True

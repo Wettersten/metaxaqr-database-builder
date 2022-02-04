@@ -320,12 +320,12 @@ def create_cluster_tax(
     followed by the label + taxonomy of all hits in the cluster.
     """
     run_path = return_proj_path(run_label) + str_id
-    removed_path = return_removed_path()
+    removed_path = return_removed_path(run_label)
     uc_file = run_path + "/uc"
     tax_clusters_file = run_path + "/tax_clusters"
     cluster_dir = run_path + "/clusters"
     tax_db = ''
-    deleted_entries_file = removed_path + "deleted_entries_100"
+    deleted_entries_file = _path + "deleted_entries_100"
     if not loop and qc_taxonomy_quality:
         tax_db = read_taxdb(run_label)
 
@@ -1008,11 +1008,11 @@ def prompt_accept(input, header, flags):
     return input_loop, review, header
 
 
-def cluster_exclude(my_cluster):
+def cluster_exclude(my_cluster, run_label):
     """Excludes clusters in the manual review, saved to a excluded cluster
     file.
     """
-    removed_path = return_removed_path()
+    removed_path = return_removed_path(run_label)
     exclusions_file = removed_path + 'flag_exclusions'
 
     with open(exclusions_file, 'a+') as exclusions:
@@ -1028,7 +1028,7 @@ def cluster_exclude(my_cluster):
     my_cluster.change_reprtax('Excluded')
 
 
-def prompt_exclude(my_cluster, input, header, flags):
+def prompt_exclude(my_cluster, input, header, flags, run_label):
     """Method for the exclude alternative in manual_correction. Removes a bad
     cluster and stores it in a flag_exclusions file for later review, this
     cluster does not appear in the final corrected repr_tax file. Works for
@@ -1043,7 +1043,7 @@ def prompt_exclude(my_cluster, input, header, flags):
         input_loop = confirm_accept_exclude('exclude')
         if not input_loop:
             rem_flag_update(header, flags)
-            cluster_exclude(my_cluster)
+            cluster_exclude(my_cluster, run_label)
 
     else:
         #: exclude all remaining clusters
@@ -1293,7 +1293,7 @@ def run_correction(my_cluster, review, rem_header, exclude_all, run_label):
     if review == 'skip' or review == 'exit':
         pass
     elif review == 'exclude':
-        cluster_exclude(my_cluster)
+        cluster_exclude(my_cluster, run_label)
     else:
         review, rem_header = manual_correction(
             my_cluster,
@@ -1336,14 +1336,14 @@ def repr_correction(str_id, run_label):
                 corr_file.write("{}\t{}\n".format(curr_label, curr_repr))
 
 
-def manual_correction(my_cluster, rem_header):
+def manual_correction(my_cluster, rem_header, run_label):
     """Displays each cluster with its suggested taxonomy and label. Prompts
     """
     input_loop = True
     review = ''
     str_id = my_cluster.get_strid()
     run_path = return_proj_path(run_label) + str_id
-    removed_path = return_removed_path()
+    removed_path = return_removed_path(run_label)
     flag_exclusions_file = removed_path + 'flag_exclusions'
     orig_header = flag_header(str_id, run_label)
 
@@ -1369,7 +1369,7 @@ def manual_correction(my_cluster, rem_header):
                 exclude = False
                 skip = False
         if exclude:
-            cluster_exclude(my_cluster)
+            cluster_exclude(my_cluster, run_label)
         if skip:
             input_loop = False
             break
@@ -1401,7 +1401,8 @@ def manual_correction(my_cluster, rem_header):
                     my_cluster,
                     curr_inp,
                     rem_header,
-                    flags
+                    flags,
+                    run_label
                 )
 
         #: exit option (exit)
@@ -1523,7 +1524,7 @@ def flag_correction(str_id, run_label, exclude_all=False):
     excluded_flags = []
 
     run_path = return_proj_path(run_label) + str_id
-    removed_path = return_removed_path()
+    removed_path = return_removed_path(run_label)
     flag_clusters_file = run_path + '/flag_clusters'
     flag_correction_file = run_path + '/flag_correction'
     flag_exclusions_file = removed_path + 'flag_exclusions'

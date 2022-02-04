@@ -9,7 +9,8 @@ import random
 import subprocess
 from datetime import datetime
 from .handling import check_dir, check_file, return_proj_path, get_v_loop
-from .handling import cleanup, get_dateinfo
+from .handling import cleanup, get_dateinfo, return_removed_path
+from .handling import return_init_path
 from .cluster_tax import create_taxdb, create_cluster_tax, repr_and_flag
 from .cluster_tax import flag_correction
 from .clustering import cluster_vs
@@ -81,9 +82,8 @@ def cross_validation(
     #: make new temp database from training set
     str_id = '100'
     float_id = 1.0
-    tmp_dir = f"{os.getcwd()}/tmp"
-    removed_path = f"{tmp_dir}/removed/"
-    init_path = f"{tmp_dir}/init/"
+    removed_path = return_removed_path(cv_label)
+    init_path = return_init_path(cv_label)
     proj_path = return_proj_path(cv_label)
     Path(removed_path).mkdir(parents=True, exist_ok=True)
     Path(init_path).mkdir(parents=True, exist_ok=True)

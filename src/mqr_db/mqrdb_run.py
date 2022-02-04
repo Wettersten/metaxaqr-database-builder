@@ -9,11 +9,11 @@ from .cluster_tax import create_cluster_tax, repr_and_flag, create_taxdb
 from .cluster_tax import flag_correction
 from .cluster_loop import cluster_loop
 from .clustering import cluster_vs
-from .handling import logging, return_label, print_license, return_proj_path
+from .handling import logging, print_license, return_proj_path
 from .handling import cleanup, format_file, sep_tax, get_v_loop, check_file
 from .handling import print_updates, check_installation, error_check
-from .handling import check_fasta_file
-from .handling import check_qc
+from .handling import check_fasta_file, check_qc
+from .handling import return_removed_path, return_init_path
 from .make_db import make_db
 from .add_entries import add_entries
 from .make_hmms import make_hmms
@@ -33,7 +33,7 @@ def main_mqrdb(args):
         logging("initialize", quiet=quiet)
         str_id = '100'
         float_id = 1.0
-        run_label = "tmp"
+        run_label = ""
         db = args.opt_prepare
         check_fasta_file(db)  # error checks file
         qc_sequence_quality = False
@@ -42,9 +42,8 @@ def main_mqrdb(args):
         if args.opt_label:
             run_label = args.opt_label
 
-        tmp_dir = f"{os.getcwd()}/tmp"
-        removed_path = f"{tmp_dir}/removed/"
-        init_path = f"{tmp_dir}/init/"
+        removed_path = return_removed_path(run_label)
+        init_path = return_init_path(run_label)
         proj_path = return_proj_path(run_label)
         Path(removed_path).mkdir(parents=True, exist_ok=True)
         Path(init_path).mkdir(parents=True, exist_ok=True)
@@ -100,8 +99,6 @@ def main_mqrdb(args):
         run_label = ''
         if args.opt_label:
             run_label = args.opt_label
-        else:
-            run_label = return_label()
         exclude_all = False
         path = return_proj_path(run_label)
         if args.opt_exclude_all:
@@ -118,7 +115,7 @@ def main_mqrdb(args):
             if "l" in qc_opts:
                 qc_limited_clusters = True
 
-        if check_qc():
+        if check_qc(run_label):
             qc_sequence_quality = True
             qc_taxonomy_quality = True
 
@@ -192,8 +189,6 @@ def main_mqrdb(args):
         run_label = ''
         if args.opt_label:
             run_label = args.opt_label
-        else:
-            run_label = return_label()
         exclude_all = False
         path = return_proj_path(run_label)
         if args.opt_exclude_all:
@@ -210,7 +205,7 @@ def main_mqrdb(args):
             if "l" in qc_opts:
                 qc_limited_clusters = True
 
-        if check_qc():
+        if check_qc(run_label):
             qc_sequence_quality = True
             qc_taxonomy_quality = True
 
@@ -264,8 +259,6 @@ def main_mqrdb(args):
         run_label = ''
         if args.opt_label:
             run_label = args.opt_label
-        else:
-            run_label = return_label()
         tree_file = f"{Path(return_proj_path(run_label)).parent}/mqr.tree"
         mode = args.opt_mode
 

@@ -4,7 +4,7 @@ import subprocess
 import random
 from pathlib import Path
 from collections import Counter
-from .handling import return_proj_path, return_label, count_entries
+from .handling import return_proj_path, count_entries
 
 
 def make_hmms(

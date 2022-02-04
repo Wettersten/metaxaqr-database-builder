@@ -12,18 +12,18 @@ seq_name = 'MetaxaQR Database Builder'
 
 def create_parser():
     """Creates a command line parser, --h shows help, --version shows version.
-
-    Creating a database: prepare (-p) the database, then make (-p) it
-    Prepare database: -p db.fasta --label DB
-    Make database & HMMs: -m --mode hmm_mode --label DB
-    Cross validate finished database: -c --mode hmm_mode --label DB
-
-    Arguments:
     """
     parser = argparse.ArgumentParser(
         prog=seq_name,
         description="""Create database for MetaxaQR using taxonomic database of
-        genetic markers.""")
+        genetic markers.
+
+        Usage:
+        Creating a database: prepare (-p) the database, then make (-p) it
+        Prepare database: -p db.fasta --label DB
+        Make database & HMMs: -m --mode hmm_mode --label DB
+        Cross validate finished database: -c --mode hmm_mode --label DB
+        """)
 
     parser.add_argument('-p', dest='opt_prepare', type=str,
                         metavar='',

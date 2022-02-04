@@ -15,6 +15,7 @@ from .cross_validation import cross_validation
 
 from .handling import float_to_str_id
 from .handling import format_file
+from .handling import check_dir
 from .handling import check_installation
 from .handling import check_qc
 from .handling import cleanup
@@ -25,7 +26,7 @@ from .handling import get_version
 from .handling import logging
 from .handling import print_license
 from .handling import print_updates
-from .handling import return_label
+from .handling import return_init_path
 from .handling import return_proj_path
 from .handling import return_qc_opts
 from .handling import return_removed_path
