@@ -28,7 +28,6 @@ from .handling import print_license
 from .handling import print_updates
 from .handling import return_init_path
 from .handling import return_proj_path
-from .handling import return_qc_opts
 from .handling import return_removed_path
 from .handling import sep_tax
 from .handling import sequence_quality_check

@@ -19,7 +19,7 @@ def create_parser():
         genetic markers.
 
         Usage:
-        Creating a database: prepare (-p) the database, then make (-p) it
+        Creating a database: prepare (-p) the database, then make (-m) it
         Prepare database: -p db.fasta --label DB
         Make database & HMMs: -m --mode hmm_mode --label DB
         Cross validate finished database: -c --mode hmm_mode --label DB
